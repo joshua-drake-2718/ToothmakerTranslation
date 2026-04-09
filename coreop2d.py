@@ -463,10 +463,10 @@ class Coreop2d():
         cls.q3d[:, :, 1] += cls.delta * cls.Da * hq3d[:, :, 1]
         
         # Inhibitor diffusion
-        cls.q3d[:, :, 2] += cls.delta * cls.Da * hq3d[:, :, 2]
-        
+        cls.q3d[:, :, 2] += cls.delta * cls.Di * hq3d[:, :, 2]
+
         # FGF diffusion
-        cls.q3d[:, :, 3] += cls.delta * cls.Da * hq3d[:, :, 3]
+        cls.q3d[:, :, 3] += cls.delta * cls.Ds * hq3d[:, :, 3]
 
         # REACTION
         hq3d[:] = 0
@@ -486,7 +486,7 @@ class Coreop2d():
                 a = cls.Sec * cls.diff_state[i] - cls.Deg * cls.q3d[i, 1, 3]    # Eq. (18). NOTE: DiffState <= 1.0
                 if a < 0: a = 0
                 hq3d[i, 1, 3] = a
-            elif cls.knots[i] > cls.Set:
+            elif cls.knots[i] == 1:
                 a = cls.Sec - cls.Deg * cls.q3d[i,1,3]  # Eq. (18). Sec = Sec (growth factor secretion rate)
                 if a < 0: a = 0
                 hq3d[i, 1, 3] = a
@@ -494,7 +494,7 @@ class Coreop2d():
         max_abs = abs(hq3d[:, 1, 1:2]).max()
         if max_abs > 1e100:
             sys.exit()
-        cls.q3d[:, 1, 1:3] += cls.delta * hq3d[:, 0, 1:3]   # explicit Euler method
+        cls.q3d[:, 1, 1:3] += cls.delta * hq3d[:, 1, 1:3]   # explicit Euler method
         
         cls.q3d.inner = cls.q3d.inner.clip(min=0)
 
