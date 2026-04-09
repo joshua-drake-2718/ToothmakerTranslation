@@ -21,8 +21,24 @@ class Esclec():
     cass: str
 
     @classmethod
-    def read_param_file(cls):
-        pass
+    def read_param_file(cls, filepath):
+        cls.read_failed = 0
+        try:
+            with open(filepath, 'r') as f:
+                for i in range(3, 33):  # indices 3 to 32 inclusive
+                    line = f.readline()
+                    if not line:
+                        cls.read_failed = 1
+                        return
+                    parts = line.split()
+                    if len(parts) < 2:
+                        cls.read_failed = 1
+                        return
+                    cls.parap[i, cls.map] = float(parts[0])
+                    cls.param_names[i] = parts[1]
+        except (IOError, ValueError):
+            print("reading error for", filepath)
+            cls.read_failed = 1
 
     @classmethod
     def set_params(cls, core: Coreop2d, imap: int): # imap: index of parameter set (always 1 in current usage)
@@ -60,11 +76,14 @@ class Esclec():
         core.umgr = cls.parap[32, imap]
 
     @classmethod
-    def initialize_from_parameter_file(cls):
-        pass
+    def initialize_from_parameter_file(cls, core, filepath):
+        cls.map = 1
+        cls.read_param_file(filepath)
+        if cls.read_failed == 0:
+            cls.set_params(core, cls.map)
 
     @classmethod
-    def guardaveinsoff_2(cls, core: Coreop2d, temp_neigh: int_array):
+    def guardaveinsoff_2(cls, core: Coreop2d, temp_neigh: int_array, f=None):
         c = float_array(4)
         mic = float_array(4)
         # I hace to go from neighbouring to faces
