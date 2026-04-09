@@ -14,7 +14,7 @@ class range:
         self.step = step
 
     def __len__(self):
-         return (self.stop - self.start + abs(self.step)) // self.step
+        return max(0, (self.stop - self.start + abs(self.step)) // self.step)
 
     def __getitem__(self, index):
         if not 0 <= index < len(self):
@@ -31,7 +31,7 @@ class range:
 def transform_indices(indices):
     if isinstance(indices, tuple):
         # iterate over tuple
-        return tuple(transform_index(index for index in indices))
+        return tuple(transform_index(index) for index in indices)
     else:
         # single index
         return transform_index(indices)
@@ -113,9 +113,9 @@ class float_array():
 class bool_array():
     def __init__(self, shape=None, buffer=None):
         if not shape is None:
-            self.inner = np.ndarray(shape, buffer=buffer, dtype=np.bool)
+            self.inner = np.ndarray(shape, buffer=buffer, dtype=np.bool_)
         elif not buffer is None:
-            self.inner = np.array(buffer, dtype=np.bool)
+            self.inner = np.array(buffer, dtype=np.bool_)
     
     def __getitem__(self, indices) -> bool | Self:
         value = self.inner[transform_indices(indices)]
