@@ -86,36 +86,32 @@ class Esclec():
     def guardaveinsoff_2(cls, core: Coreop2d, temp_neigh: int_array, f=None):
         c = float_array(4)
         mic = float_array(4)
-        # I hace to go from neighbouring to faces
 
-        face = int_array((core.num_active_cells*20, 5))
-        nfaces: int
-        bi: int
-        nop: int
+        face = int_array((core.num_active_cells * 20, 5))
+        nfaces = 0
+        bi = 0
+        nop = 0
 
         cls.ma = float_array(core.num_active_cells)
-        cls.mat()
+        cls.mat(core)
 
-        nfaces = 0
-
-        # code inside ele loop
-        # returns True if cycling ele
+        # --- Pass 1: count faces ---
         def ele():
             nonlocal nfaces, bi, nop
             iii = core.neigh[ii, k]
             if iii == 0 or iii > core.num_active_cells or iii == i:
-                return True # cycle ele
+                return True
             for kk in range(core.nv_max):
                 iiii = core.neigh[iii, kk]
                 if iiii == 0 or iiii > core.num_active_cells:
-                    return True # cycle ele
-                if iiii == i: # triangle trobat
+                    return True
+                if iiii == i:
                     nfaces += 1
                     bi += 1
                     nop = iii
                     if bi == 1:
-                        return True # cycle ele
-                    return False # cycle ale
+                        return True
+                    return False
 
         for i in range(core.num_active_cells):
             for j in range(core.nv_max):
@@ -127,7 +123,7 @@ class Esclec():
                     if ele():
                         continue
                     else:
-                        break # cycle ale
+                        break
                 else:
                     for k in range(core.nv_max):
                         iii = core.neigh[ii, k]
@@ -135,31 +131,38 @@ class Esclec():
                             continue
                         if bi == 0:
                             continue
-                        # to by the squares
                         for kk in range(core.nv_max):
                             iiii = core.neigh[iii, kk]
                             if iiii == 0 or iiii > core.num_active_cells or iiii == ii or iiii == nop:
                                 continue
                             for kkk in range(core.nv_max):
                                 jj = core.neigh[iiii, kkk]
-                                if jj == i: # triangle found
+                                if jj == i:
                                     nfaces += 1
                                     break
                             else: continue
                             break
                         else: continue
                         break
-        
-        # TODO: write statements
-        for i in range(core.num_active_cells):
-            cls.get_rainbow_knot(cls.ma(i), cls.va_min, cls.va_max, c, i)
 
+        # --- Write header and vertices ---
+        if f is not None:
+            f.write("COFF\n")
+            f.write(f"{core.num_active_cells} {nfaces} 0\n")
+
+            for i in range(core.num_active_cells):
+                cls.get_rainbow_knot(core, cls.ma[i], cls.va_min, cls.va_max, c, i)
+                x = core.positions[i, 1]
+                y = core.positions[i, 2]
+                z = core.positions[i, 3]
+                f.write(f"{x} {y} {z} {c[1]} {c[2]} {c[3]} {c[4]}\n")
+
+        # --- Pass 2: write faces ---
         nfaces = 0
-
         for i in range(core.num_active_cells):
             for j in range(core.nv_max):
                 bi = 0
-                ii = core.neigh[i, k]
+                ii = core.neigh[i, j]
                 if ii == 0 or ii > core.num_active_cells:
                     continue
                 for k in range(core.nv_max):
@@ -170,20 +173,84 @@ class Esclec():
                         iiii = core.neigh[iii, kk]
                         if iiii == 0 or iiii > core.num_active_cells:
                             continue
-                        if iiii == i: # triangle found
+                        if iiii == i:
                             nfaces += 1
-                            cls.get_rainbow(cls.ma[i], cls.va_min, cls.va_max, c)
-                    
-
+                            bi += 1
+                            nop = iii
+                            if f is not None:
+                                f.write(f"3 {i - 1} {ii - 1} {iii - 1}\n")
+                            if bi == 1:
+                                break
+                            # quad face search
+                            for k2 in range(core.nv_max):
+                                iii2 = core.neigh[ii, k2]
+                                if iii2 == 0 or iii2 > core.num_active_cells or iii2 == i or iii2 == nop:
+                                    continue
+                                if bi == 0:
+                                    continue
+                                for kk2 in range(core.nv_max):
+                                    iiii2 = core.neigh[iii2, kk2]
+                                    if iiii2 == 0 or iiii2 > core.num_active_cells or iiii2 == ii or iiii2 == nop:
+                                        continue
+                                    for kkk2 in range(core.nv_max):
+                                        jj = core.neigh[iiii2, kkk2]
+                                        if jj == i:
+                                            nfaces += 1
+                                            if f is not None:
+                                                f.write(f"4 {i - 1} {ii - 1} {iii2 - 1} {iiii2 - 1}\n")
+                                            break
+                                    else: continue
+                                    break
+                                else: continue
+                                break
+                            break
+                    else: continue
+                    break
 
     @classmethod
-    def mat(cls):
-        pass
+    def mat(cls, core):
+        cls.ma[:] = 0
+        for i in range(core.num_active_cells):
+            if core.knots[i] == 1:
+                cls.ma[i] = 1.0
+            else:
+                if core.diff_state[i] > core.Int:
+                    cls.ma[i] = 0.1
+                if core.diff_state[i] > core.Set:
+                    cls.ma[i] = 1.0
+        cls.va_max = max(cls.ma[i] for i in range(core.num_active_cells))
+        cls.va_min = min(cls.ma[i] for i in range(core.num_active_cells))
 
     @classmethod
-    def get_rainbow(cls, val: float, min_val: float, max_val: float, c: float_array):
-        pass
+    def get_rainbow(cls, val, min_val, max_val, c):
+        if max_val > min_val:
+            f = (val - min_val) / (max_val - min_val)
+        else:
+            f = 0.5
+
+        if f < 0.07:
+            c[1], c[2], c[3], c[4] = 0.6, 0.6, 0.6, 0.8
+        elif f < 0.2:
+            c[1], c[2], c[3], c[4] = 1.0, f, 0.0, 0.5
+        elif f < 1.0:
+            c[1], c[2], c[3], c[4] = 1.0, f * 3, 0.0, 1.0
+        else:
+            c[1], c[2], c[3], c[4] = 1.0, 1.0, 0.0, 1.0
 
     @classmethod
-    def get_rainbow_knot(cls, val: float, min_val: float, max_val: float, c: float_array, i: int):
-        pass
+    def get_rainbow_knot(cls, core, val, min_val, max_val, c, i):
+        if max_val > min_val:
+            f = (val - min_val) / (max_val - min_val)
+        else:
+            f = 0.5
+
+        if core.knots[i] == 1:
+            c[1], c[2], c[3], c[4] = 0, 1, 1, 0
+        elif f < 0.07:
+            c[1], c[2], c[3], c[4] = 0.6, 0.6, 0.6, 0.8
+        elif f < 0.2:
+            c[1], c[2], c[3], c[4] = 1.0, f, 0.0, 0.5
+        elif f < 1.0:
+            c[1], c[2], c[3], c[4] = 1.0, f * 3, 0.0, 1.0
+        else:
+            c[1], c[2], c[3], c[4] = 1.0, 1.0, 0.0, 1.0
