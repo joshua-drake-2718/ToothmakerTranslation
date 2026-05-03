@@ -25,7 +25,7 @@ class Esclec():
         cls.read_failed = 0
         try:
             with open(filepath, 'r') as f:
-                for i in range(3, 33):  # indices 3 to 32 inclusive
+                for i in range(3, 32):  # indices 3..32 inclusive (30 lines, mirroring FORTRAN do i=3,32)
                     line = f.readline()
                     if not line:
                         cls.read_failed = 1
