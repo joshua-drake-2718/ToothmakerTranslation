@@ -285,25 +285,25 @@ class Coreop2d():
         # always executes goto 77, but sometimes early
         def calculate_margins_a():
             nonlocal count, kl, ii, iii, a, b, c
-            for jj in range(j-1, 1, -1):
-                if cls.neigh[i, jj] != 0:
-                    if cls.neigh[i, jj] <= cls.num_active_cells:
+            for jj in range(j-2, -1, -1):  # FORTRAN: do jj=j-1,1,-1 (1-based) → j-2..0
+                if cls.neigh[i, jj] != -1:
+                    if cls.neigh[i, jj] < cls.num_active_cells:
                         ii = cls.neigh[i, jj]
-                        a += cls.positions[ii, 1]
-                        b += cls.positions[ii, 2]
-                        c += cls.positions[ii, 3]
+                        a += cls.positions[ii, 0]
+                        b += cls.positions[ii, 1]
+                        c += cls.positions[ii, 2]
                         count += 1
                     return # goto 77
-            for jj in range(cls.nv_max, j+1, -1):
-                if cls.neigh[i, jj] != -0:
-                    if cls.neigh[i, jj] <= cls.num_active_cells:
+            for jj in range(cls.nv_max-1, j-1, -1):  # FORTRAN: do jj=nvmax,j+1,-1 → nv_max-1..j
+                if cls.neigh[i, jj] != -1:
+                    if cls.neigh[i, jj] < cls.num_active_cells:
                         ii = cls.neigh[i, jj]
-                        a += cls.positions[ii, 1]
-                        b += cls.positions[ii, 2]
-                        c += cls.positions[ii, 3]
+                        a += cls.positions[ii, 0]
+                        b += cls.positions[ii, 1]
+                        c += cls.positions[ii, 2]
                         count += 1
                     return # goto 77
-        
+
         # returns early if it executes goto 77
         def calculate_margins_b():
             nonlocal count, kl, ii, iii, a, b, c
@@ -316,12 +316,12 @@ class Coreop2d():
                 if kl > 100:
                     calculate_margins_a()
                     return # goto 77
-                a += cls.positions[ii, 1]
-                b += cls.positions[ii, 2]
-                c += cls.positions[ii, 3]
+                a += cls.positions[ii, 0]
+                b += cls.positions[ii, 1]
+                c += cls.positions[ii, 2]
                 count += 1
                 looping = calculate_margins_c() # goto 66 or 77
-        
+
         # returns true if it executes goto 66, false if goto 77
         def calculate_margins_c() -> bool:
             nonlocal count, kl, ii, iii, a, b, c
@@ -330,40 +330,40 @@ class Coreop2d():
                     jjj = jj
                     break
             for jj in range(jjj+1, cls.nv_max):
-                if cls.neigh[ii, jj] != 0:
-                    if cls.neigh[ii, jj] > cls.num_active_cells:
+                if cls.neigh[ii, jj] != -1:
+                    if cls.neigh[ii, jj] >= cls.num_active_cells:
                         return False # goto 77
                     iii = ii
                     ii = cls.neigh[iii, jj]
                     return True # goto 66
-            for jj in range(1, jjj, -1):
-                if cls.neigh[ii, jj] != 0:
-                    if cls.neigh[ii, jj] > cls.num_active_cells:
+            for jj in range(0, jjj-1):  # FORTRAN: do jj=1,jjj-1 (forward loop, 1-based) → 0..jjj-2
+                if cls.neigh[ii, jj] != -1:
+                    if cls.neigh[ii, jj] >= cls.num_active_cells:
                         return False # goto 77
                     iii = ii
                     ii = cls.neigh[iii, jj]
                     return True # goto 66
             return False # goto 77
 
-        cls.border[:, :, 1:3] = 0
+        cls.border[:, :, 0:3] = 0
         for i in range(cls.num_active_cells):
             kl = 0
             for j in range(cls.nv_max):
-                if cls.neigh[i, j] != 0:
-                    a = cls.positions[i, 1]
-                    b = cls.positions[i, 2]
-                    c = cls.positions[i, 3]
-                    count = 0
+                if cls.neigh[i, j] != -1:
+                    a = cls.positions[i, 0]
+                    b = cls.positions[i, 1]
+                    c = cls.positions[i, 2]
+                    count = 1
                     ii = cls.neigh[i, j]
                     iii = i
-                    if ii > cls.num_active_cells:
+                    if ii >= cls.num_active_cells:
                         calculate_margins_a()
                     else:
                         calculate_margins_b()
                     # 77
-                    cls.border[i, j, 1] = a / count
-                    cls.border[i, j, 2] = b / count
-                    cls.border[i, j, 3] = c / count
+                    cls.border[i, j, 0] = a / count
+                    cls.border[i, j, 1] = b / count
+                    cls.border[i, j, 2] = c / count
 
 
     @classmethod
