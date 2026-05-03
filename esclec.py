@@ -42,8 +42,8 @@ class Esclec():
 
     @classmethod
     def set_params(cls, core: Coreop2d, imap: int): # imap: index of parameter set (always 1 in current usage)
-        core.temps = cls.parap[1, imap] # global counter of the number of simulation time steps that have elapsed, measured in number of iterations that have already been executed
-        core.num_active_cells = cls.parap[2, imap] # Current number of cells
+        core.temps = int(cls.parap[1, imap]) # global counter of the number of simulation time steps that have elapsed, measured in number of iterations that have already been executed
+        core.num_active_cells = int(cls.parap[2, imap]) # Current number of cells
         core.Egr = cls.parap[3, imap]
         core.Mgr = cls.parap[4, imap]
         core.Rep = cls.parap[5, imap]
@@ -67,7 +67,7 @@ class Esclec():
         core.Pbi = cls.parap[23, imap]
         core.Bbi = cls.parap[24, imap]
         core.Lbi = cls.parap[25, imap]
-        core.Rad = cls.parap[26, imap]
+        core.Rad = int(cls.parap[26, imap])
         core.Deg = cls.parap[27, imap]
         core.Dgr = cls.parap[28, imap]
         core.Ntr = cls.parap[29, imap]

@@ -566,6 +566,7 @@ class Coreop2d():
                         c = math.atan2(uuy, uux)
                 else:
                     uux = ua - cls.positions[k, 1]
+                    uuy = ub - cls.positions[k, 2]
                     d = vector.magnitude(uux, uuy, 0)
                     if d > 0:
                         if a == -0.3:
