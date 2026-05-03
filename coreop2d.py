@@ -325,6 +325,7 @@ class Coreop2d():
         # returns true if it executes goto 66, false if goto 77
         def calculate_margins_c() -> bool:
             nonlocal count, kl, ii, iii, a, b, c
+            jjj = 0
             for jj in range(cls.nv_max):
                 if cls.neigh[ii, jj] == iii:
                     jjj = jj
@@ -532,13 +533,15 @@ class Coreop2d():
                     aa -= uux * d
                     bb -= uuy * d
                     cc -= uuz * d
-            d = cls.Egr / vector.magnitude(aa, bb, cc)
-            a = 1 - cls.diff_state[i]
-            if a < 0: a = 0
-            d *= a
-            cls.forces[i, 0] = aa * d
-            cls.forces[i, 1] = bb * d
-            cls.forces[i, 2] = cc * d
+            d = vector.magnitude(aa, bb, cc)
+            if d > 0:
+                d = cls.Egr / d
+                a = 1 - cls.diff_state[i]
+                if a < 0: a = 0
+                d *= a
+                cls.forces[i, 0] = aa * d
+                cls.forces[i, 1] = bb * d
+                cls.forces[i, 2] = cc * d
 
         for i in range(cls.first_border_cell):
             aa = bb = 0.0
@@ -553,23 +556,31 @@ class Coreop2d():
                 if k >= cls.first_border_cell:
                     uux = ua - cls.positions[k, 0]
                     uuy = ub - cls.positions[k, 1]
-                    if uux != 0 or uuy != 0:
-                        c = math.atan2(uuy, uux)
+                    d = vector.magnitude(uux, uuy, 0)
+                    if d > 0:
+                        c = math.acos(uux / d)
+                        if uuy < 0: c = 2 * math.pi - c
                 else:
                     uux = ua - cls.positions[k, 0]
                     uuy = ub - cls.positions[k, 1]
                     d = vector.magnitude(uux, uuy, 0)
                     if d > 0:
                         if a == -0.3:
-                            a = math.atan2(uuy, uux)
-                            uuux = -uuy / d
-                            uuuy = uux / d
-                            uaa = math.atan2(uuuy, uuux)
+                            a = math.acos(uux / d)
+                            if uuy < 0: a = 2 * math.pi - a
+                            dd = 1 / d
+                            uuux = -uuy * dd
+                            uuuy = uux * dd
+                            uaa = math.acos(uuux)
+                            if uuuy < 0: uaa = 2 * math.pi - uaa
                         else:
-                            b = math.atan2(uuy, uux)
-                            duux = -uuy / d
-                            duuy = uux / d
-                            ubb = math.atan2(duuy, duux)
+                            b = math.acos(uux / d)
+                            if uuy < 0: b = 2 * math.pi - b
+                            dd = 1 / d
+                            duux = -uuy * dd
+                            duuy = uux * dd
+                            ubb = math.acos(duux)
+                            if duuy < 0: ubb = 2 * math.pi - ubb
 
             if a < b: a, b = b, a
             if c < a and c > b:
@@ -581,11 +592,11 @@ class Coreop2d():
                     duux *= -1
                     duuy *= -1
             else:
-                if uaa > a and uaa < b:
+                if uaa > a or uaa < b:
                     # is on the inside side and then we have to invert it
                     uuux *= -1
                     uuuy *= -1
-                if ubb > a and ubb < b:
+                if ubb > a or ubb < b:
                     duux *= -1
                     duuy *= -1
             aa = -uuux-duux
@@ -969,7 +980,7 @@ class Coreop2d():
                             fi = ii
                         break
                 if kkk == 0:
-                    for jjjj in range(jjj-1):
+                    for jjjj in range(jjj):
                         if cls.neigh[ii, jjjj] >= 0:
                             if cls.neigh[ii, jjjj] < cls.num_active_cells:
                                 ini = ii
@@ -979,7 +990,8 @@ class Coreop2d():
                                 fi = ii
                             break
                 iii = ini
-                pillats[1] = iii
+                cj = 0
+                pillats[cj] = iii
                 # now we look for the j in which iii has jj (the cell whose neigh we are looking for)
                 for j in range(cls.nv_max):
                     if temp_neigh[iii, j] == jj:
@@ -990,20 +1002,20 @@ class Coreop2d():
                 for j in range(jjj+1, cls.nv_max):
                     jji = temp_neigh[iii, j]
                     if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
-                        iiii = jj
+                        iiii = jji
                         kkk = 1
                         break
                 if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
-                    for j in range(jjj-1):
+                    for j in range(jjj):
                         jji = temp_neigh[iii, j]
                         if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
-                            iiii = jj
+                            iiii = jji
                             break
 
-                cj = 2
-                if cj > cls.nv_max:
-                    sys.exit()
-                pillats[2] = iiii
+                cj += 1
+                if cj >= cls.nv_max:
+                    return  # FORTRAN: panic=1; return
+                pillats[cj] = iiii
                 for j in range(cls.nv_max):
                     if temp_neigh[iiii, j] == iii:
                         jjjj = j
@@ -1020,19 +1032,19 @@ class Coreop2d():
                     for j in range(jjj+1, cls.nv_max):
                         jji = temp_neigh[iii, j]
                         if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
-                            iiii = jj
+                            iiii = jji
                             kkk = 1
                             break
                     if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
                         for j in range(jjj):
                             jji = temp_neigh[iii, j]
                             if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
-                                iiii = jj
+                                iiii = jji
                                 break
 
                     cj += 1
-                    if cj > cls.nv_max:
-                        sys.exit()
+                    if cj >= cls.nv_max:
+                        return  # FORTRAN: panic=1; return
                     pillats[cj] = iiii
                     for j in range(cls.nv_max):
                         if temp_neigh[iiii, j] == iii:
@@ -1053,7 +1065,7 @@ class Coreop2d():
                                 kkk = 1
                                 sjj = kkkk
                         if kkk < 2:
-                            for kkkk in range(jjjj-1):
+                            for kkkk in range(jjjj):
                                 if temp_neigh[iiii, kkkk] != -1 and kkk == 1:
                                     kkk = 2
                                     if temp_neigh[iiii, kkkk] > cls.num_active_cells + num_new_cells:
@@ -1070,16 +1082,16 @@ class Coreop2d():
                     # we have gone all the way around
                     if iiii == ini:
                         if cj >= cls.nv_max:
-                            sys.exit()
-                        c_pillats = np.zeros((cls.nv_max), dtype=np.int32)
+                            return  # FORTRAN: panic=1; return
+                        c_pillats = np.full((cls.nv_max), -1, dtype=np.int32)
                         pillats[cj] = -1
                         cj -= 1
-                        for jjj in range(cj):
-                            c_pillats[cj - 1 - jjj] = pillats[jjj]
+                        for jjj in range(cj + 1):
+                            c_pillats[cj - jjj] = pillats[jjj]
                         pillats = c_pillats
                         # now let's see what nodes can actually be
                         jjj = 0
-                        for kkk in range(cj):
+                        for kkk in range(cj + 1):
                             kkkk = pillats[kkk]
                             if kkkk >= cls.num_active_cells and kkkk <= cls.num_active_cells + num_new_cells:
                                 jjj += 1
@@ -1103,7 +1115,7 @@ class Coreop2d():
                                                     break
                                             if kkkk == 2: break
                                         if ji - ij == 1:
-                                            for kk in range(cls.nv_max, ji+1, -1):
+                                            for kk in range(cls.nv_max-1, ji, -1):
                                                 temp_neigh[k, kk] = temp_neigh[k, kk-1]
                                                 temp_border[k, kk, 3:8] = temp_border[k, kk-1, 3:8]
                                             temp_neigh[k, ji] = jj
@@ -1113,9 +1125,9 @@ class Coreop2d():
                             temp_new_neigh[i, :] = -1
                             temp_new_neigh[i, 0] = ini
                             kkkk = 0
-                            if cj > cls.nv_max:
-                                sys.exit()
-                            for kkk in range(cj):
+                            if cj >= cls.nv_max:
+                                return  # FORTRAN: panic=1; return
+                            for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
                                 if jjjj == fi:
                                     kkkk += 1
@@ -1153,9 +1165,10 @@ class Coreop2d():
                                 ji = jjj
                             # we have to connect between ij and ji
                             if ji - ij == 1:
-                                for kk in range(cls.nv_max, ji+1, -1):
+                                for kk in range(cls.nv_max-1, ji, -1):
                                     temp_new_neigh[i, kk] = temp_new_neigh[i, kk-1]
                                     temp_border[i, kk, 3:8] = temp_border[i, kk-1, 3:8]
+                                temp_new_neigh[i, ji] = new_num_active_cells
                             else:
                                 temp_new_neigh[i, ji+1] = new_num_active_cells # temp_border(i,ji+1,4:5)=0.
                         looping = False # cycle statement ends while loop
