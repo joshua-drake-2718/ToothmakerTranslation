@@ -860,11 +860,11 @@ class Coreop2d():
                     a = vector.magnitude(ux, uy, uz)
                     a = round(a, 9)
                     if a > cls.dmax:    # we add new node
-                        num_new_cells += 1
                         new_cell_pairs[num_new_cells, 0] = i
                         new_cell_pairs[num_new_cells, 1] = k
                         if i < cls.first_border_cell and k < cls.first_border_cell:
                             new_cell_is_external[num_new_cells] = True
+                        num_new_cells += 1
 
         if num_new_cells > 0:
             for i in range(cls.num_all_cells):
@@ -1075,7 +1075,7 @@ class Coreop2d():
                         pillats[cj] = -1
                         cj -= 1
                         for jjj in range(cj):
-                            c_pillats[cj - jjj + 1] = pillats[jjj]
+                            c_pillats[cj - 1 - jjj] = pillats[jjj]
                         pillats = c_pillats
                         # now let's see what nodes can actually be
                         jjj = 0
@@ -1307,8 +1307,8 @@ class Coreop2d():
                         iii = cls.border_cell_list[ii]
                         if k == iii:
                             if kk:
-                                num_new_border_cells += 1
                                 new_border_cells[num_new_border_cells] = i
+                                num_new_border_cells += 1
                                 return # cycle era
                             else:
                                 kk = True
@@ -1322,11 +1322,11 @@ class Coreop2d():
             old_border_cell_list = cls.border_cell_list
             cls.num_border_cells += num_new_border_cells
             cls.border_cell_list = np.zeros(cls.num_border_cells, dtype=np.int32)
-            cls.border_cell_list[1:cls.num_border_cells-num_new_border_cells] = old_border_cell_list[:]
+            cls.border_cell_list[0:cls.num_border_cells-num_new_border_cells] = old_border_cell_list[:]
             for i in range(num_new_border_cells):
                 cls.border_cell_list[old_num_border_cells+i] = new_border_cells[i]
 
-        new_border_cells[:] = 0
+        new_border_cells[:] = -1
         num_new_border_cells = 0
         # code inside loop labelled era
         def era(i: int):
@@ -1342,8 +1342,8 @@ class Coreop2d():
                         iii = cls.m_map[ii]
                         if k == iii:
                             if kk:
-                                num_new_border_cells += 1
                                 new_border_cells[num_new_border_cells] = i
+                                num_new_border_cells += 1
                                 return # cycle era
                             else:
                                 kk = True
@@ -1357,7 +1357,7 @@ class Coreop2d():
             old_border_cell_list = cls.m_map
             cls.n_map += num_new_border_cells
             cls.m_map = np.zeros(cls.n_map, dtype=np.int32)
-            cls.m_map[1:cls.n_map-num_new_border_cells] = old_border_cell_list
+            cls.m_map[0:cls.n_map-num_new_border_cells] = old_border_cell_list
             for i in range(num_new_border_cells):
                 cls.m_map[old_border_cells+i] = new_border_cells[i]
     
