@@ -89,46 +89,51 @@ class Esclec():
     @classmethod
     def guardaveinsoff_2(cls, core: Coreop2d, temp_neigh: np.ndarray, f=None):
         c = np.zeros(4)
-        mic = np.zeros(4)
-
-        face = np.zeros((core.num_active_cells * 20, 5), dtype=np.int32)
-        nfaces = 0
-        bi = 0
-        nop = 0
 
         cls.ma = np.zeros(core.num_active_cells)
         cls.mat(core)
 
-        # --- Pass 1: count faces ---
-        def ele():
-            nonlocal nfaces, bi, nop
-            iii = core.neigh[ii, k]
-            if iii == -1 or iii >= core.num_active_cells or iii == i:
-                return True
-            for kk in range(core.nv_max):
-                iiii = core.neigh[iii, kk]
-                if iiii == -1 or iiii >= core.num_active_cells:
-                    return True
-                if iiii == i:
-                    nfaces += 1
-                    bi += 1
-                    nop = iii
-                    if bi == 1:
-                        return True
-                    return False
-
-        for i in range(core.num_active_cells):
-            for j in range(core.nv_max):
-                bi = 0
-                ii = core.neigh[i, j]
-                if ii == -1 or ii >= core.num_active_cells:
-                    continue
-                for k in range(core.nv_max):
-                    if ele():
+        def count_or_emit_faces(emit: bool):
+            """Mirror of FORTRAN guardaveinsoff_2 face-emission loops (13.f90:1619-1656 / 1665-1721)."""
+            nfaces = 0
+            for i in range(core.num_active_cells):
+                for j in range(core.nv_max):
+                    bi = 0
+                    nop = -1
+                    ii = core.neigh[i, j]
+                    if ii == -1 or ii >= core.num_active_cells:
                         continue
-                    else:
-                        break
-                else:
+                    # ele: triangle search via i -> ii -> iii -> i
+                    cycle_ale = False
+                    for k in range(core.nv_max):
+                        iii = core.neigh[ii, k]
+                        if iii == -1 or iii >= core.num_active_cells or iii == i:
+                            continue
+                        cycle_ele = False
+                        for kk in range(core.nv_max):
+                            iiii = core.neigh[iii, kk]
+                            if iiii == -1 or iiii >= core.num_active_cells:
+                                continue
+                            if iiii == i:    # triangle found
+                                nfaces += 1
+                                bi += 1
+                                nop = iii
+                                if emit and f is not None:
+                                    f.write(f"3 {i} {ii} {iii}\n")
+                                if bi == 1:
+                                    cycle_ele = True
+                                    break  # cycle ele
+                                else:
+                                    cycle_ale = True
+                                    break  # cycle ale
+                        if cycle_ale:
+                            break
+                        if cycle_ele:
+                            continue
+                    if cycle_ale:
+                        continue
+                    # quad search (only if not jumped to next j)
+                    found_quad = False
                     for k in range(core.nv_max):
                         iii = core.neigh[ii, k]
                         if iii == -1 or iii >= core.num_active_cells or iii == i or iii == nop:
@@ -141,13 +146,18 @@ class Esclec():
                                 continue
                             for kkk in range(core.nv_max):
                                 jj = core.neigh[iiii, kkk]
-                                if jj == i:
+                                if jj == i:    # quad found
                                     nfaces += 1
+                                    if emit and f is not None:
+                                        f.write(f"4 {i} {ii} {iii} {iiii}\n")
+                                    found_quad = True
                                     break
-                            else: continue
-                            break
-                        else: continue
-                        break
+                            if found_quad: break
+                        if found_quad: break
+            return nfaces
+
+        # --- Pass 1: count faces ---
+        nfaces = count_or_emit_faces(emit=False)
 
         # --- Write header and vertices ---
         if f is not None:
@@ -162,54 +172,7 @@ class Esclec():
                 f.write(f"{x} {y} {z} {c[0]} {c[1]} {c[2]} {c[3]}\n")
 
         # --- Pass 2: write faces ---
-        nfaces = 0
-        for i in range(core.num_active_cells):
-            for j in range(core.nv_max):
-                bi = 0
-                ii = core.neigh[i, j]
-                if ii == -1 or ii >= core.num_active_cells:
-                    continue
-                for k in range(core.nv_max):
-                    iii = core.neigh[ii, k]
-                    if iii == -1 or iii >= core.num_active_cells or iii == i:
-                        continue
-                    for kk in range(core.nv_max):
-                        iiii = core.neigh[iii, kk]
-                        if iiii == -1 or iiii >= core.num_active_cells:
-                            continue
-                        if iiii == i:
-                            nfaces += 1
-                            bi += 1
-                            nop = iii
-                            if f is not None:
-                                f.write(f"3 {i} {ii} {iii}\n")
-                            if bi == 1:
-                                break
-                            # quad face search
-                            for k2 in range(core.nv_max):
-                                iii2 = core.neigh[ii, k2]
-                                if iii2 == -1 or iii2 >= core.num_active_cells or iii2 == i or iii2 == nop:
-                                    continue
-                                if bi == 0:
-                                    continue
-                                for kk2 in range(core.nv_max):
-                                    iiii2 = core.neigh[iii2, kk2]
-                                    if iiii2 == -1 or iiii2 >= core.num_active_cells or iiii2 == ii or iiii2 == nop:
-                                        continue
-                                    for kkk2 in range(core.nv_max):
-                                        jj = core.neigh[iiii2, kkk2]
-                                        if jj == i:
-                                            nfaces += 1
-                                            if f is not None:
-                                                f.write(f"4 {i} {ii} {iii2} {iiii2}\n")
-                                            break
-                                    else: continue
-                                    break
-                                else: continue
-                                break
-                            break
-                    else: continue
-                    break
+        count_or_emit_faces(emit=True)
 
     @classmethod
     def mat(cls, core):

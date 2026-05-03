@@ -402,23 +402,23 @@ class Coreop2d():
                             dy = cls.border[i, jj, 1] - ub
                             dz = cls.border[i, jj, 2] - uc
                             area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
-                            break # cycle ui
+                            break # cycle ui (skip fallback)
                     else:
-                        continue
-                    pes[i, j] = vector.a_distance_between(cls.border[i, j, :], cls.border[i, 0, :])
-                    ux = cls.border[i, j, 0] - ua
-                    uy = cls.border[i, j, 1] - ub
-                    uz = cls.border[i, j, 2] - uc
-                    dx = cls.border[i, 0, 0] - ua
-                    dy = cls.border[i, 0, 1] - ub
-                    dz = cls.border[i, 0, 2] - uc
-                    area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
+                        # FORTRAN fallback: no valid jj > j was found, use border[i, 0]
+                        pes[i, j] = vector.a_distance_between(cls.border[i, j, :], cls.border[i, 0, :])
+                        ux = cls.border[i, j, 0] - ua
+                        uy = cls.border[i, j, 1] - ub
+                        uz = cls.border[i, j, 2] - uc
+                        dx = cls.border[i, 0, 0] - ua
+                        dy = cls.border[i, 0, 1] - ub
+                        dz = cls.border[i, 0, 2] - uc
+                        area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
             area_bottom = area_p[i, :].sum()
             sum_a = pes[i, :].sum() + 2 * area_bottom
             area_bottom /= sum_a
             pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d):
-                for kk in range(1, cls.max_z_layers-2):  # 1-based layer 2..max_z_layers-1 → 0-based 1..max_z_layers-2
+                for kk in range(1, cls.max_z_layers-1):  # FORTRAN: do kk=2,max_z_layers-1 → 0-based 1..max_z_layers-2
                     hq3d[i, kk, k] += area_bottom * (cls.q3d[i, kk-1, k] - cls.q3d[i, kk, k])
                     hq3d[i, kk, k] += area_bottom * (cls.q3d[i, kk+1, k] - cls.q3d[i, kk, k])
                     for j in range(cls.nv_max):
