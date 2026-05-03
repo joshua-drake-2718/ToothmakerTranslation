@@ -2,22 +2,21 @@ import sys
 import math
 import vector
 import numpy as np
-from indexing import *
 
 
 class Coreop2d():
-    positions:  float_array
-    border:     float_array
-    neigh:      int_array
-    knots:      int_array
-    num_neigh:  int_array
-    q3d:        float_array
-    diff_state: float_array
-    forces:     float_array
-    force_snapshot: float_array
-    px: float_array
-    py: float_array
-    pz: float_array
+    positions:  np.ndarray
+    border:     np.ndarray
+    neigh:      np.ndarray
+    knots:      np.ndarray
+    num_neigh:  np.ndarray
+    q3d:        np.ndarray
+    diff_state: np.ndarray
+    forces:     np.ndarray
+    force_snapshot: np.ndarray
+    px: np.ndarray
+    py: np.ndarray
+    pz: np.ndarray
 
     num_active_cells: int
     num_all_cells: int
@@ -93,8 +92,8 @@ class Coreop2d():
     num_new_cells: int
     num_border_cells: int
     n_map: int
-    border_cell_list: int_array
-    m_map: int_array
+    border_cell_list: np.ndarray
+    m_map: np.ndarray
 
     # for visualisation
     vlinies: int
@@ -151,70 +150,63 @@ class Coreop2d():
         cls.css =-s60;  cls.sss = 0.5
 
         # allocations
-        cls.positions =     float_array((cls.num_all_cells,3))
-        cls.neigh =         int_array((cls.num_all_cells, cls.nv_max))
-        cls.border =        float_array((cls.num_all_cells, cls.nv_max,8))
-        cls.knots =         int_array((cls.num_all_cells))
-        cls.num_neigh =     int_array((cls.num_all_cells))
-        cls.diff_state =    float_array((cls.num_all_cells))
-        cls.q3d =           float_array((cls.num_all_cells, cls.max_z_layers, cls.num_species_in_q3d))
-        cls.m_map =         int_array((cls.Rad))
-        cls.forces =        float_array((cls.num_all_cells,3))
-        cls.force_snapshot =    float_array((cls.num_all_cells,3))
-        cls.border_cell_list =  int_array((cls.Rad))
+        cls.positions =     np.zeros((cls.num_all_cells,3))
+        cls.neigh =         np.zeros((cls.num_all_cells, cls.nv_max), dtype=np.int32)
+        cls.border =        np.zeros((cls.num_all_cells, cls.nv_max,8))
+        cls.knots =         np.zeros((cls.num_all_cells), dtype=np.int32)
+        cls.num_neigh =     np.zeros((cls.num_all_cells), dtype=np.int32)
+        cls.diff_state =    np.zeros((cls.num_all_cells))
+        cls.q3d =           np.zeros((cls.num_all_cells, cls.max_z_layers, cls.num_species_in_q3d))
+        cls.m_map =         np.zeros((cls.Rad), dtype=np.int32)
+        cls.forces =        np.zeros((cls.num_all_cells,3))
+        cls.force_snapshot =    np.zeros((cls.num_all_cells,3))
+        cls.border_cell_list =  np.zeros((cls.Rad), dtype=np.int32)
 
         # visualisation matrices
-        cls.px = float_array((cls.num_all_cells))
-        cls.py = float_array((cls.num_all_cells))
-        cls.pz = float_array((cls.num_all_cells))
+        cls.px = np.zeros((cls.num_all_cells))
+        cls.py = np.zeros((cls.num_all_cells))
+        cls.pz = np.zeros((cls.num_all_cells))
 
-        # zero values
-        cls.neigh[:] = 0
-        cls.num_neigh[:] = 0
-        cls.positions[:] = 0
-        cls.diff_state[:] = 0
-        cls.q3d[:] = 0
-        cls.knots[:] = 0
-        cls.forces[:] = 0
-        cls.force_snapshot[:] = 0
+        # zero values (np.zeros already zeros arrays; sentinel for neigh is -1)
+        cls.neigh[:] = -1
 
         # initial values
-        cls.positions[1, 1] = 0
-        cls.positions[1, 2] = 0
-        cls.positions[1, 3] = 1
+        cls.positions[0, 0] = 0
+        cls.positions[0, 1] = 0
+        cls.positions[0, 2] = 1
         cls.nca = 1
         cls.num_neigh[:] = 6
 
         # initial mesh values
         for i_centre in range(cls.num_active_cells): # al
-            x = cls.positions[i_centre, 1]
-            y = cls.positions[i_centre, 2]
+            x = cls.positions[i_centre, 0]
+            y = cls.positions[i_centre, 1]
 
-            cls.initialise_cell_positions(i_centre, x+cls.csu*cls.la, y+cls.ssu*cls.la, 1, 4)
-            cls.initialise_cell_positions(i_centre, x+cls.csd*cls.la, y+cls.ssd*cls.la, 2, 5)
-            cls.initialise_cell_positions(i_centre, x+cls.cst*cls.la, y+cls.sst*cls.la, 3, 6)
-            cls.initialise_cell_positions(i_centre, x+cls.csq*cls.la, y+cls.ssq*cls.la, 4, 1)
-            cls.initialise_cell_positions(i_centre, x+cls.csc*cls.la, y+cls.ssc*cls.la, 5, 2)
-            cls.initialise_cell_positions(i_centre, x+cls.css*cls.la, y+cls.sss*cls.la, 6, 3)
-        for i in range(2, cls.num_active_cells):
+            cls.initialise_cell_positions(i_centre, x+cls.csu*cls.la, y+cls.ssu*cls.la, 0, 3)
+            cls.initialise_cell_positions(i_centre, x+cls.csd*cls.la, y+cls.ssd*cls.la, 1, 4)
+            cls.initialise_cell_positions(i_centre, x+cls.cst*cls.la, y+cls.sst*cls.la, 2, 5)
+            cls.initialise_cell_positions(i_centre, x+cls.csq*cls.la, y+cls.ssq*cls.la, 3, 0)
+            cls.initialise_cell_positions(i_centre, x+cls.csc*cls.la, y+cls.ssc*cls.la, 4, 1)
+            cls.initialise_cell_positions(i_centre, x+cls.css*cls.la, y+cls.sss*cls.la, 5, 2)
+        for i in range(1, cls.num_active_cells):
             for j in range(cls.nv_max):
-                if cls.neigh[i, j] > cls.num_active_cells:
+                if cls.neigh[i, j] >= cls.num_active_cells:
                     cls.neigh[i, j] = cls.num_all_cells
         for k in range(3):
-            for i in range(2, cls.num_active_cells):
+            for i in range(1, cls.num_active_cells):
                 for j in range(cls.nv_max-1):
                     if cls.neigh[i, j] == cls.num_all_cells and cls.neigh[i, j+1] == cls.num_all_cells:
                         for jj in range(j, cls.nv_max-1):
                             cls.neigh[i, jj] = cls.neigh[i, jj+1]
-        for i in range(2, cls.num_active_cells):
+        for i in range(1, cls.num_active_cells):
             k = False
             for j in range(cls.nv_max):
                 if cls.neigh[i, j] == cls.num_all_cells:
                     if k:
-                        cls.neigh[i, j] = 0
+                        cls.neigh[i, j] = -1
                         break
                     k = True
-        cls.positions.inner = cls.positions.inner.round(decimals=14)
+        cls.positions = cls.positions.round(decimals=14)
         for i in range(cls.num_active_cells):
             for j in range(3):
                 if abs(cls.positions[i, j]) < 1e-14:
@@ -227,24 +219,24 @@ class Coreop2d():
         cv = cls.neigh.copy()
         temp_positions = cls.positions.copy()
         for i in range(cls.num_active_cells):
-            ii = cls.num_active_cells-i+1
+            ii = cls.num_active_cells - 1 - i
             cls.neigh[i, :] = cv[ii, :]
             cls.positions[i, :] = temp_positions[ii, :]
 
         cv = cls.neigh.copy()
         for i in range(cls.num_active_cells):
-            ii = cls.num_active_cells-i+1
+            ii = cls.num_active_cells - 1 - i
             for j in range(cls.num_active_cells):
                 for jj in range(cls.nv_max):
                     if cv[j, jj] == i:
                         cls.neigh[j, jj] = ii
-        
+
         cls.calculate_margins()
         cls.num_neigh[:] = 3
-        cls.num_neigh[1] = 6
-        cls.border[:, :, 4:5] = cls.la
+        cls.num_neigh[0] = 6
+        cls.border[:, :, 3:5] = cls.la
         cls.centre = cls.num_active_cells
-        cls.first_border_cell = 6 * (cls.Rad - 1) + 1
+        cls.first_border_cell = 6 * (cls.Rad - 1)
         cls.border_cell_list[:] = 0
         cls.m_map[:] = 0
         # margin values ATTENTION NOT SCALABLE WITH Rad, only for Rad=2
@@ -259,10 +251,10 @@ class Coreop2d():
 
     @classmethod
     def initialise_cell_positions(cls, i_centre: int, x: float, y: float, j: int, jj: int):
-        for i in range(cls.nca): # al
+        for i in range(cls.nca):
             if i == i_centre: continue
-            x_approx = math.isclose(x, cls.positions[i, 1], abs_tol=1e-6)
-            y_approx = math.isclose(y, cls.positions[i, 2], abs_tol=1e-6)
+            x_approx = math.isclose(x, cls.positions[i, 0], abs_tol=1e-6)
+            y_approx = math.isclose(y, cls.positions[i, 1], abs_tol=1e-6)
             if x_approx and y_approx:
                 for ii in range(cls.nv_max):
                     if cls.neigh[i_centre, ii] == i: return
@@ -271,14 +263,14 @@ class Coreop2d():
                 cls.num_neigh[i] += 1
                 cls.num_neigh[i_centre] += 1
                 return
-        cls.nca += 1
         cls.neigh[i_centre, j] = cls.nca
         cls.neigh[cls.nca, jj] = i_centre
-        cls.positions[cls.nca, 1] = x
-        cls.positions[cls.nca, 2] = y
-        cls.positions[cls.nca, 3] = 1
+        cls.positions[cls.nca, 0] = x
+        cls.positions[cls.nca, 1] = y
+        cls.positions[cls.nca, 2] = 1
         cls.num_neigh[i_centre] += 1
         cls.num_neigh[cls.nca] += 1
+        cls.nca += 1
 
     @classmethod
     def calculate_margins(cls):
