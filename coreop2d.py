@@ -833,7 +833,7 @@ class Coreop2d():
     def update_cell_position(cls):
         # we determine the extremes
         for i in range(cls.first_border_cell-1):
-            if abs(cls.positions[i, 2] < cls.Bwi):
+            if abs(cls.positions[i, 2]) < cls.Bwi:
                 if cls.positions[i, 1] > 0:
                     cls.forces[i, 1] *= cls.Pbi
                 elif cls.positions[i, 1] < 0:
@@ -906,8 +906,8 @@ class Coreop2d():
             for i in range(cls.num_active_cells):
                 temp_positions[i, :] =  cls.positions[i, :]
                 temp_neigh[i, :] =      cls.neigh[i, :]
-                temp_num_neigh[i] =     cls.num_neigh[i, :]
-                c_diff_state[i] =       cls.diff_state[i, :]
+                temp_num_neigh[i] =     cls.num_neigh[i]
+                c_diff_state[i] =       cls.diff_state[i]
                 c_q3d[i, :, :] =        cls.q3d[i, :, :]
                 c_knots[i] =            cls.knots[i]
                 temp_border[i, :, :] =  cls.border[i, :, :]
@@ -915,7 +915,7 @@ class Coreop2d():
             for i in range(cls.num_active_cells + num_new_cells):
                 for j in range(cls.nv_max):
                     if temp_neigh[i, j] > cls.num_active_cells:
-                        temp_neigh[i, j] = new_num_active_cells - 1
+                        temp_neigh[i, j] = new_num_active_cells
 
             for i in range(num_new_cells):
                 ii = new_cell_pairs[i, 1]
@@ -1209,9 +1209,9 @@ class Coreop2d():
                         ux = cls.positions[ii, 1] - ua
                         uy = cls.positions[ii, 2] - ub
                         uz = cls.positions[ii, 3] - uc
-                        if abs(ux < 1e-13): ux = 0
-                        if abs(uy < 1e-13): uy = 0
-                        if abs(uz < 1e-13): uz = 0
+                        if abs(ux) < 1e-13: ux = 0
+                        if abs(uy) < 1e-13: uy = 0
+                        if abs(uz) < 1e-13: uz = 0
                         d = vector.magnitude(ux, uy, 0)
                         temp_border[i, j, 5] = d
                         d = vector.magnitude(ux, uy, uz)
@@ -1272,14 +1272,14 @@ class Coreop2d():
                 cls.num_neigh[cls.first_border_cell] = snapshot_num_neigh[ii]
                 cls.positions[ii, :] = post_division_temp_positions[cls.first_border_cell, :]
                 cls.positions[cls.first_border_cell, :] = post_division_temp_positions[ii, :]
-                cls.diff_state[ii, :] = sc_diff_state[cls.first_border_cell, :]
-                cls.diff_state[cls.first_border_cell, :] = sc_diff_state[ii, :]
+                cls.diff_state[ii] = sc_diff_state[cls.first_border_cell]
+                cls.diff_state[cls.first_border_cell] = sc_diff_state[ii]
                 cls.q3d[ii, :] = sc_q3d[cls.first_border_cell, :]
                 cls.q3d[cls.first_border_cell, :] = sc_q3d[ii, :]
                 cls.border[ii, :] = temp_border_of_external_cells[cls.first_border_cell, :]
                 cls.border[cls.first_border_cell, :] = temp_border_of_external_cells[ii, :]
-                cls.knots[ii, :] = sc_knots[cls.first_border_cell, :]
-                cls.knots[cls.first_border_cell, :] = sc_knots[ii, :]
+                cls.knots[ii] = sc_knots[cls.first_border_cell]
+                cls.knots[cls.first_border_cell] = sc_knots[ii]
                 snapshot_neigh = cls.neigh.copy()
 
                 for i in range(cls.num_active_cells):
@@ -1289,7 +1289,7 @@ class Coreop2d():
                 for i in range(cls.num_active_cells):
                     for j in range(cls.nv_max):
                         if snapshot_neigh[i, j] == cls.first_border_cell:
-                            cls.neigh[i, j] == ii
+                            cls.neigh[i, j] = ii
                 
         
         if num_new_cells > 0:
@@ -1335,7 +1335,7 @@ class Coreop2d():
                 cls.border_cell_list[old_num_border_cells+i] = new_border_cells[i]
         
         new_border_cells[:] = 0
-        num_new_border_cells[:] = 0
+        num_new_border_cells = 0
         # code inside loop labelled era
         def era(i: int):
             for ii in range(cls.n_map):
