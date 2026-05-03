@@ -841,50 +841,50 @@ class Coreop2d():
     
     @classmethod
     def add_cell(cls):
-        new_cell_pairs = int_array((cls.num_active_cells * cls.nv_max, 2))
-        new_cell_is_external = bool_array((cls.num_active_cells * cls.nv_max))
-        pillats = int_array((cls.nv_max))
+        new_cell_pairs = np.zeros((cls.num_active_cells * cls.nv_max, 2), dtype=np.int32)
+        new_cell_is_external = np.zeros((cls.num_active_cells * cls.nv_max), dtype=bool)
+        pillats = np.zeros((cls.nv_max), dtype=np.int32)
         num_new_cells = 0
-        new_cell_pairs[:] = 0
-        new_cell_is_external[:] = False
 
         # first we identify and name the new nodes and rescale the mesh matrix and see
         for i in range(cls.num_active_cells):
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                ua = cls.positions[i, 1]
-                ub = cls.positions[i, 2]
-                uc = cls.positions[i, 3]
-                if k != 0 and k > i and k <= cls.num_active_cells:
-                    ux = cls.positions[k, 1] - ua
-                    uy = cls.positions[k, 2] - ub
-                    uz = cls.positions[k, 3] - uc
+                ua = cls.positions[i, 0]
+                ub = cls.positions[i, 1]
+                uc = cls.positions[i, 2]
+                if k != -1 and k > i and k < cls.num_active_cells:
+                    ux = cls.positions[k, 0] - ua
+                    uy = cls.positions[k, 1] - ub
+                    uz = cls.positions[k, 2] - uc
                     a = vector.magnitude(ux, uy, uz)
                     a = round(a, 9)
                     if a > cls.dmax:    # we add new node
                         num_new_cells += 1
-                        new_cell_pairs[num_new_cells, 1] = i
-                        new_cell_pairs[num_new_cells, 2] = k
+                        new_cell_pairs[num_new_cells, 0] = i
+                        new_cell_pairs[num_new_cells, 1] = k
                         if i < cls.first_border_cell and k < cls.first_border_cell:
                             new_cell_is_external[num_new_cells] = True
-            
+
         if num_new_cells > 0:
             for i in range(cls.num_all_cells):
                 for j in range(cls.nv_max):
-                    if cls.neigh[i, j] == 0:
+                    if cls.neigh[i, j] == -1:
                         for jj in range(j, cls.nv_max-1):
                             cls.neigh[i, jj] = cls.neigh[i, jj+1]
-        
+
             new_num_active_cells = cls.num_all_cells + num_new_cells
 
-            temp_positions =    float_array((new_num_active_cells, 3))
-            temp_neigh =        int_array((new_num_active_cells, cls.nv_max))
-            temp_num_neigh =    int_array((new_num_active_cells))
-            c_diff_state =      float_array((new_num_active_cells))
-            c_q3d =             float_array((new_num_active_cells, cls.max_z_layers, cls.num_species_in_q3d))
-            temp_new_neigh =    int_array((num_new_cells, cls.nv_max))
-            c_knots =           int_array((new_num_active_cells))
-            temp_border =       float_array((new_num_active_cells, cls.nv_max, 8))
+            temp_positions =    np.zeros((new_num_active_cells, 3))
+            temp_neigh =        np.zeros((new_num_active_cells, cls.nv_max), dtype=np.int32)
+            temp_num_neigh =    np.zeros((new_num_active_cells), dtype=np.int32)
+            c_diff_state =      np.zeros((new_num_active_cells))
+            c_q3d =             np.zeros((new_num_active_cells, cls.max_z_layers, cls.num_species_in_q3d))
+            temp_new_neigh =    np.zeros((num_new_cells, cls.nv_max), dtype=np.int32)
+            c_knots =           np.zeros((new_num_active_cells), dtype=np.int32)
+            temp_border =       np.zeros((new_num_active_cells, cls.nv_max, 8))
+            temp_neigh[:] = -1
+            temp_new_neigh[:] = -1
 
             for i in range(cls.num_active_cells + num_new_cells, new_num_active_cells):
                 temp_positions[i, :] =  cls.positions[i - num_new_cells, :]
@@ -892,8 +892,8 @@ class Coreop2d():
                 c_diff_state[i] =       cls.diff_state[i - num_new_cells]
                 c_q3d[i, :, :] =        cls.q3d[i - num_new_cells]
                 c_knots[i] =            cls.knots[i - num_new_cells]
-                temp_border[i, :, 4:8] = cls.border[i - num_new_cells, :, 4:8]
-            
+                temp_border[i, :, 3:8] = cls.border[i - num_new_cells, :, 3:8]
+
             for i in range(cls.num_active_cells):
                 temp_positions[i, :] =  cls.positions[i, :]
                 temp_neigh[i, :] =      cls.neigh[i, :]
@@ -902,22 +902,22 @@ class Coreop2d():
                 c_q3d[i, :, :] =        cls.q3d[i, :, :]
                 c_knots[i] =            cls.knots[i]
                 temp_border[i, :, :] =  cls.border[i, :, :]
-            
+
             for i in range(cls.num_active_cells + num_new_cells):
                 for j in range(cls.nv_max):
-                    if temp_neigh[i, j] > cls.num_active_cells:
+                    if temp_neigh[i, j] >= cls.num_active_cells:
                         temp_neigh[i, j] = new_num_active_cells
 
             for i in range(num_new_cells):
-                ii = new_cell_pairs[i, 1]
-                kk = new_cell_pairs[i, 2]
+                ii = new_cell_pairs[i, 0]
+                kk = new_cell_pairs[i, 1]
                 jj = cls.num_active_cells + i
-                temp_neigh[jj, :] = 0
-                temp_neigh[jj, 1] = ii
-                temp_neigh[jj, 2] = kk
+                temp_neigh[jj, :] = -1
+                temp_neigh[jj, 0] = ii
+                temp_neigh[jj, 1] = kk
 
-                a = temp_positions[ii, 1] + temp_positions[kk, 1]
-                b = temp_positions[ii, 2] + temp_positions[kk, 2]
+                a = temp_positions[ii, 0] + temp_positions[kk, 0]
+                b = temp_positions[ii, 1] + temp_positions[kk, 1]
                 d = vector.magnitude(a, b, 0)
                 a /= d
                 b /= d
@@ -925,17 +925,17 @@ class Coreop2d():
                 d = round(d, 10)
                 a *= d
                 b *= d
-                temp_positions[jj, 1] = a
-                temp_positions[jj, 2] = b
+                temp_positions[jj, 0] = a
+                temp_positions[jj, 1] = b
 
-                temp_positions[jj, 3] = 0.5 * (cls.positions[ii, 3] + cls.positions[kk, 3])
+                temp_positions[jj, 2] = 0.5 * (cls.positions[ii, 2] + cls.positions[kk, 2])
                 c_q3d[jj, :, :] =       0.5 * (cls.q3d[ii, :, :] + c_q3d[kk, :, :])
                 c_diff_state[jj] =      0.5 * (cls.diff_state[ii] + cls.diff_state[kk])
                 # The 0.333 instead of 0.25 is a trick because before we multiplied the parents by 3/4
-            
+
             for i in range(num_new_cells):
-                ii = new_cell_pairs[i, 1]
-                jj = new_cell_pairs[i, 2]
+                ii = new_cell_pairs[i, 0]
+                jj = new_cell_pairs[i, 1]
                 kk = cls.num_active_cells + i
                 for j in range(cls.nv_max):
                     if temp_neigh[ii, j] == kk:
@@ -945,11 +945,11 @@ class Coreop2d():
                     if temp_neigh[kk, j] == ii:
                         temp_neigh[kk, j] = jj
                         break
-            
+
             for i in range(num_new_cells):
-                pillats[:] = 0
-                ii = new_cell_pairs[i, 1]
-                kk = new_cell_pairs[i, 2]
+                pillats[:] = -1
+                ii = new_cell_pairs[i, 0]
+                kk = new_cell_pairs[i, 1]
                 jj = cls.num_active_cells + i
                 # now I have to look at which parent is to follow it (it will be called ini) it is the one that has no external nodes towards j+1
                 jjj = 0
@@ -959,9 +959,9 @@ class Coreop2d():
                         break
                 ini = fi = kkk = 0
                 for jjjj in range(jjj+1, cls.nv_max):
-                    if cls.neigh[ii, jjjj] > 0:
+                    if cls.neigh[ii, jjjj] >= 0:
                         kkk = 1
-                        if cls.neigh[ii, jjjj] <= cls.num_active_cells:
+                        if cls.neigh[ii, jjjj] < cls.num_active_cells:
                             ini = ii
                             fi = kk
                         else:
@@ -970,8 +970,8 @@ class Coreop2d():
                         break
                 if kkk == 0:
                     for jjjj in range(jjj-1):
-                        if cls.neigh[ii, jjjj] > 0:
-                            if cls.neigh[ii, jjjj] <= cls.num_active_cells:
+                        if cls.neigh[ii, jjjj] >= 0:
+                            if cls.neigh[ii, jjjj] < cls.num_active_cells:
                                 ini = ii
                                 fi = kk
                             else:
@@ -989,14 +989,14 @@ class Coreop2d():
                 iiii = kkk = 0
                 for j in range(jjj+1, cls.nv_max):
                     jji = temp_neigh[iii, j]
-                    if jji != 0 and jji <= cls.num_active_cells + num_new_cells:
+                    if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
                         iiii = jj
                         kkk = 1
                         break
                 if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
                     for j in range(jjj-1):
                         jji = temp_neigh[iii, j]
-                        if jji != 0 and jji <= cls.num_active_cells + num_new_cells:
+                        if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
                             iiii = jj
                             break
 
@@ -1008,7 +1008,7 @@ class Coreop2d():
                     if temp_neigh[iiii, j] == iii:
                         jjjj = j
                         break
-                
+
                 # False if goto 88 executed
                 looping = True
                 cycling = False
@@ -1019,14 +1019,14 @@ class Coreop2d():
                     iiii = kkk = 0
                     for j in range(jjj+1, cls.nv_max):
                         jji = temp_neigh[iii, j]
-                        if jji != 0 and jji <= cls.num_active_cells + num_new_cells:
+                        if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
                             iiii = jj
                             kkk = 1
                             break
                     if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
                         for j in range(jjj):
                             jji = temp_neigh[iii, j]
-                            if jji != 0 and jji <= cls.num_active_cells + num_new_cells:
+                            if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
                                 iiii = jj
                                 break
 
@@ -1041,7 +1041,7 @@ class Coreop2d():
                     if iiii == fi:  # equinox
                         kkk = sjj = 0
                         for kkkk in range(jjjj+1, cls.nv_max):
-                            if temp_neigh[iiii, kkkk] != 0 and kkk == 1:
+                            if temp_neigh[iiii, kkkk] != -1 and kkk == 1:
                                 kkk = 2
                                 if temp_neigh[iiii, kkkk] > cls.num_active_cells + num_new_cells:
                                     iiii = ini
@@ -1049,12 +1049,12 @@ class Coreop2d():
                                 else:
                                     sjj = kkkk
                                 break
-                            if temp_neigh[iiii, kkkk] != 0 and kkk == 0:
+                            if temp_neigh[iiii, kkkk] != -1 and kkk == 0:
                                 kkk = 1
                                 sjj = kkkk
                         if kkk < 2:
                             for kkkk in range(jjjj-1):
-                                if temp_neigh[iiii, kkkk] != 0 and kkk == 1:
+                                if temp_neigh[iiii, kkkk] != -1 and kkk == 1:
                                     kkk = 2
                                     if temp_neigh[iiii, kkkk] > cls.num_active_cells + num_new_cells:
                                         iiii = ini
@@ -1062,17 +1062,17 @@ class Coreop2d():
                                     else:
                                         sjj = kkkk
                                     break
-                                if temp_neigh[iiii, kkkk] != 0 and kkk == 0:
+                                if temp_neigh[iiii, kkkk] != -1 and kkk == 0:
                                     kkk = 1
                                     sjj = kkkk
                         jjjj = sjj - 1
-                    
+
                     # we have gone all the way around
                     if iiii == ini:
                         if cj >= cls.nv_max:
                             sys.exit()
-                        c_pillats = int_array((cls.nv_max))
-                        pillats[cj] = 0
+                        c_pillats = np.zeros((cls.nv_max), dtype=np.int32)
+                        pillats[cj] = -1
                         cj -= 1
                         for jjj in range(cj):
                             c_pillats[cj - jjj + 1] = pillats[jjj]
@@ -1081,20 +1081,20 @@ class Coreop2d():
                         jjj = 0
                         for kkk in range(cj):
                             kkkk = pillats[kkk]
-                            if kkkk > cls.num_active_cells and kkkk <= cls.num_active_cells + num_new_cells:
+                            if kkkk >= cls.num_active_cells and kkkk <= cls.num_active_cells + num_new_cells:
                                 jjj += 1
                         if jjj == 0:
-                            temp_new_neigh[i, :] = pillats.inner.copy()   # we don't have new nodes on the sides then the crossing is impossible
+                            temp_new_neigh[i, :] = pillats.copy()   # we don't have new nodes on the sides then the crossing is impossible
                             for j in range(cls.nv_max):
                                 k = temp_new_neigh[i, j]
-                                if k != 0:
-                                    ii = new_cell_pairs[i, 1]
-                                    iiii = new_cell_pairs[i, 2]
+                                if k != -1:
+                                    ii = new_cell_pairs[i, 0]
+                                    iiii = new_cell_pairs[i, 1]
                                     if k != ii and k != iiii and k <= cls.num_active_cells + num_new_cells: # It's one of those that I have to connect with.
                                         kkkk = 0
                                         for kk in range(cls.nv_max):
                                             for kkk in range(cls.nv_max):
-                                                if temp_neigh[k, kk] != 0 and temp_neigh[k, kk] == pillats[kkk]:
+                                                if temp_neigh[k, kk] != -1 and temp_neigh[k, kk] == pillats[kkk]:
                                                     if kkkk == 1:
                                                         ji = kk
                                                     else:
@@ -1105,12 +1105,12 @@ class Coreop2d():
                                         if ji - ij == 1:
                                             for kk in range(cls.nv_max, ji+1, -1):
                                                 temp_neigh[k, kk] = temp_neigh[k, kk-1]
-                                                temp_border[k, kk, 4:8] = temp_border[k, kk-1, 4:8]
+                                                temp_border[k, kk, 3:8] = temp_border[k, kk-1, 3:8]
                                             temp_neigh[k, ji] = jj
                                         else:
                                             temp_neigh[k, ji+1] = jj
                         else:   # the txungu will be in sinomes we have a new one because then there will only be 3 neigh
-                            temp_new_neigh[i, :] = 0
+                            temp_new_neigh[i, :] = -1
                             temp_new_neigh[i, 1] = ini
                             kkkk = 1
                             if cj > cls.nv_max:
@@ -1120,13 +1120,13 @@ class Coreop2d():
                                 if jjjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
-                                elif jjjj > cls.num_active_cells:
+                                elif jjjj >= cls.num_active_cells:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = jjjj
-                        
+
                         # now we need to add the connections to external nodes
-                        ii = new_cell_pairs[i, 1]
-                        kk = new_cell_pairs[i, 2]
+                        ii = new_cell_pairs[i, 0]
+                        kk = new_cell_pairs[i, 1]
                         kkk = 0
                         for j in range(cls.nv_max):
                             if temp_neigh[ii, j] > cls.num_active_cells + num_new_cells:
@@ -1155,12 +1155,12 @@ class Coreop2d():
                             if ji - ij == 1:
                                 for kk in range(cls.nv_max, ji+1, -1):
                                     temp_new_neigh[i, kk] = temp_new_neigh[i, kk-1]
-                                    temp_border[i, kk, 4:8] = temp_border[i, kk-1, 4:8]
+                                    temp_border[i, kk, 3:8] = temp_border[i, kk-1, 3:8]
                             else:
                                 temp_new_neigh[i, ji+1] = new_num_active_cells # temp_border(i,ji+1,4:5)=0.
                         looping = False # cycle statement ends while loop
                     # goto 88 just continues while loop
-                
+
             # now we need to add the external connections
 
             # now we replace
@@ -1169,57 +1169,57 @@ class Coreop2d():
 
             # we calculate the new basal distances of the new cells
             for i in range(cls.num_active_cells+1, cls.num_active_cells + num_new_cells):
-                ua = cls.positions[i, 1]
-                ub = cls.positions[i, 2]
-                uc = cls.positions[i, 3]
+                ua = cls.positions[i, 0]
+                ub = cls.positions[i, 1]
+                uc = cls.positions[i, 2]
                 for j in range(cls.nv_max):
                     ii = temp_neigh[i, j]
-                    if ii > 0 and ii <= cls.num_active_cells + num_new_cells:
-                        ux = cls.positions[ii, 1] - ua
-                        uy = cls.positions[ii, 2] - ub
-                        uz = cls.positions[ii, 3] - uc
+                    if ii >= 0 and ii <= cls.num_active_cells + num_new_cells:
+                        ux = cls.positions[ii, 0] - ua
+                        uy = cls.positions[ii, 1] - ub
+                        uz = cls.positions[ii, 2] - uc
                         if abs(ux) < 1e-13: ux = 0
                         if abs(uy) < 1e-13: uy = 0
                         if abs(uz) < 1e-13: uz = 0
                         d = vector.magnitude(ux, uy, 0)
-                        temp_border[i, j, 5] = d
-                        d = vector.magnitude(ux, uy, uz)
                         temp_border[i, j, 4] = d
-                        temp_border[i, j, 6] = ux
-                        temp_border[i, j, 7] = uy
-                        temp_border[i, j, 8] = uz
-            
+                        d = vector.magnitude(ux, uy, uz)
+                        temp_border[i, j, 3] = d
+                        temp_border[i, j, 5] = ux
+                        temp_border[i, j, 6] = uy
+                        temp_border[i, j, 7] = uz
+
             # we calculate the basal distances of the new connections between old and new cells
             for i in range(cls.num_active_cells):
-                ua = cls.positions[i, 1]
-                ub = cls.positions[i, 2]
-                uc = cls.positions[i, 3]
+                ua = cls.positions[i, 0]
+                ub = cls.positions[i, 1]
+                uc = cls.positions[i, 2]
                 for j in range(cls.nv_max):
                     ii = temp_neigh[i, j]
-                    if ii > cls.num_active_cells and ii <= cls.num_active_cells + num_new_cells:
-                        ux = cls.positions[ii, 1] - ua
-                        uy = cls.positions[ii, 2] - ub
-                        uz = cls.positions[ii, 3] - uc
+                    if ii >= cls.num_active_cells and ii <= cls.num_active_cells + num_new_cells:
+                        ux = cls.positions[ii, 0] - ua
+                        uy = cls.positions[ii, 1] - ub
+                        uz = cls.positions[ii, 2] - uc
                         if abs(ux) < 1e-13: ux = 0
                         if abs(uy) < 1e-13: uy = 0
                         if abs(uz) < 1e-13: uz = 0
                         d = vector.magnitude(ux, uy, 0)
-                        temp_border[i, j, 5] = d
-                        d = vector.magnitude(ux, uy, uz)
                         temp_border[i, j, 4] = d
-                        temp_border[i, j, 6] = ux
-                        temp_border[i, j, 7] = uy
-                        temp_border[i, j, 8] = uz
-            
+                        d = vector.magnitude(ux, uy, uz)
+                        temp_border[i, j, 3] = d
+                        temp_border[i, j, 5] = ux
+                        temp_border[i, j, 6] = uy
+                        temp_border[i, j, 7] = uz
+
             cls.num_all_cells = new_num_active_cells
             prev_num_active_cells = cls.num_active_cells
             cls.num_active_cells += num_new_cells
 
-            cls.forces = float_array((new_num_active_cells, 3))
-            cls.force_snapshot = float_array((new_num_active_cells, 3))
-            cls.px = float_array(new_num_active_cells)
-            cls.py = float_array(new_num_active_cells)
-            cls.pz = float_array(new_num_active_cells)
+            cls.forces = np.zeros((new_num_active_cells, 3))
+            cls.force_snapshot = np.zeros((new_num_active_cells, 3))
+            cls.px = np.zeros(new_num_active_cells)
+            cls.py = np.zeros(new_num_active_cells)
+            cls.pz = np.zeros(new_num_active_cells)
 
             cls.neigh = temp_neigh
             cls.num_neigh = temp_num_neigh
@@ -1229,16 +1229,16 @@ class Coreop2d():
             cls.border = temp_border
             cls.forces[:] = 0
 
-            # we remove the zeros
+            # we remove the sentinel -1 values (compact neigh)
             for i in range(cls.num_all_cells):
                 for j in range(cls.nv_max):
-                    if cls.neigh[i, j] == 0:
+                    if cls.neigh[i, j] == -1:
                         for jj in range(j, cls.nv_max-1):
                             cls.neigh[i, jj] = cls.neigh[i, jj+1]
             for i in range(cls.num_all_cells):
                 ii = 0
                 for j in range(cls.nv_max):
-                    if cls.neigh[i, j] > 0:
+                    if cls.neigh[i, j] >= 0:
                         ii += 1
                 cls.num_neigh[i] = ii
         # END IF WE HAVE NEW CELLS
@@ -1289,12 +1289,13 @@ class Coreop2d():
     @classmethod
     def update_border_cells(cls):
         # makes the new cells that are on the margin between two extremes for the bias extreme
-        new_border_cells = int_array(cls.first_border_cell)
+        new_border_cells = np.zeros(cls.first_border_cell, dtype=np.int32)
         num_new_border_cells = 0
 
         # now let's correct the ends
         # code inside loop labelled er
         def er(i: int):
+            nonlocal num_new_border_cells
             for ii in range(cls.num_border_cells):
                 iii = cls.border_cell_list[ii]
                 if iii == i: return # cycle er
@@ -1313,22 +1314,23 @@ class Coreop2d():
                                 kk = True
                                 break # cycle err
         for i in range(cls.first_border_cell-1):
-            if i == 3 or i == 6: continue
+            if i == 2 or i == 5: continue  # 0-based equivalents of 1-based 3 and 6 (ATTENTION NOT SCALABLE WITH Rad)
             er(i)
 
         if num_new_border_cells > 0:
             old_num_border_cells = cls.num_border_cells
             old_border_cell_list = cls.border_cell_list
             cls.num_border_cells += num_new_border_cells
-            cls.border_cell_list = int_array(cls.num_border_cells)
+            cls.border_cell_list = np.zeros(cls.num_border_cells, dtype=np.int32)
             cls.border_cell_list[1:cls.num_border_cells-num_new_border_cells] = old_border_cell_list[:]
             for i in range(num_new_border_cells):
                 cls.border_cell_list[old_num_border_cells+i] = new_border_cells[i]
-        
+
         new_border_cells[:] = 0
         num_new_border_cells = 0
         # code inside loop labelled era
         def era(i: int):
+            nonlocal num_new_border_cells
             for ii in range(cls.n_map):
                 iii = cls.m_map[ii]
                 if iii == i: return # cycle era
@@ -1347,14 +1349,14 @@ class Coreop2d():
                                 kk = True
                                 break # cycle erra
         for i in range(cls.first_border_cell-1):
-            if i == 3 or i == 6: continue # ATTENTION IS NOT SCALABLE WITH RAD
+            if i == 2 or i == 5: continue  # 0-based equivalents of 1-based 3 and 6 (ATTENTION NOT SCALABLE WITH Rad)
             era(i)
-        
+
         if num_new_border_cells > 0:
             old_border_cells = cls.n_map
             old_border_cell_list = cls.m_map
             cls.n_map += num_new_border_cells
-            cls.m_map = int_array(cls.n_map)
+            cls.m_map = np.zeros(cls.n_map, dtype=np.int32)
             cls.m_map[1:cls.n_map-num_new_border_cells] = old_border_cell_list
             for i in range(num_new_border_cells):
                 cls.m_map[old_border_cells+i] = new_border_cells[i]
