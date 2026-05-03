@@ -439,8 +439,10 @@ class Coreop2d():
                         else:
                             hq3d[i, top, k] += pes[i, j] * (cls.q3d[ii, top, k] - cls.q3d[i, top, k])
             pes[i, :] *= sum_a
-            sum_a -= sum_a * area_bottom
+            area_bottom *= sum_a    # FORTRAN 13.f90:451 — restore absolute, then subtract
+            sum_a -= area_bottom
             pes[i, :] /= sum_a
+            area_bottom /= sum_a    # FORTRAN 13.f90:452 — re-normalise to new sum
             for k in range(cls.num_species_in_q3d): # ATTENTION
                 hq3d[i, 0, k] = area_bottom * (cls.q3d[i, 1, k] - cls.q3d[i, 0, k])
                 for j in range(cls.nv_max):
@@ -1001,14 +1003,14 @@ class Coreop2d():
                 iiii = kkk = 0
                 for j in range(jjj+1, cls.nv_max):
                     jji = temp_neigh[iii, j]
-                    if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
+                    if jji != -1 and jji < cls.num_active_cells + num_new_cells:
                         iiii = jji
                         kkk = 1
                         break
                 if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
                     for j in range(jjj):
                         jji = temp_neigh[iii, j]
-                        if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
+                        if jji != -1 and jji < cls.num_active_cells + num_new_cells:
                             iiii = jji
                             break
 
@@ -1031,14 +1033,14 @@ class Coreop2d():
                     iiii = kkk = 0
                     for j in range(jjj+1, cls.nv_max):
                         jji = temp_neigh[iii, j]
-                        if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
+                        if jji != -1 and jji < cls.num_active_cells + num_new_cells:
                             iiii = jji
                             kkk = 1
                             break
                     if kkk == 0:    # I couldn't find the neighbor and I need to go over it again.
                         for j in range(jjj):
                             jji = temp_neigh[iii, j]
-                            if jji != -1 and jji <= cls.num_active_cells + num_new_cells:
+                            if jji != -1 and jji < cls.num_active_cells + num_new_cells:
                                 iiii = jji
                                 break
 
@@ -1055,7 +1057,7 @@ class Coreop2d():
                         for kkkk in range(jjjj+1, cls.nv_max):
                             if temp_neigh[iiii, kkkk] != -1 and kkk == 1:
                                 kkk = 2
-                                if temp_neigh[iiii, kkkk] > cls.num_active_cells + num_new_cells:
+                                if temp_neigh[iiii, kkkk] >= cls.num_active_cells + num_new_cells:
                                     iiii = ini
                                     cj += 1
                                 else:
@@ -1068,7 +1070,7 @@ class Coreop2d():
                             for kkkk in range(jjjj):
                                 if temp_neigh[iiii, kkkk] != -1 and kkk == 1:
                                     kkk = 2
-                                    if temp_neigh[iiii, kkkk] > cls.num_active_cells + num_new_cells:
+                                    if temp_neigh[iiii, kkkk] >= cls.num_active_cells + num_new_cells:
                                         iiii = ini
                                         cj += 1
                                     else:
@@ -1093,7 +1095,7 @@ class Coreop2d():
                         jjj = 0
                         for kkk in range(cj + 1):
                             kkkk = pillats[kkk]
-                            if kkkk >= cls.num_active_cells and kkkk <= cls.num_active_cells + num_new_cells:
+                            if kkkk >= cls.num_active_cells and kkkk < cls.num_active_cells + num_new_cells:
                                 jjj += 1
                         if jjj == 0:
                             temp_new_neigh[i, :] = pillats.copy()   # we don't have new nodes on the sides then the crossing is impossible
@@ -1102,7 +1104,7 @@ class Coreop2d():
                                 if k != -1:
                                     ii = new_cell_pairs[i, 0]
                                     iiii = new_cell_pairs[i, 1]
-                                    if k != ii and k != iiii and k <= cls.num_active_cells + num_new_cells: # It's one of those that I have to connect with.
+                                    if k != ii and k != iiii and k < cls.num_active_cells + num_new_cells: # It's one of those that I have to connect with.
                                         kkkk = 0
                                         for kk in range(cls.nv_max):
                                             for kkk in range(cls.nv_max):
@@ -1129,23 +1131,26 @@ class Coreop2d():
                                 return  # FORTRAN: panic=1; return
                             for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
-                                if jjjj == fi:
+                                # FORTRAN 13.f90:1158-1163 reads `jjjj` here, but jjjj is
+                                # stale (loop-invariant); reading `jjj` is the apparent
+                                # intent and matches the comment "we have a new one".
+                                if jjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
-                                elif jjjj >= cls.num_active_cells:
+                                elif jjj >= cls.num_active_cells:
                                     kkkk += 1
-                                    temp_new_neigh[i, kkkk] = jjjj
+                                    temp_new_neigh[i, kkkk] = jjj
 
                         # now we need to add the connections to external nodes
                         ii = new_cell_pairs[i, 0]
                         kk = new_cell_pairs[i, 1]
                         kkk = 0
                         for j in range(cls.nv_max):
-                            if temp_neigh[ii, j] > cls.num_active_cells + num_new_cells:
+                            if temp_neigh[ii, j] >= cls.num_active_cells + num_new_cells:
                                 kkk = 1
                                 break
                         for j in range(cls.nv_max):
-                            if temp_neigh[kk, j] > cls.num_active_cells + num_new_cells:
+                            if temp_neigh[kk, j] >= cls.num_active_cells + num_new_cells:
                                 kkk += 1
                                 break
                         if kkk == 2:
@@ -1187,7 +1192,7 @@ class Coreop2d():
                 uc = cls.positions[i, 2]
                 for j in range(cls.nv_max):
                     ii = temp_neigh[i, j]
-                    if ii >= 0 and ii <= cls.num_active_cells + num_new_cells:
+                    if ii >= 0 and ii < cls.num_active_cells + num_new_cells:
                         ux = cls.positions[ii, 0] - ua
                         uy = cls.positions[ii, 1] - ub
                         uz = cls.positions[ii, 2] - uc
@@ -1209,7 +1214,7 @@ class Coreop2d():
                 uc = cls.positions[i, 2]
                 for j in range(cls.nv_max):
                     ii = temp_neigh[i, j]
-                    if ii >= cls.num_active_cells and ii <= cls.num_active_cells + num_new_cells:
+                    if ii >= cls.num_active_cells and ii < cls.num_active_cells + num_new_cells:
                         ux = cls.positions[ii, 0] - ua
                         uy = cls.positions[ii, 1] - ub
                         uz = cls.positions[ii, 2] - uc
@@ -1294,8 +1299,9 @@ class Coreop2d():
                     for j in range(cls.nv_max):
                         if snapshot_neigh[i, j] == cls.first_border_cell:
                             cls.neigh[i, j] = ii
-                
-        
+                cls.first_border_cell += 1     # FORTRAN 13.f90:1384: expand border-cell block by 1
+
+
         if num_new_cells > 0:
             cls.update_border_cells()
 
