@@ -46,12 +46,12 @@ class Esclec():
 
     @classmethod
     def set_params(cls, core: Coreop2d, imap: int):
-        core.temps =            int(cls.parap[0, imap])
-        core.num_active_cells = int(cls.parap[1, imap])
+        core.temps =            int(cls.parap[0, imap])  # global counter of simulation time steps
+        core.num_active_cells = int(cls.parap[1, imap])  # current number of cells
         core.Egr = cls.parap[2, imap]
         core.Mgr = cls.parap[3, imap]
         core.Rep = cls.parap[4, imap]
-        # parap[5, imap] reserved (file slot 6 unused)
+        # parap[5, imap] reserved (corresponds to FORTRAN parap(6) — no field in the param file)
         core.Adh = cls.parap[6, imap]
         core.Act = cls.parap[7, imap]
         core.Inh = cls.parap[8, imap]
