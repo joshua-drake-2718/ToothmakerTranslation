@@ -1,7 +1,6 @@
 import sys
 import argparse
 import os
-from indexing import *
 from coreop2d import Coreop2d
 from esclec import Esclec
 
@@ -34,14 +33,14 @@ def main():
 
     core.allocate_initial_state()
     prev_num_active_cells = core.num_active_cells
-    io.set_params(core, 1)
+    io.set_params(core, 0)
     core.num_active_cells = prev_num_active_cells
 
     core.initact()
 
     os.makedirs(caufolder, exist_ok=True)
 
-    for iti in range(1, abs(sstep)):  # overridden range is end-inclusive (1..sstep)
+    for iti in range(1, abs(sstep) + 1):  # builtin range; 1..sstep for human-friendly labels
         iter_label = str(iti * iteration_total)
 
         nff = os.path.join(caufolder, iter_label + '_' + cau)
