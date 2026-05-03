@@ -368,11 +368,11 @@ class Coreop2d():
 
     @classmethod
     def apply_diffusion(cls):
-        pes = float_array((cls.num_all_cells, cls.nv_max))  # area of contact between i and neighbor (i, j)
-        area_p = float_array((cls.num_all_cells, cls.nv_max))   # fraction of a cell’s surface area that is in contact with the “bottom” (the z-direction neighbors / substrate) and is used to weight vertical diffusion.areabottom
+        pes = np.zeros((cls.num_all_cells, cls.nv_max))  # area of contact between i and neighbor (i, j)
+        area_p = np.zeros((cls.num_all_cells, cls.nv_max))   # fraction of a cell’s surface area that is in contact with the “bottom” (the z-direction neighbors / substrate) and is used to weight vertical diffusion.areabottom
         sum_a: float
         area_bottom: float
-        hq3d = float_array((cls.num_all_cells, cls.max_z_layers, cls.num_species_in_q3d))   # num_all_cells = number of cells (within "real radius"), max_z_layers = z depth, num_species_in_q3d = 3 (constant)
+        hq3d = np.zeros((cls.num_all_cells, cls.max_z_layers, cls.num_species_in_q3d))   # num_all_cells = number of cells (within “real radius”), max_z_layers = z depth, num_species_in_q3d = 3 (constant)
         ux: float
         uy: float
         uz: float
@@ -383,118 +383,117 @@ class Coreop2d():
         ub: float
         uc: float
 
-        hq3d[:] = 0
-
         for i in range(cls.num_active_cells):
             pes[i, :] = 0
             area_p[i, :] = 0
             for j in range(cls.nv_max): # ui
-                if cls.neigh[i, j] != 0:
-                    ua = cls.positions[i, 1]
-                    ub = cls.positions[i, 2]
-                    uc = cls.positions[i, 3]
+                if cls.neigh[i, j] != -1:
+                    ua = cls.positions[i, 0]
+                    ub = cls.positions[i, 1]
+                    uc = cls.positions[i, 2]
                     for jj in range(j+1, cls.nv_max):
-                        if cls.neigh[i, jj] != 0:
+                        if cls.neigh[i, jj] != -1:
                             pes[i, j] = vector.a_distance_between(cls.border[i, j, :], cls.border[i, jj, :])
-                            ux = cls.border[i, j, 1] - ua
-                            uy = cls.border[i, j, 2] - ub
-                            uz = cls.border[i, j, 3] - uc
-                            dx = cls.border[i, jj, 1] - ua
-                            dy = cls.border[i, jj, 2] - ub
-                            dz = cls.border[i, jj, 3] - uc
+                            ux = cls.border[i, j, 0] - ua
+                            uy = cls.border[i, j, 1] - ub
+                            uz = cls.border[i, j, 2] - uc
+                            dx = cls.border[i, jj, 0] - ua
+                            dy = cls.border[i, jj, 1] - ub
+                            dz = cls.border[i, jj, 2] - uc
                             area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
                             break # cycle ui
                     else:
                         continue
-                    pes[i, j] = vector.a_distance_between(cls.border[i, j, :], cls.border[i, 1, :])
-                    ux = cls.border[i, j, 1] - ua
-                    uy = cls.border[i, j, 2] - ub
-                    uz = cls.border[i, j, 3] - uc
-                    dx = cls.border[i, 1, 1] - ua
-                    dy = cls.border[i, 1, 2] - ub
-                    dz = cls.border[i, 1, 3] - uc
+                    pes[i, j] = vector.a_distance_between(cls.border[i, j, :], cls.border[i, 0, :])
+                    ux = cls.border[i, j, 0] - ua
+                    uy = cls.border[i, j, 1] - ub
+                    uz = cls.border[i, j, 2] - uc
+                    dx = cls.border[i, 0, 0] - ua
+                    dy = cls.border[i, 0, 1] - ub
+                    dz = cls.border[i, 0, 2] - uc
                     area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
             area_bottom = area_p[i, :].sum()
             sum_a = pes[i, :].sum() + 2 * area_bottom
             area_bottom /= sum_a
             pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d):
-                for kk in range(2, cls.max_z_layers-1):
+                for kk in range(1, cls.max_z_layers-2):  # 1-based layer 2..max_z_layers-1 → 0-based 1..max_z_layers-2
                     hq3d[i, kk, k] += area_bottom * (cls.q3d[i, kk-1, k] - cls.q3d[i, kk, k])
                     hq3d[i, kk, k] += area_bottom * (cls.q3d[i, kk+1, k] - cls.q3d[i, kk, k])
                     for j in range(cls.nv_max):
-                        if cls.neigh[i, j] != 0:
+                        if cls.neigh[i, j] != -1:
                             ii = cls.neigh[i, j]
                             if ii == cls.num_all_cells:
                                 hq3d[i, kk, k] -= 0.44 * pes[i, j] * cls.q3d[i, kk, k]
                             else:
                                 hq3d[i, kk, k] += pes[i, j] * (cls.q3d[ii, kk, k] - cls.q3d[i, kk, k])
-                hq3d[i, cls.max_z_layers, k] = -0.44 * area_bottom * cls.q3d[i, cls.max_z_layers, k]
-                hq3d[i, cls.max_z_layers, k] += area_bottom * (cls.q3d[i, cls.max_z_layers-1, k] - cls.q3d[i, cls.max_z_layers, k])
+                top = cls.max_z_layers - 1  # 1-based max_z_layers → 0-based max_z_layers-1
+                hq3d[i, top, k] = -0.44 * area_bottom * cls.q3d[i, top, k]
+                hq3d[i, top, k] += area_bottom * (cls.q3d[i, top-1, k] - cls.q3d[i, top, k])
                 for j in range(cls.nv_max):
-                    if cls.neigh[i, j] != 0:
+                    if cls.neigh[i, j] != -1:
                         ii = cls.neigh[i, j]
                         if ii == cls.num_all_cells:
-                            hq3d[i, cls.max_z_layers, k] -= 0.44 * pes[i, j] * cls.q3d[i, cls.max_z_layers, k] # sink
+                            hq3d[i, top, k] -= 0.44 * pes[i, j] * cls.q3d[i, top, k] # sink
                         else:
-                            hq3d[i, cls.max_z_layers, k] += pes[i, j] * (cls.q3d[ii, cls.max_z_layers, k] - cls.q3d[i, cls.max_z_layers, k])
+                            hq3d[i, top, k] += pes[i, j] * (cls.q3d[ii, top, k] - cls.q3d[i, top, k])
             pes[i, :] *= sum_a
             sum_a -= sum_a * area_bottom
             pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d): # ATTENTION
-                hq3d[i, 1, k] = area_bottom * (cls.q3d[i, 2, k] - cls.q3d[i, 1, k])
+                hq3d[i, 0, k] = area_bottom * (cls.q3d[i, 1, k] - cls.q3d[i, 0, k])
                 for j in range(cls.nv_max):
-                    if cls.neigh[i, j] != 0:
+                    if cls.neigh[i, j] != -1:
                         ii = cls.neigh[i, j]
                         if ii == cls.num_all_cells:
-                            hq3d[i, 1, k] -= 0.44 * pes[i, j] * cls.q3d[i, 1, k]
+                            hq3d[i, 0, k] -= 0.44 * pes[i, j] * cls.q3d[i, 0, k]
                         else:
-                            hq3d[i, 1, k] += pes[i, j] * (cls.q3d[ii, 1, k] - cls.q3d[i, 1, k])
-        
+                            hq3d[i, 0, k] += pes[i, j] * (cls.q3d[ii, 0, k] - cls.q3d[i, 0, k])
+
         # Activator diffusion
-        cls.q3d[:, :, 1] += cls.delta * cls.Da * hq3d[:, :, 1]
-        
+        cls.q3d[:, :, 0] += cls.delta * cls.Da * hq3d[:, :, 0]
+
         # Inhibitor diffusion
-        cls.q3d[:, :, 2] += cls.delta * cls.Di * hq3d[:, :, 2]
+        cls.q3d[:, :, 1] += cls.delta * cls.Di * hq3d[:, :, 1]
 
         # FGF diffusion
-        cls.q3d[:, :, 3] += cls.delta * cls.Ds * hq3d[:, :, 3]
+        cls.q3d[:, :, 2] += cls.delta * cls.Ds * hq3d[:, :, 2]
 
         # REACTION
         hq3d[:] = 0
         for i in range(cls.num_active_cells):
-            if cls.q3d[i, 1, 1] > 1 and i >= cls.first_border_cell:
+            if cls.q3d[i, 0, 0] > 1 and i >= cls.first_border_cell:
                 cls.knots[i] = 1
-            
-            a = cls.Act * cls.q3d[i, 1, 1]  # Act = Activator (activator auto-activation)
+
+            a = cls.Act * cls.q3d[i, 0, 0]  # Act = Activator (activator auto-activation)
             if a < 0: a = 0
-            hq3d[i, 1, 1] = a / (1 + cls.Inh * cls.q3d[i, 1, 2]) - cls.Deg * cls.q3d[i, 1, 1]   # Eq. (14) sans diffusion
+            hq3d[i, 0, 0] = a / (1 + cls.Inh * cls.q3d[i, 0, 1]) - cls.Deg * cls.q3d[i, 0, 0]   # Eq. (14) sans diffusion
             if cls.diff_state[i] > cls.Int: # Int (initial inhibitor threshold)
-                hq3d[i, 1, 2] = hq3d[i, 1, 1] * cls.diff_state[i] - cls.Deg * cls.q3d[i, 1, 2]  # Eq. (17). NOTE: DiffState <= 1.0
+                hq3d[i, 0, 1] = hq3d[i, 0, 0] * cls.diff_state[i] - cls.Deg * cls.q3d[i, 0, 1]  # Eq. (17). NOTE: DiffState <= 1.0
             else:
                 if cls.knots[i] == 1:
-                    hq3d[i, 1, 2] = cls.q3d[i, 1, 1] - cls.Deg * cls.q3d[i, 1, 2]   # Eq. (17)
+                    hq3d[i, 0, 1] = cls.q3d[i, 0, 0] - cls.Deg * cls.q3d[i, 0, 1]   # Eq. (17)
             if cls.diff_state[i] > cls.Set:     # Set (growth factor threshold)
-                a = cls.Sec * cls.diff_state[i] - cls.Deg * cls.q3d[i, 1, 3]    # Eq. (18). NOTE: DiffState <= 1.0
+                a = cls.Sec * cls.diff_state[i] - cls.Deg * cls.q3d[i, 0, 2]    # Eq. (18). NOTE: DiffState <= 1.0
                 if a < 0: a = 0
-                hq3d[i, 1, 3] = a
+                hq3d[i, 0, 2] = a
             elif cls.knots[i] == 1:
-                a = cls.Sec - cls.Deg * cls.q3d[i,1,3]  # Eq. (18). Sec = Sec (growth factor secretion rate)
+                a = cls.Sec - cls.Deg * cls.q3d[i, 0, 2]  # Eq. (18). Sec = Sec (growth factor secretion rate)
                 if a < 0: a = 0
-                hq3d[i, 1, 3] = a
-    
-        max_abs = abs(hq3d[:, 1, 1:2]).max()
+                hq3d[i, 0, 2] = a
+
+        max_abs = abs(hq3d[:, 0, 0:2]).max()
         if max_abs > 1e100:
             sys.exit()
-        cls.q3d[:, 1, 1:3] += cls.delta * hq3d[:, 1, 1:3]   # explicit Euler method
-        
-        cls.q3d.inner = cls.q3d.inner.clip(min=0)
+        cls.q3d[:, 0, 0:3] += cls.delta * hq3d[:, 0, 0:3]   # explicit Euler method
+
+        cls.q3d = cls.q3d.clip(min=0)
 
     
     @classmethod
     def apply_differentiation(cls):
         for i in range(cls.num_active_cells):
-            cls.diff_state[i] += cls.Dff * cls.q3d[i, 1, 3]     # paper Eq. 6
+            cls.diff_state[i] += cls.Dff * cls.q3d[i, 0, 2]     # paper Eq. 6
             if cls.diff_state[i] > 1: cls.diff_state[i] = 1
     
     
@@ -517,18 +516,18 @@ class Coreop2d():
         cls.forces[:] = 0
         for i in range(cls.first_border_cell, cls.num_active_cells):
             if cls.knots[i] == 1: continue
-            ua = cls.positions[i, 1]
-            ub = cls.positions[i, 2]
-            uc = cls.positions[i, 3]
+            ua = cls.positions[i, 0]
+            ub = cls.positions[i, 1]
+            uc = cls.positions[i, 2]
             aa = bb = cc = 0.0
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                if k == 0 or k > cls.num_active_cells: continue
-                b = uc - cls.positions[k, 3]
+                if k == -1 or k >= cls.num_active_cells: continue
+                b = uc - cls.positions[k, 2]
                 if b < -1e-4:
-                    uux = ua-cls.positions[k, 1]
-                    uuy = ub-cls.positions[k, 2]
-                    uuz = uc-cls.positions[k, 3]
+                    uux = ua-cls.positions[k, 0]
+                    uuy = ub-cls.positions[k, 1]
+                    uuz = uc-cls.positions[k, 2]
                     d = 1 / vector.magnitude(uux, uuy, uuz)
                     aa -= uux * d
                     bb -= uuy * d
@@ -537,28 +536,28 @@ class Coreop2d():
             a = 1 - cls.diff_state[i]
             if a < 0: a = 0
             d *= a
-            cls.forces[i, 1] = aa * d
-            cls.forces[i, 2] = bb * d
-            cls.forces[i, 3] = cc * d
-        
+            cls.forces[i, 0] = aa * d
+            cls.forces[i, 1] = bb * d
+            cls.forces[i, 2] = cc * d
+
         for i in range(cls.first_border_cell):
             aa = bb = 0.0
             a = -0.3
             b = 0.0
             c = 0.0
-            ua = cls.positions[i, 1]
-            ub = cls.positions[i, 2]
+            ua = cls.positions[i, 0]
+            ub = cls.positions[i, 1]
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                if k < 1 or k > cls.num_active_cells: continue
+                if k < 0 or k >= cls.num_active_cells: continue
                 if k >= cls.first_border_cell:
-                    uux = ua - cls.positions[k, 1]
-                    uuy = ub - cls.positions[k, 2]
+                    uux = ua - cls.positions[k, 0]
+                    uuy = ub - cls.positions[k, 1]
                     if uux != 0 or uuy != 0:
                         c = math.atan2(uuy, uux)
                 else:
-                    uux = ua - cls.positions[k, 1]
-                    uuy = ub - cls.positions[k, 2]
+                    uux = ua - cls.positions[k, 0]
+                    uuy = ub - cls.positions[k, 1]
                     d = vector.magnitude(uux, uuy, 0)
                     if d > 0:
                         if a == -0.3:
@@ -571,7 +570,7 @@ class Coreop2d():
                             duux = -uuy / d
                             duuy = uux / d
                             ubb = math.atan2(duuy, duux)
-            
+
             if a < b: a, b = b, a
             if c < a and c > b:
                 if uaa < a and uaa > b:
@@ -602,11 +601,11 @@ class Coreop2d():
             if ddd > dd:
                 aa *= -1
                 bb *= -1
-            
+
             # We also have the downward traction due to the adhesion to the mesenchyme.
             d = vector.magnitude(aa, bb, 0)
             if d > 0:
-                d = (d + cls.Mgr * cls.q3d[i, 1, 3] + cls.umgr) / d     # Eq. (12) + basal Mgr
+                d = (d + cls.Mgr * cls.q3d[i, 0, 2] + cls.umgr) / d     # Eq. (12) + basal Mgr
                 aa *= d     # Eq. 10
                 bb *= d     # Eq. 11
             cc = cls.Dgr
@@ -616,9 +615,9 @@ class Coreop2d():
                 a = 1 - cls.diff_state[i]
                 if a < 0: a = 0     # DiffState(i) = differentiation state
                 d *= a
-                cls.forces[i, 1] = aa * d
-                cls.forces[i, 2] = bb * d
-                cls.forces[i, 3] = cc * d
+                cls.forces[i, 0] = aa * d
+                cls.forces[i, 1] = bb * d
+                cls.forces[i, 2] = cc * d
 
         cls.force_snapshot = cls.forces.copy()
 
@@ -631,78 +630,78 @@ class Coreop2d():
         # does it push perpendicularly? This is equation 13. 
 
         for i in range(cls.num_active_cells):
-            ax = cls.forces[i, 1]
-            ay = cls.forces[i, 2]
+            ax = cls.forces[i, 0]
+            ay = cls.forces[i, 1]
             d = vector.magnitude(ax, ay, 0)
             if d != 0:
-                c = cls.forces[i, 3]
+                c = cls.forces[i, 2]
                 a = vector.magnitude(ax, ay, c)
                 a = -c / a
                 ax *= a
                 ay *= a
                 dd = vector.magnitude(ax, ay, d)
-                dd = cls.Boy * cls.q3d[i, 1, 3] / dd    # I believe this is Eq. 13. Boy corresponds to k_Boy
-                if dd > 0:                              # q3d(i,1,3) = [Sec], DiffState(i) = d_i
+                dd = cls.Boy * cls.q3d[i, 0, 2] / dd    # I believe this is Eq. 13. Boy corresponds to k_Boy
+                if dd > 0:                              # q3d(i,0,2) = [Sec], DiffState(i) = d_i
                     a = 1 - cls.diff_state[i]           # this is the differentiation gate (DiffState(i) is DIFF state variable)
                     if a < 0: a = 0
                     ax *= dd * a
                     ay *= dd * a
                     d *= dd * a
-                    cls.forces[i, 1] -= ax
-                    cls.forces[i, 2] -= ay
-                    cls.forces[i, 3] -= d
+                    cls.forces[i, 0] -= ax
+                    cls.forces[i, 1] -= ay
+                    cls.forces[i, 2] -= d
         
     
     @classmethod
     def repulse_neighbour(cls):
-        persu = float_array((cls.nv_max, 3))
+        persu = np.zeros((cls.nv_max, 3))
 
         # finite element roll
         for i in range(cls.num_active_cells):
-            ua = cls.positions[i, 1]
-            ub = cls.positions[i, 2]
-            uc = cls.positions[i, 3]
+            ua = cls.positions[i, 0]
+            ub = cls.positions[i, 1]
+            uc = cls.positions[i, 2]
             persu[:] = 0
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                if k > 0 and k <= cls.num_active_cells:
-                    ux = cls.positions[k, 1] - ua
-                    uy = cls.positions[k, 2] - ub
-                    uz = cls.positions[k, 3] - uc   # eq1: r_ij = p_j - p_i
+                if k >= 0 and k < cls.num_active_cells:
+                    ux = cls.positions[k, 0] - ua
+                    uy = cls.positions[k, 1] - ub
+                    uz = cls.positions[k, 2] - uc   # eq1: r_ij = p_j - p_i
                     if abs(ux) < 1e-15: ux = 0
                     if abs(uy) < 1e-15: uy = 0
                     if abs(uz) < 1e-15: uz = 0
                     dr = vector.magnitude(ux, uy, uz)   # eq1: d_r = ||p_j - p_i||
-                    rd = cls.border[i, j, 5]
+                    rd = cls.border[i, j, 4]
                     if dr < 1e-8: dr = 0
                     if rd < 1e-8: rd = 0
                     if (cls.knots[i] == 1 and cls.knots[k] == 1) or dr < rd:
                         d = dr - rd     # eq1: d= (||p_j - p_i|| -||p_ij^0||) (||p_j - p_i||)
                         dr = d / dr     # introduce normalisation
-                        persu[j, 1] = ux * dr   # persu = instantenaous "force" contribution vector. will be updated & stored as Force
-                        persu[j, 2] = uy * dr   # normalized eq1: d= (||p_j - p_i|| -||p_ij^0||) (||p_j - p_i||)
-                        persu[j, 3] = uz * dr
+                        persu[j, 0] = ux * dr   # persu = instantenaous "force" contribution vector. will be updated & stored as Force
+                        persu[j, 1] = uy * dr   # normalized eq1: d= (||p_j - p_i|| -||p_ij^0||) (||p_j - p_i||)
+                        persu[j, 2] = uz * dr
                     elif i >= cls.first_border_cell:    # the cells from "0" to "first_border_cell-1" are interior epithelial cells, so this is saying "if i IS a border cell!"
-                        persu[j, 1] = ux * cls.Adh
-                        persu[j, 2] = uy * cls.Adh
-                        persu[j, 3] = uz * cls.Adh
-            
+                        persu[j, 0] = ux * cls.Adh
+                        persu[j, 1] = uy * cls.Adh
+                        persu[j, 2] = uz * cls.Adh
+
             # fast version without sorting (possible biases for floats)
             c = cls.Rep
             if c > 1: c = 1
-            a = sum(persu[j, 1] for j in range(cls.nv_max))    # x direction forces
-            cls.forces[i, 1] += a * c   # eq1 = kRep * (||p_j - p_i|| - ||p_o||)(p_j - p_i)
-            a = sum(persu[j, 2] for j in range(cls.nv_max))    # y direction forces
+            a = sum(persu[j, 0] for j in range(cls.nv_max))    # x direction forces
+            cls.forces[i, 0] += a * c   # eq1 = kRep * (||p_j - p_i|| - ||p_o||)(p_j - p_i)
+            a = sum(persu[j, 1] for j in range(cls.nv_max))    # y direction forces
+            cls.forces[i, 1] += a * c
+            a = sum(persu[j, 2] for j in range(cls.nv_max))    # z direction forces
             cls.forces[i, 2] += a * c
-            a = sum(persu[j, 3] for j in range(cls.nv_max))    # z direction forces
-            cls.forces[i, 3] += a * c
     
 
     @classmethod
     def repel_non_neigh(cls):
         conta = 0
         espai = 20
-        persu = float_array((espai, 3))
+        persu = np.zeros((espai, 3))
 
         def repel_non_neigh_a(i: int, ii: int) -> bool:
             for j in range(cls.nv_max):
@@ -711,19 +710,19 @@ class Coreop2d():
             return False
 
         for i in range(cls.num_active_cells):
-            ua = cls.positions[i, 1]
-            ub = cls.positions[i, 2]
-            uc = cls.positions[i, 3]
+            ua = cls.positions[i, 0]
+            ub = cls.positions[i, 1]
+            uc = cls.positions[i, 2]
             persu[:] = 0
             conta = 0
             for ii in range(cls.num_active_cells):
                 if i == ii: continue
                 if repel_non_neigh_a(i, ii): continue
-                ux = cls.positions[ii, 1] - ua
+                ux = cls.positions[ii, 0] - ua
                 if ux > 1.4: continue
-                uy = cls.positions[ii, 2] - ub
+                uy = cls.positions[ii, 1] - ub
                 if uy > 1.4: continue
-                uz = cls.positions[ii, 3] - uc
+                uz = cls.positions[ii, 2] - uc
                 if uz > 1.4: continue
                 if abs(ux) < 1e-15: ux = 0
                 if abs(uy) < 1e-15: uy = 0
@@ -733,39 +732,38 @@ class Coreop2d():
                     conta += 1
                     if conta > espai:
                         espai += 20
-
-                        persu.inner = np.pad(persu.inner, ((0, 20), (0, 0)))
+                        persu = np.pad(persu, ((0, 20), (0, 0)))
                     dd = 1 / (d + 1)**8
                     d = dd / d
                     d = np.floor(d*1e8)*1e-8
-                    persu[conta, 1] = -ux * d
-                    persu[conta, 2] = -uy * d
-                    persu[conta, 3] = -uz * d
-            
+                    persu[conta, 0] = -ux * d
+                    persu[conta, 1] = -uy * d
+                    persu[conta, 2] = -uz * d
+
             # quick unsorted version (possible biases for floats)
+            a = sum(persu[j, 0] for j in range(espai))
+            cls.forces[i, 0] += a * cls.Rep
             a = sum(persu[j, 1] for j in range(espai))
             cls.forces[i, 1] += a * cls.Rep
             a = sum(persu[j, 2] for j in range(espai))
             cls.forces[i, 2] += a * cls.Rep
-            a = sum(persu[j, 3] for j in range(espai))
-            cls.forces[i, 3] += a * cls.Rep
     
 
     @classmethod
     def apply_border_bias(cls):
         for i in range(cls.first_border_cell-1):
-            if cls.positions[i, 2] < 0:
-                if cls.q3d[i, 1, 1] < cls.Lbi:  # Won't reset activator concentration to value of bias; to make Ina work in borders.
-                    cls.q3d[i, 1, 1] = cls.Lbi
-            elif cls.positions[i, 2] > 0:
-                if cls.q3d[i, 1, 1] < cls.Bbi:  # Same as above
-                    cls.q3d[i, 1, 1] = cls.Bbi
-    
+            if cls.positions[i, 1] < 0:
+                if cls.q3d[i, 0, 0] < cls.Lbi:  # Won't reset activator concentration to value of bias; to make Ina work in borders.
+                    cls.q3d[i, 0, 0] = cls.Lbi
+            elif cls.positions[i, 1] > 0:
+                if cls.q3d[i, 0, 0] < cls.Bbi:  # Same as above
+                    cls.q3d[i, 0, 0] = cls.Bbi
+
 
     @classmethod
     def initact(cls):   # Adds initial activator concentration in each cell. Defined by Ina parameter.
         for i in range(cls.num_active_cells):
-            cls.q3d[i, 1, 1] = cls.ina
+            cls.q3d[i, 0, 0] = cls.ina
     
 
     @classmethod
@@ -777,24 +775,24 @@ class Coreop2d():
             n = 0
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                if k != 0 and k <= cls.num_active_cells:
-                    a += cls.positions[k, 1]
-                    b += cls.positions[k, 2]
-                    c += cls.positions[k, 3]
+                if k != -1 and k < cls.num_active_cells:
+                    a += cls.positions[k, 0]
+                    b += cls.positions[k, 1]
+                    c += cls.positions[k, 2]
                     n += 1
             a /= n
             b /= n
             c /= n
-            a -= cls.positions[i, 1]
-            b -= cls.positions[i, 2]
-            c -= cls.positions[i, 3]
-            positions_after_traction[i, 1] += cls.delta * cls.Ntr * a
-            positions_after_traction[i, 2] += cls.delta * cls.Ntr * b
+            a -= cls.positions[i, 0]
+            b -= cls.positions[i, 1]
+            c -= cls.positions[i, 2]
+            positions_after_traction[i, 0] += cls.delta * cls.Ntr * a
+            positions_after_traction[i, 1] += cls.delta * cls.Ntr * b
             if cls.knots[i] == 0:
                 a = 1 - cls.diff_state[i]
                 if a < 0: a = 0
-                positions_after_traction[i, 3] += cls.delta * cls.Ntr * c * a
-        
+                positions_after_traction[i, 2] += cls.delta * cls.Ntr * c * a
+
         # for the margins
         for i in range(cls.first_border_cell-1):
             if cls.diff_state[i] == 1: continue
@@ -802,23 +800,23 @@ class Coreop2d():
             n = 0
             for j in range(cls.nv_max):
                 k = cls.neigh[i, j]
-                if k > 0 and k < cls.first_border_cell and k <= cls.num_active_cells:
-                    a += cls.positions[k, 1]
-                    b += cls.positions[k, 2]
-                    c += cls.positions[k, 3]
+                if k >= 0 and k < cls.first_border_cell and k < cls.num_active_cells:
+                    a += cls.positions[k, 0]
+                    b += cls.positions[k, 1]
+                    c += cls.positions[k, 2]
                     n += 1
             a /= n
             b /= n
             c /= n
-            a -= cls.positions[i, 1]
-            b -= cls.positions[i, 2]
-            c -= cls.positions[i, 3]
-            positions_after_traction[i, 1] += cls.delta * cls.Ntr * a
-            positions_after_traction[i, 2] += cls.delta * cls.Ntr * b
+            a -= cls.positions[i, 0]
+            b -= cls.positions[i, 1]
+            c -= cls.positions[i, 2]
+            positions_after_traction[i, 0] += cls.delta * cls.Ntr * a
+            positions_after_traction[i, 1] += cls.delta * cls.Ntr * b
             if cls.knots[i] == 0:
                 a = 1 - cls.diff_state[i]
                 if a < 0: a = 0
-                positions_after_traction[i, 3] += cls.delta * cls.Ntr * c * a
+                positions_after_traction[i, 2] += cls.delta * cls.Ntr * c * a
         cls.positions = positions_after_traction
     
 
@@ -826,17 +824,17 @@ class Coreop2d():
     def update_cell_position(cls):
         # we determine the extremes
         for i in range(cls.first_border_cell-1):
-            if abs(cls.positions[i, 2]) < cls.Bwi:
-                if cls.positions[i, 1] > 0:
-                    cls.forces[i, 1] *= cls.Pbi
-                elif cls.positions[i, 1] < 0:
-                    cls.forces[i, 1] *= cls.Abi
-                cls.forces[i, 3] *= cls.Bgr
-        
+            if abs(cls.positions[i, 1]) < cls.Bwi:
+                if cls.positions[i, 0] > 0:
+                    cls.forces[i, 0] *= cls.Pbi
+                elif cls.positions[i, 0] < 0:
+                    cls.forces[i, 0] *= cls.Abi
+                cls.forces[i, 2] *= cls.Bgr
+
         for i in range(cls.num_active_cells):
-            if cls.forces[i, 3] < 0 or cls.knots[i] == 1:
-                cls.forces[i, 3] = 0    # it is due to the pressure of the stelate
-        
+            if cls.forces[i, 2] < 0 or cls.knots[i] == 1:
+                cls.forces[i, 2] = 0    # it is due to the pressure of the stelate
+
         for i in range(cls.num_active_cells):
             cls.positions[i, :] += cls.delta * cls.forces[i, :]     # Eq3 kinda! This is the final position update (in the case where Swi = 0)
 
