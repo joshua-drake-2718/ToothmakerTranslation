@@ -742,8 +742,7 @@ class Coreop2d():
                 if abs(uz) < 1e-15: uz = 0
                 d = vector.magnitude(ux, uy, uz)
                 if d < 1.4:
-                    conta += 1
-                    if conta > espai:
+                    if conta >= espai:    # FORTRAN 13.f90:747 — grow before writing
                         espai += 20
                         persu = np.pad(persu, ((0, 20), (0, 0)))
                     dd = 1 / (d + 1)**8
@@ -752,6 +751,7 @@ class Coreop2d():
                     persu[conta, 0] = -ux * d
                     persu[conta, 1] = -uy * d
                     persu[conta, 2] = -uz * d
+                    conta += 1
 
             # quick unsorted version (possible biases for floats)
             a = sum(persu[j, 0] for j in range(espai))
@@ -901,6 +901,7 @@ class Coreop2d():
 
             for i in range(cls.num_active_cells + num_new_cells, new_num_active_cells):
                 temp_positions[i, :] =  cls.positions[i - num_new_cells, :]
+                temp_neigh[i, :] =      cls.neigh[i - num_new_cells, :]   # FORTRAN 13.f90:963
                 temp_num_neigh[i] =     cls.num_neigh[i - num_new_cells]
                 c_diff_state[i] =       cls.diff_state[i - num_new_cells]
                 c_q3d[i, :, :] =        cls.q3d[i - num_new_cells]
@@ -947,6 +948,16 @@ class Coreop2d():
                 # The 0.333 instead of 0.25 is a trick because before we multiplied the parents by 3/4
 
             for i in range(num_new_cells):
+                # FORTRAN 13.f90:1000-1003 reads ii=parents[0], kk=parents[1],
+                # jj=num_active+i and replaces ii's `kk` entry with `jj` (and
+                # vice versa). The previous variable swap below preserves a
+                # working topology by leaving the original parent-parent
+                # links in place, even though it is not faithful to FORTRAN.
+                # The faithful version exposes a downstream txungu-branch
+                # bug (FORTRAN 13.f90:1158 reads stale `jjjj`) that strips
+                # newly-divided cells of their parent links and produces NaN
+                # in apply_diffusion. Until the txungu branch is fixed, the
+                # swap is the lesser evil.
                 ii = new_cell_pairs[i, 0]
                 jj = new_cell_pairs[i, 1]
                 kk = cls.num_active_cells + i
@@ -1131,15 +1142,14 @@ class Coreop2d():
                                 return  # FORTRAN: panic=1; return
                             for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
-                                # FORTRAN 13.f90:1158-1163 reads `jjjj` here, but jjjj is
-                                # stale (loop-invariant); reading `jjj` is the apparent
-                                # intent and matches the comment "we have a new one".
-                                if jjj == fi:
+                                # FORTRAN 13.f90:1158-1163 reads `jjjj` (loop-invariant
+                                # stale value) — preserved verbatim for fidelity.
+                                if jjjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
-                                elif jjj >= cls.num_active_cells:
+                                elif jjjj >= cls.num_active_cells:
                                     kkkk += 1
-                                    temp_new_neigh[i, kkkk] = jjj
+                                    temp_new_neigh[i, kkkk] = jjjj
 
                         # now we need to add the connections to external nodes
                         ii = new_cell_pairs[i, 0]
