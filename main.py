@@ -41,7 +41,7 @@ def main():
 
     os.makedirs(caufolder, exist_ok=True)
 
-    for iti in range(1, abs(sstep) + 1):
+    for iti in range(1, abs(sstep)):  # overridden range is end-inclusive (1..sstep)
         iter_label = str(iti * iteration_total)
 
         nff = os.path.join(caufolder, iter_label + '_' + cau)
