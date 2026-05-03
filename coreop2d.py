@@ -751,7 +751,7 @@ class Coreop2d():
 
     @classmethod
     def apply_border_bias(cls):
-        for i in range(cls.first_border_cell-1):
+        for i in range(cls.first_border_cell):
             if cls.positions[i, 1] < 0:
                 if cls.q3d[i, 0, 0] < cls.Lbi:  # Won't reset activator concentration to value of bias; to make Ina work in borders.
                     cls.q3d[i, 0, 0] = cls.Lbi
@@ -794,7 +794,7 @@ class Coreop2d():
                 positions_after_traction[i, 2] += cls.delta * cls.Ntr * c * a
 
         # for the margins
-        for i in range(cls.first_border_cell-1):
+        for i in range(cls.first_border_cell):
             if cls.diff_state[i] == 1: continue
             a = b = c = 0.0
             n = 0
@@ -823,7 +823,7 @@ class Coreop2d():
     @classmethod
     def update_cell_position(cls):
         # we determine the extremes
-        for i in range(cls.first_border_cell-1):
+        for i in range(cls.first_border_cell):
             if abs(cls.positions[i, 1]) < cls.Bwi:
                 if cls.positions[i, 0] > 0:
                     cls.forces[i, 0] *= cls.Pbi
@@ -1111,8 +1111,8 @@ class Coreop2d():
                                             temp_neigh[k, ji+1] = jj
                         else:   # the txungu will be in sinomes we have a new one because then there will only be 3 neigh
                             temp_new_neigh[i, :] = -1
-                            temp_new_neigh[i, 1] = ini
-                            kkkk = 1
+                            temp_new_neigh[i, 0] = ini
+                            kkkk = 0
                             if cj > cls.nv_max:
                                 sys.exit()
                             for kkk in range(cj):
@@ -1164,11 +1164,11 @@ class Coreop2d():
             # now we need to add the external connections
 
             # now we replace
-            temp_neigh[(cls.num_active_cells+1):(cls.num_active_cells+num_new_cells), :] = temp_new_neigh[1:num_new_cells, :]
+            temp_neigh[cls.num_active_cells:cls.num_active_cells+num_new_cells, :] = temp_new_neigh[0:num_new_cells, :]
             cls.positions = temp_positions
 
             # we calculate the new basal distances of the new cells
-            for i in range(cls.num_active_cells+1, cls.num_active_cells + num_new_cells):
+            for i in range(cls.num_active_cells, cls.num_active_cells + num_new_cells):
                 ua = cls.positions[i, 0]
                 ub = cls.positions[i, 1]
                 uc = cls.positions[i, 2]
@@ -1313,7 +1313,7 @@ class Coreop2d():
                             else:
                                 kk = True
                                 break # cycle err
-        for i in range(cls.first_border_cell-1):
+        for i in range(cls.first_border_cell):
             if i == 2 or i == 5: continue  # 0-based equivalents of 1-based 3 and 6 (ATTENTION NOT SCALABLE WITH Rad)
             er(i)
 
@@ -1348,7 +1348,7 @@ class Coreop2d():
                             else:
                                 kk = True
                                 break # cycle erra
-        for i in range(cls.first_border_cell-1):
+        for i in range(cls.first_border_cell):
             if i == 2 or i == 5: continue  # 0-based equivalents of 1-based 3 and 6 (ATTENTION NOT SCALABLE WITH Rad)
             era(i)
 
