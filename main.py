@@ -32,8 +32,8 @@ def main():
     core.initial_conditions()
     io.initialize_from_parameter_file(core, cac)
 
-    prev_num_active_cells = core.num_active_cells
     core.allocate_initial_state()
+    prev_num_active_cells = core.num_active_cells
     io.set_params(core, 1)
     core.num_active_cells = prev_num_active_cells
 
