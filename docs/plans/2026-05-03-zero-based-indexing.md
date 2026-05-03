@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the 1-based `indexing.py` wrappers (a transient FORTRAN-translation aid) and convert the entire Python codebase to native 0-based numpy indexing, while preserving simulator output bit-for-bit.
+**Goal:** Remove the 1-based `indexing.py` wrappers (a transient FORTRAN-translation aid) and convert the entire Python codebase to native 0-based numpy indexing.
 
-**Architecture:** Capture a reference output from the current 1-based code first ("golden" OFF files). Then convert each source file to use plain numpy arrays and the builtin `range`. The biggest semantic risk is the sentinel value `0` in `neigh[]` (meaning "no neighbour") — under 0-based indexing, `0` becomes a valid cell index, so the sentinel must become `-1`. After migration, the same simulator run on `examples/seal.txt` must produce byte-identical OFF output.
+**Architecture:** Convert each source file to use plain numpy arrays and the builtin `range`. The biggest semantic risk is the sentinel value `0` in `neigh[]` (meaning "no neighbour") — under 0-based indexing, `0` becomes a valid cell index, so the sentinel must become `-1`. After migration, run the simulator on `examples/seal.txt` and verify it still produces well-formed OFF output (5 files, valid COFF headers, sensible vertex/face counts). **Acceptance is structural, not byte-identical:** the pre-migration Python output is itself broken (NaN z-coords, frozen cell count — see PR #8) so byte-matching it would just lock in known bugs. The authoritative reference for *correctness* is `tests/golden_fortran/` (captured from compiling and running the original FORTRAN); debugging the Python iteration code against those goldens is a follow-up effort (Task 9).
 
-**Tech Stack:** Python 3.11+, NumPy, pytest.
+**Tech Stack:** Python 3.11+ (project uses 3.12), NumPy 2.x, pytest.
 
 ---
 
@@ -15,6 +15,15 @@
 `indexing.py` provides four wrapper classes (`int_array`, `float_array`, `bool_array`, `str_array`) that subtract 1 from every index, plus an overridden `range` whose semantics are FORTRAN-style (`range(N)` iterates `1..N` inclusive; `range(a, b)` iterates `a..b` inclusive). All four source files (`coreop2d.py`, `esclec.py`, `main.py`, `vector.py`) `from indexing import *` and use 1-based access throughout.
 
 The wrappers were a translation convenience so the Python could mirror the FORTRAN line-for-line. Now that the translation is largely complete, the wrappers add overhead, hide bugs, and make the code unidiomatic. Removing them lets us use numpy slicing, broadcasting, and any third-party Python tool that expects ordinary arrays.
+
+### State on main as of 2026-05-03
+
+Two prerequisite PRs landed before this plan was revised:
+
+- **PR #8** got the simulator to run end-to-end without crashing. It fixed the off-by-one in `read_param_file`, the init-order bug in `main`, the missing `uuy` assignment in `ep_growth_border_force`, the `range(1, sstep+1)` off-by-one in the save-block loop, numpy 2.x compatibility in `set_params`, and added numeric-protocol support (`__array__`, dunders, `np.integer` indices) to the wrapper. The wrapper's growth in PR #8 is *temporary investment in code being deleted by this plan* — don't preserve it.
+- **PR #9** added `scripts/build-fortran.sh`, `scripts/capture-fortran-golden.sh`, and 5 captured OFF files in `tests/golden_fortran/`. These are the FORTRAN's authoritative output and are the reference for the iteration-debug follow-up (Task 9).
+
+Several of the wrapper-induced bugs PR #8 fixed will cease to exist once the wrapper is gone — e.g. there's no off-by-one in `read_param_file` if you write `for i in range(2, 32)` against builtin `range`.
 
 ## Translation cheat sheet
 
@@ -114,129 +123,58 @@ No new files. Final state:
 
 ## Tasks
 
-### Task 1: Pin Python and NumPy environment
+### Task 1: Add a structural smoke test
+
+`pyproject.toml` and `tests/golden_fortran/` already exist on `main` (PRs #8 and #9). What's missing is a smoke test the engineer can run after each per-file conversion to confirm the simulator still completes a 5-block run and produces well-formed OFF output. The test is **structural only** — it does not byte-compare against pre-migration Python (that output is broken) and it does not byte-compare against the FORTRAN goldens (the Python iteration code has known bugs the migration is not trying to fix).
 
 **Files:**
-- Modify: `pyproject.toml` (create if absent)
-
-- [ ] **Step 1: Confirm Python version**
-
-Run: `python --version`
-Expected: Python 3.11.x or later (the code uses `from typing import Self`, which is 3.11+).
-
-- [ ] **Step 2: Confirm numpy is available and pin version for reproducibility**
-
-Run: `python -c "import numpy; print(numpy.__version__)"`
-Expected: a version string (e.g. `2.0.x` or `1.26.x`). Note the version.
-
-- [ ] **Step 3: Create `pyproject.toml` recording the pinned versions**
-
-If `pyproject.toml` does not already exist, create it:
-
-```toml
-[project]
-name = "toothmaker-translation"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = [
-    "numpy>=1.26,<3.0",
-]
-
-[project.optional-dependencies]
-dev = ["pytest>=7"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-```
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add pyproject.toml
-git commit -m "chore: add pyproject.toml pinning Python 3.11 and numpy"
-```
-
----
-
-### Task 2: Verify the current simulator runs and capture golden output
-
-**Files:**
-- Create: `tests/golden/run/100_seal_.off` (and friends — 5 files)
-- Create: `tests/golden/RUN_COMMAND.md`
-
-- [ ] **Step 1: Run the simulator with the seal example**
-
-Run:
-
-```bash
-mkdir -p .tmp/run-baseline
-python main.py examples/seal.txt .tmp/run-baseline run 100 5
-```
-
-Expected: prints `Block 1/5 complete: ...` through `Block 5/5 complete: ...`, and produces `.tmp/run-baseline/100_run_.off`, `200_run_.off`, `300_run_.off`, `400_run_.off`, `500_run_.off`.
-
-- [ ] **Step 2: If the run fails, stop and report**
-
-If Python raises an exception, stop here and surface the error in the task report. Do not attempt fixes — the conversion plan assumes a working baseline. The user will decide whether to fix the bug before proceeding or to switch to a "no golden output, manual inspection" mode.
-
-- [ ] **Step 3: Capture the OFF files as the golden reference**
-
-Run:
-
-```bash
-mkdir -p tests/golden
-cp .tmp/run-baseline/*.off tests/golden/
-```
-
-- [ ] **Step 4: Document the exact run command**
-
-Write `tests/golden/RUN_COMMAND.md`:
-
-```markdown
-# Golden output
-
-Captured from the pre-0-based-migration codebase by running:
-
-    python main.py examples/seal.txt .tmp/run-baseline run 100 5
-
-Output: 5 OFF files, one per save block (`100_run_.off` ... `500_run_.off`).
-
-The files in this directory are the exact bytes the simulator produced before
-the 0-based indexing migration. The post-migration simulator must reproduce them
-byte-for-byte.
-```
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add tests/golden/
-git commit -m "test: capture pre-migration golden OFF output"
-```
-
----
-
-### Task 3: Add a regression smoke test
-
-**Files:**
+- Create: `tests/__init__.py` (empty)
 - Create: `tests/test_simulator_smoke.py`
-- Create: `tests/__init__.py` (empty, if needed)
 
-- [ ] **Step 1: Write the test**
+- [ ] **Step 1: Confirm prerequisites are on main**
+
+Run:
+
+```bash
+ls pyproject.toml tests/golden_fortran/*.off scripts/build-fortran.sh
+```
+
+Expected: lists `pyproject.toml`, 5 `.off` files in `tests/golden_fortran/`, and the FORTRAN build script. If any are missing, `git pull origin main` first; if still missing, stop and report.
+
+- [ ] **Step 2: Confirm the venv works**
+
+Run: `.venv/bin/python -c "import numpy, pytest; print(numpy.__version__, pytest.__version__)"`
+
+Expected: a numpy ≥ 1.26 and pytest ≥ 7. If the venv is missing, run `python -m venv .venv && .venv/bin/pip install numpy pytest` first.
+
+- [ ] **Step 3: Create the empty package marker**
+
+Run: `touch tests/__init__.py`
+
+- [ ] **Step 4: Write the smoke test**
 
 Create `tests/test_simulator_smoke.py`:
 
 ```python
-"""End-to-end regression test: simulator output must match captured golden files."""
-import filecmp
+"""Structural smoke test for the simulator end-to-end run.
+
+Asserts: the simulator completes a 5-block run on examples/seal.txt without
+crashing, writes 5 OFF files, and each file has a valid COFF header with
+sensible vertex/face counts.
+
+Does NOT byte-compare to the FORTRAN goldens — the Python iteration code has
+known bugs (NaN z-coords, frozen cell count) that are out of scope for this
+migration. See Task 9 for the FORTRAN-comparison follow-up.
+"""
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-GOLDEN = REPO_ROOT / "tests" / "golden"
 
 
-def test_seal_run_matches_golden(tmp_path):
+def test_seal_run_smoke(tmp_path):
     out_dir = tmp_path / "out"
     out_dir.mkdir()
 
@@ -256,33 +194,40 @@ def test_seal_run_matches_golden(tmp_path):
         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
     )
 
-    expected_files = sorted(p.name for p in GOLDEN.glob("*.off"))
-    actual_files = sorted(p.name for p in out_dir.glob("*.off"))
-    assert actual_files == expected_files, (
-        f"file list mismatch: golden={expected_files}, actual={actual_files}"
+    off_files = sorted(out_dir.glob("*.off"))
+    assert len(off_files) == 5, (
+        f"expected 5 OFF files, got {len(off_files)}: "
+        f"{[p.name for p in off_files]}"
     )
 
-    for name in expected_files:
-        assert filecmp.cmp(GOLDEN / name, out_dir / name, shallow=False), (
-            f"{name} differs from golden output"
-        )
+    for off in off_files:
+        with off.open() as f:
+            header = f.readline().strip()
+            counts = f.readline().strip()
+        assert header == "COFF", f"{off.name}: expected 'COFF' header, got {header!r}"
+        m = re.match(r"^\s*(\d+)\s+(\d+)\s+0\s*$", counts)
+        assert m, f"{off.name}: expected 'V F 0' counts line, got {counts!r}"
+        n_vertices, n_faces = int(m.group(1)), int(m.group(2))
+        assert n_vertices > 0, f"{off.name}: zero vertices"
+        assert n_faces > 0, f"{off.name}: zero faces"
 ```
 
-- [ ] **Step 2: Run the test against the current (pre-migration) code**
+- [ ] **Step 5: Run the test against the current (pre-migration) code**
 
-Run: `pytest tests/test_simulator_smoke.py -v`
-Expected: PASS (the simulator currently produces exactly the bytes we just captured).
+Run: `.venv/bin/pytest tests/test_simulator_smoke.py -v`
 
-- [ ] **Step 3: Commit**
+Expected: PASS. The pre-migration code runs end-to-end (PR #8 fixed the crash bugs); even with NaN values, the OFF structure is intact.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add tests/test_simulator_smoke.py
-git commit -m "test: add end-to-end smoke test against golden output"
+gitops.sh add tests/__init__.py tests/test_simulator_smoke.py
+gitops.sh commit "test: add structural smoke test for simulator end-to-end run"
 ```
 
 ---
 
-### Task 4: Convert `vector.py`
+### Task 2: Convert `vector.py`
 
 `vector.py` is 39 lines and only uses `float_array` for the four-component (1-based-indexed) shim — not for storage. After migration it imports nothing from `indexing` and accepts plain numpy arrays.
 
@@ -341,12 +286,12 @@ git commit -m "refactor: convert vector.py to plain numpy (0-based)"
 
 ---
 
-### Task 5: Convert `main.py`
+### Task 3: Convert `main.py`
 
 **Files:**
 - Modify: `main.py`
 
-- [ ] **Step 1: Update imports and the iteration loop**
+- [ ] **Step 1: Update imports, parameter-set index, and save-block loop**
 
 Replace `main.py` with:
 
@@ -384,8 +329,8 @@ def main():
     core.initial_conditions()
     io.initialize_from_parameter_file(core, cac)
 
-    prev_num_active_cells = core.num_active_cells
     core.allocate_initial_state()
+    prev_num_active_cells = core.num_active_cells
     io.set_params(core, 0)
     core.num_active_cells = prev_num_active_cells
 
@@ -393,7 +338,7 @@ def main():
 
     os.makedirs(caufolder, exist_ok=True)
 
-    for iti in range(1, abs(sstep) + 1):
+    for iti in range(1, abs(sstep) + 1):  # builtin range; 1..sstep for human-friendly labels
         iter_label = str(iti * iteration_total)
 
         nff = os.path.join(caufolder, iter_label + '_' + cau)
@@ -416,10 +361,11 @@ if __name__ == '__main__':
     main()
 ```
 
-Key changes:
+Key changes from the post-PR-#8 main:
 - Removed `from indexing import *`.
-- `io.set_params(core, 1)` → `io.set_params(core, 0)` (parameter set index becomes 0-based).
-- The save-block `for iti in range(1, abs(sstep) + 1)` is **kept as-is** (this loop runs `1..sstep` for human-friendly labels — it has nothing to do with array indexing).
+- `io.set_params(core, 1)` → `io.set_params(core, 0)` (parameter-set index becomes 0-based).
+- The save-block loop on main is currently `range(1, abs(sstep))` (under the overridden, end-inclusive range — iterates 1..sstep inclusive). Under builtin `range`, the equivalent is `range(1, abs(sstep) + 1)`. Both yield the same human-readable labels 1..sstep. **Important:** PR #8 fixed this loop to `range(1, abs(sstep))` *under the wrapper*. After migration, builtin range needs `+ 1` to produce sstep iterations.
+- Init order (`allocate_initial_state` before `prev_num_active_cells = …`) is already correct on main from PR #8 — preserve it.
 
 - [ ] **Step 2: Commit**
 
@@ -430,7 +376,7 @@ git commit -m "refactor: convert main.py to builtin range and 0-based set_params
 
 ---
 
-### Task 6: Convert `esclec.py`
+### Task 4: Convert `esclec.py`
 
 **Files:**
 - Modify: `esclec.py`
@@ -564,7 +510,7 @@ git commit -m "refactor: convert esclec.py to 0-based indexing and plain numpy"
 
 ---
 
-### Task 7: Convert `coreop2d.py`
+### Task 5: Convert `coreop2d.py`
 
 This is the largest file (1385 lines). The conversion is mechanical — apply the cheat sheet — but the volume makes mistakes likely. Work through it method by method, committing after each logical block. After every commit, re-grep for stragglers (see Step 0).
 
@@ -746,48 +692,49 @@ git commit -m "refactor: complete coreop2d.py 0-based conversion"
 
 ---
 
-### Task 8: Run the regression smoke test
+### Task 6: Run the structural smoke test and report metrics
 
 **Files:**
 - (none modified — verification only)
 
 - [ ] **Step 1: Run the smoke test**
 
-Run: `pytest tests/test_simulator_smoke.py -v`
+Run: `.venv/bin/pytest tests/test_simulator_smoke.py -v`
 
-Expected: PASS — the post-migration simulator produces byte-identical OFF output to the golden files.
+Expected: PASS — the post-migration simulator completes a 5-block run, writes 5 OFF files, each with a valid `COFF` header and non-zero vertex/face counts. **Do not** expect byte-identical output to either pre-migration Python (which is broken) or to the FORTRAN goldens (which exposes iteration bugs that are out of scope here).
 
-- [ ] **Step 2: If the test fails, diff and diagnose**
+- [ ] **Step 2: Capture and report the migration's effect on output structure**
 
-If files differ, run:
+Run the simulator manually so you can inspect the output:
 
 ```bash
-diff <(head -50 tests/golden/100_run_.off) <(head -50 .tmp/run-baseline/100_run_.off)
+mkdir -p .tmp/post-migration && rm -f .tmp/post-migration/*.off
+.venv/bin/python main.py examples/seal.txt .tmp/post-migration run 100 5
+head -2 .tmp/post-migration/100_run_.off .tmp/post-migration/500_run_.off
+wc -l .tmp/post-migration/*.off
 ```
 
-(Recapture the live output first by re-running the simulator manually.)
+Report (in the task summary at completion) the per-block vertex count, face count, and a sample z-coordinate. Compare against the FORTRAN reference structure (57 vertices, 236 faces, z growing from ~26 to ~125 in `tests/golden_fortran/README.md`). The migration is *not* expected to make Python match FORTRAN — that's Task 9. But changes from the pre-migration Python's structure (37 vertices, 318 faces, NaN z) signal that the migration either fixed something or broke something new; either way it's worth surfacing.
+
+- [ ] **Step 3: If the smoke test fails, diff and diagnose**
 
 The most likely failure modes, in order:
-1. **Sentinel miss** — somewhere `neigh[...] == 0` was not changed to `== -1`. Symptoms: missing or extra OFF faces, garbled face indices.
-2. **Off-by-one in `range` conversion** — a loop bound was shifted incorrectly. Symptoms: missing first or last cell, extra cell.
-3. **Boundary check still uses `>` not `>=`** — a cell on the boundary is misclassified. Symptoms: faces along the rim differ.
-4. **Mirror calculation `N - i + 1` not converted to `N - 1 - i`** — geometry mirrored to the wrong row. Symptoms: positions mirrored inconsistently.
-5. **`positions[i, 1/2/3]` not all converted to `[i, 0/1/2]`** — one coordinate wrong. Symptoms: vertex coordinates differ in one column.
+1. **Sentinel miss** — somewhere `neigh[...] == 0` was not changed to `== -1`. Symptoms: crash with `IndexError`, or zero vertices/faces written.
+2. **Off-by-one in `range` conversion** — a loop bound was shifted incorrectly. Symptoms: `IndexError`, or the simulator runs but emits wildly wrong file sizes.
+3. **Boundary check still uses `>` not `>=`** — a cell on the boundary is misclassified. Symptoms: face count noticeably different from pre-migration.
+4. **Mirror calculation `N - i + 1` not converted to `N - 1 - i`** — `IndexError` (you'd write to index `N`, which is out of bounds).
+5. **`positions[i, 1/2/3]` not all converted to `[i, 0/1/2]`** — `IndexError` if any access uses index 3 (out of bounds) or wrong coordinate written.
 
-Do not commit any "fix" until the test passes.
-
-- [ ] **Step 3: When green, commit any fixes**
+Fix and re-run until green. Commit fixes individually:
 
 ```bash
-git add -p
-git commit -m "fix: <specific issue> after 0-based migration"
+gitops.sh add coreop2d.py
+gitops.sh commit "fix: <specific issue> after 0-based migration"
 ```
-
-(Use `gitops.sh add` per your wrappers if `git add -p` is awkward.)
 
 ---
 
-### Task 9: Delete `indexing.py`
+### Task 7: Delete `indexing.py`
 
 **Files:**
 - Delete: `indexing.py`
@@ -808,18 +755,18 @@ Run: `git rm indexing.py`
 
 - [ ] **Step 3: Re-run the smoke test**
 
-Run: `pytest tests/test_simulator_smoke.py -v`
+Run: `.venv/bin/pytest tests/test_simulator_smoke.py -v`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git commit -m "refactor: remove obsolete 1-based indexing wrappers"
+gitops.sh commit "refactor: remove obsolete 1-based indexing wrappers"
 ```
 
 ---
 
-### Task 10: Open the PR
+### Task 8: Open the PR
 
 **Files:**
 - (none — git/gh workflow only)
@@ -837,14 +784,18 @@ gitops.sh push-new
 ```bash
 ghops.sh pr create --base main --title "refactor: convert codebase to 0-based indexing" --body "$(cat <<'EOF'
 ## Summary
-- Removes the 1-based `indexing.py` wrappers (an aid for translating from FORTRAN).
-- Converts `vector.py`, `main.py`, `esclec.py`, and `coreop2d.py` to native numpy 0-based indexing.
-- Changes the `neigh[]` sentinel from `0` to `-1` (since `0` is now a valid cell index).
-- Adds an end-to-end smoke test that runs the simulator on `examples/seal.txt` and compares output against captured golden OFF files.
+- Removes the 1-based \`indexing.py\` wrappers (an aid for translating from FORTRAN).
+- Converts \`vector.py\`, \`main.py\`, \`esclec.py\`, and \`coreop2d.py\` to native numpy 0-based indexing.
+- Changes the \`neigh[]\` sentinel from \`0\` to \`-1\` (since \`0\` is now a valid cell index).
+- Adds a structural smoke test that runs the simulator end-to-end and asserts well-formed OFF output.
+
+The migration is structural only — output is **not** byte-identical to either the pre-migration Python (broken: NaN z-coords, frozen cells) or the FORTRAN reference (which exposes iteration bugs). Debugging the iteration code against \`tests/golden_fortran/\` is a separate follow-up (see plan Task 9).
 
 ## Test plan
-- [ ] `pytest tests/test_simulator_smoke.py -v` passes
-- [ ] OFF output for `examples/seal.txt` is byte-identical to the pre-migration baseline
+- [ ] \`.venv/bin/pytest tests/test_simulator_smoke.py -v\` passes
+- [ ] Simulator produces 5 well-formed OFF files for \`examples/seal.txt\`
+- [ ] \`grep -rn "from indexing\\\\|import indexing" .\` returns no Python matches
+- [ ] \`indexing.py\` is deleted
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
@@ -853,16 +804,63 @@ EOF
 
 - [ ] **Step 3: Report the PR URL**
 
+- [ ] **Step 4: Wait for the PR to merge before starting Task 9**
+
+The user merges (you do not have admin permission). Confirm with the user once the PR is up.
+
+---
+
+### Task 9: Dispatch the iteration-debugging subagent
+
+After the migration PR lands, the codebase is clean Python with no wrapper landmines, and `tests/golden_fortran/` contains the FORTRAN's authoritative output. The remaining work is to make the Python iteration code reproduce that output (or at least come close — same vertex count, same face count, real z-coords, growing geometry).
+
+This task does not modify any files in the parent session — it dispatches a single long-running subagent with a clear acceptance criterion.
+
+**Files:**
+- (none modified by the parent — the subagent commits directly)
+
+- [ ] **Step 1: Switch to a fresh debug branch off the now-migrated main**
+
+```bash
+git checkout main && gitops.sh pull
+git checkout -b fix/iteration-vs-fortran
+```
+
+- [ ] **Step 2: Dispatch the subagent**
+
+Use the Agent tool with `subagent_type: general-purpose` and the following prompt (verbatim, with the goal made explicit):
+
+> The Python tooth-morphogenesis simulator at `coreop2d.py` produces structurally valid but mathematically wrong output compared to the original FORTRAN. Your goal: make the Python output match the FORTRAN reference at `tests/golden_fortran/` as closely as possible, in terms of vertex count, face count, and geometric evolution (z-coordinate growth across save blocks).
+>
+> **Ground truth.** The FORTRAN binary is built from `13.f90`. Run `scripts/build-fortran.sh` then `scripts/capture-fortran-golden.sh` to (re)produce reference output. Reference: 5 OFF files, each with 57 vertices, 236 faces, z growing from ~26 (block 1) to ~125 (block 5). See `tests/golden_fortran/README.md`.
+>
+> **Current Python state.** Pre-debug, the Python produces 5 OFF files but with 37 vertices (cells never divide), 318 faces (likely OFF face-emission loop double-counts), NaN z-coordinates (divide-by-zero in `ep_growth_border_force`). The Python is on 0-based indexing per the migration that just landed.
+>
+> **Approach.** Methodically compare each subroutine in `coreop2d.py` against the corresponding FORTRAN subroutine in `13.f90`. Suspect areas: `addcell` (cell division — likely the cause of frozen cell count), `ep_growth_border_force` (the divide-by-zero), `guardaveinsoff_2` (face count discrepancy), `apply_diffusion` and `update_cell_position` (z-coordinate evolution). Use the FORTRAN's variable values as ground truth — compile a debug FORTRAN binary that prints intermediate state if needed.
+>
+> **Workflow.** Make small fixes, run the smoke test (`.venv/bin/pytest tests/test_simulator_smoke.py -v`), then run the simulator manually and inspect output. Commit each fix individually with a clear message naming the FORTRAN line numbers being matched. Don't refactor; minimal changes only.
+>
+> **Stopping conditions.** Stop and report if: (a) the structural metrics match FORTRAN (vertex count = 57, face count = 236, no NaN, z grows ~5x across blocks); (b) you've made 20+ commits without convergence; (c) you find a bug that requires architectural decisions beyond translation fixes.
+>
+> **Do not.** Do not modify the wrapper (it's gone). Do not modify the goldens or the FORTRAN source. Do not open a PR — leave the branch for the user to review.
+>
+> Report at the end: total commits made, what changed (one bullet per fix), final structural metrics vs FORTRAN, anything outstanding.
+
+- [ ] **Step 3: When the subagent returns, review its commits**
+
+Run `git log --oneline main..HEAD` to see what was done. If the work looks reasonable, push and open a PR for review. If not, narrow the brief and re-dispatch.
+
 ---
 
 ## Self-review
 
-**Spec coverage:** the goal was to remove `indexing.py` and switch to native 0-based indexing while preserving simulator output. Tasks 1-3 establish a regression baseline; Tasks 4-7 convert the four source files; Task 8 verifies; Task 9 deletes the wrapper; Task 10 opens the PR. Covered.
+**Spec coverage:** the goal was to remove `indexing.py` and switch to native 0-based indexing. Task 1 sets up a structural smoke test; Tasks 2-5 convert the four source files; Task 6 verifies structurally; Task 7 deletes the wrapper; Task 8 opens the PR. Task 9 dispatches the follow-up iteration-debug effort against the FORTRAN goldens. Covered.
 
-**Placeholder scan:** the cheat sheet, the sentinel section, and each per-file step state explicit pattern transformations and exact code where the engineer needs it. Task 7 Step 8 ("continue method by method") is the one place I rely on the engineer to apply the cheat sheet rather than spelling out every method — but `coreop2d.py` is 1385 lines and listing every method explicitly would inflate the plan beyond usefulness. The cheat sheet, the verification greps in Step 9, and the smoke test together prevent this from being a blank check.
+**Placeholder scan:** Task 5 Step 8 ("continue method by method through the rest of the file") is the one place I rely on the engineer to apply the cheat sheet rather than spelling out every method — but `coreop2d.py` is 1385 lines and listing every method explicitly would inflate the plan beyond usefulness. The cheat sheet, the verification greps in Step 9, and the smoke test together prevent this from being a blank check.
 
-**Type consistency:** `np.ndarray` is used consistently for type annotations; `np.zeros` for allocations (matching the wrappers' pre-zeroed behaviour); `-1` consistently as the new sentinel. The `nca` semantics change (write-then-increment vs increment-then-write) is described once in the cheat sheet and once in Task 7 Step 5 with a worked example, and the call-site updates are spelled out.
+**Type consistency:** `np.ndarray` is used consistently for type annotations; `np.zeros` for allocations (matching the wrappers' pre-zeroed behaviour); `-1` consistently as the new sentinel. The `nca` semantics change (write-then-increment vs increment-then-write) is described once in the cheat sheet and once in Task 5 Step 5 with a worked example, and the call-site updates are spelled out.
 
 **Known risks the plan flags:**
 - The `range(1, jjj, -1)` loop in `calculate_margins` is suspicious in the original and the plan says to verify against the FORTRAN before blindly converting.
-- The "no working baseline" branch (Task 2 Step 2) — if the pre-migration code does not run, the engineer must stop and report rather than silently continue without a regression check.
+- Acceptance is structural, not byte-identical — Task 6 explicitly reports the post-migration metrics so we can spot whether the migration alone happens to fix anything (good) or breaks something new (worth investigating).
+- Task 9 is open-ended — the subagent has stopping conditions but the underlying simulation may have bugs that don't yield to translation fixes alone. The (b) and (c) stopping conditions are the safety net.
