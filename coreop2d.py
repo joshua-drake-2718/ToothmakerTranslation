@@ -38,21 +38,40 @@ verbatim or the simulator falls apart. The chain, in order of execution:
   5. That ε noise makes `sum_a` tiny but positive, so the normalisation
      `area_bottom /= sum_a` is finite. Vertical diffusion proceeds at
      `area_bottom = 0.5` (first norm) and `area_bottom = 1.0` (second norm
-     after the renormalisation block).
+     after the renormalisation block) — the same values the mathematical
+     limit gives.
 
-If any link in the chain breaks (typo "fixed", label 77 moved, fall-
-through patched, FMA disabled), the simulator NaN-cascades. Pure Python
-breaks link 4 by default (`*` and `-` don't use FMA), which is why the
-post-migration Python produces NaN where the FORTRAN does not. A naive
-"defensive" fix at link 5 (e.g. set `area_bottom = 0.5` when sum_a == 0)
-removes the NaN but exposes a downstream over-division bug — cells then
-multiply exponentially (37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in
-70 iterations vs FORTRAN's plateau at 57). The simulator is exquisitely
-tuned to the chain of accidents; nothing in it is robust to fixing
-"obvious" bugs in isolation.
+If any link 1-4 breaks (typo "fixed", label 77 moved, fall-through
+patched, FMA disabled), the FORTRAN also NaN-cascades — confirmed by
+PR #14's `-ffp-contract=off` rebuild. Pure Python breaks link 4 by
+default (`*` and `-` don't use FMA). The Python translation handles
+link 4 by substituting the explicit limit at link 5 (`if sum_a == 0:
+area_bottom = 0.5/1.0`); see the FMA-LIMIT GUARD comment in
+`apply_diffusion`.
 
-Each step in the chain has a `KNOWN ISSUE` comment in this file at the
-relevant code site. See PRs #11-#15 for the full investigation.
+The original handover claimed that fixing link 5 alone exposed a
+single coupled "over-division" bug (cells multiplying exponentially:
+37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in 70 iterations vs
+FORTRAN's plateau at 57). PR #16 traced that to TWO unrelated bugs
+that happened to be masked by the NaN cascade:
+
+  - `update_cell_position`: `forces[:, 2] *= Bgr` was applied to all
+    |y| < Bwi cells; FORTRAN nests it inside each x-sign branch, so
+    cells with x == 0 (initial y-axis cells) don't receive the Bgr
+    boost (FORTRAN 13.f90:863-872).
+  - `add_cell`: a `iiii = kkk = 0` reset clobbered FORTRAN's
+    preserved `iiii` value across the topology walk; FORTRAN's
+    local-variable lifetime carries it forward, which is what causes
+    degenerate walks to get stuck and panic instead of adding bogus
+    cells (FORTRAN 13.f90:1045-1054, 1072-1081).
+
+These are independent of FMA. The chain documented in steps 1-4
+remains real and load-bearing at exactly one site (the apply_diffusion
+divide); it is not a global equilibrium effect.
+
+Each step in the chain has a `KNOWN ISSUE` (or, for step 4-5, an
+`FMA-LIMIT GUARD`) comment in this file at the relevant code site.
+See PRs #11-#16 for the full investigation.
 """
 
 
@@ -491,39 +510,41 @@ class Coreop2d():
                         area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
             area_bottom = area_p[i, :].sum()
             sum_a = pes[i, :].sum() + 2 * area_bottom
-            # KNOWN ISSUE: when sum_a == 0 (a 1-neighbour cell with collapsed
-            # border geometry — produced by add_cell's txungu else-branch,
-            # whose `rtt:` loop is dead code due to a `jjjj` vs `jjj` typo
-            # in FORTRAN 13.f90:1158 — see the matching KNOWN ISSUE comment
-            # near `temp_new_neigh[i, :] = -1` later in this file), this
-            # divides by zero and NaN propagates to every cell via
-            # diffusion coupling.
-            # FORTRAN avoids the NaN purely by accident: when compiled with
-            # fused multiply-add (FMA) emission enabled, the cross product
-            # (uy*dz − uz*dy) is computed as fma(uy, dz, −uz*dy) with one
-            # rounding step instead of two separate ones, leaving an
-            # ulp-level non-zero residual (~1e-18) even when the two
-            # vectors are bit-equal. That ε noise makes sum_a tiny but
-            # positive, so the division is finite. Verified by recompiling
-            # the FORTRAN with `-ffp-contract=off` (FMA disabled): the
-            # FORTRAN binary then produces the same NaN cascade as Python.
-            # FMA emission depends on the compile environment: ARMv8 has FMA
-            # in the base ISA so any -O2 build uses it; Intel needs Haswell+
-            # (FMA3, 2013) plus `-march=native` or `-mfma` (gcc/gfortran
-            # default `-march=x86-64` does NOT enable FMA on x86). Pure
-            # Python with `*` and `-` never uses FMA, so the cross product
-            # is exactly zero.
+            # FMA-LIMIT GUARD: when sum_a == 0 (degenerate cell with
+            # collapsed border geometry — produced by add_cell's txungu
+            # else-branch, whose `rtt:` loop is dead code due to a `jjjj`
+            # vs `jjj` typo at FORTRAN 13.f90:1158 — see the matching
+            # KNOWN ISSUE near `temp_new_neigh[i, :] = -1` later in this
+            # file), this would divide exact zero by exact zero and NaN
+            # would propagate to every cell via diffusion coupling.
             #
-            # The mathematical limit of areap_sum / (pes_sum + 2·areap_sum)
-            # as areap_sum → 0+ with pes_sum = 0 is 1/2, and after the
-            # second normalisation (lines below) the limit is 1.0. Applying
-            # those limits as an explicit guard removes the NaN but exposes
-            # a downstream over-division bug (cells multiply exponentially:
-            # 37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in 70 iterations,
-            # versus FORTRAN's plateau at 57). Both bugs need addressing
-            # together. See PR #12 and PR #14 for the full investigation.
-            area_bottom /= sum_a
-            pes[i, :] /= sum_a
+            # FORTRAN avoids the NaN by accident: with FMA emission
+            # enabled, the upstream cross product (uy*dz − uz*dy) on
+            # bit-equal vectors compiles to fma(uy, dz, −uz*dy) with one
+            # rounding step instead of two, leaving an ulp-level residual
+            # (~1e-18) instead of an exact zero. That ε makes sum_a tiny
+            # but positive, so the divide is finite. Verified in PR #14
+            # by rebuilding the FORTRAN with `-ffp-contract=off`: the
+            # FORTRAN binary then produces the same NaN cascade as Python.
+            #
+            # FMA emission depends on the compile environment: ARMv8 has
+            # FMA in the base ISA so any -O2 build uses it; Intel needs
+            # Haswell+ (FMA3, 2013) plus `-march=native` or `-mfma`
+            # (gcc/gfortran default `-march=x86-64` does NOT enable FMA
+            # on x86). Pure Python's `*` and `-` never use FMA, so the
+            # cross product is exactly zero.
+            #
+            # Substitute the mathematical limit explicitly. As areap_sum → 0+
+            # with pes_sum = 0:
+            #   first  norm: area_bottom = areap_sum / (2·areap_sum) = 0.5,  pes = 0
+            #   second norm: area_bottom = areap_sum / areap_sum = 1.0,      pes = 0
+            sum_a_is_zero = (sum_a == 0)
+            if sum_a_is_zero:
+                area_bottom = 0.5
+                pes[i, :] = 0
+            else:
+                area_bottom /= sum_a
+                pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d):
                 for kk in range(1, cls.max_z_layers-1):  # FORTRAN: do kk=2,max_z_layers-1 → 0-based 1..max_z_layers-2
                     hq3d[i, kk, k] += area_bottom * (cls.q3d[i, kk-1, k] - cls.q3d[i, kk, k])
@@ -545,11 +566,15 @@ class Coreop2d():
                             hq3d[i, top, k] -= 0.44 * pes[i, j] * cls.q3d[i, top, k] # sink
                         else:
                             hq3d[i, top, k] += pes[i, j] * (cls.q3d[ii, top, k] - cls.q3d[i, top, k])
-            pes[i, :] *= sum_a
-            area_bottom *= sum_a    # FORTRAN 13.f90:451 — restore absolute, then subtract
-            sum_a -= area_bottom
-            pes[i, :] /= sum_a
-            area_bottom /= sum_a    # FORTRAN 13.f90:452 — re-normalise to new sum
+            if sum_a_is_zero:
+                area_bottom = 1.0
+                # pes stays 0
+            else:
+                pes[i, :] *= sum_a
+                area_bottom *= sum_a    # FORTRAN 13.f90:451 — restore absolute, then subtract
+                sum_a -= area_bottom
+                pes[i, :] /= sum_a
+                area_bottom /= sum_a    # FORTRAN 13.f90:452 — re-normalise to new sum
             for k in range(cls.num_species_in_q3d): # ATTENTION
                 hq3d[i, 0, k] = area_bottom * (cls.q3d[i, 1, k] - cls.q3d[i, 0, k])
                 for j in range(cls.nv_max):
@@ -943,13 +968,19 @@ class Coreop2d():
     @classmethod
     def update_cell_position(cls):
         # we determine the extremes
+        # FORTRAN 13.f90:863-872 — the forces[:,2] *= Bgr is INSIDE each
+        # x-sign branch. Cells with x exactly == 0 (initial y-axis cells)
+        # don't receive the Bgr boost. Applying Bgr unconditionally when
+        # |y| < Bwi over-pushes y-axis cells in z by Bgr×, breaking the
+        # equilibrium and causing exponential over-division downstream.
         for i in range(cls.first_border_cell):
             if abs(cls.positions[i, 1]) < cls.Bwi:
                 if cls.positions[i, 0] > 0:
                     cls.forces[i, 0] *= cls.Pbi
+                    cls.forces[i, 2] *= cls.Bgr
                 elif cls.positions[i, 0] < 0:
                     cls.forces[i, 0] *= cls.Abi
-                cls.forces[i, 2] *= cls.Bgr
+                    cls.forces[i, 2] *= cls.Bgr
 
         for i in range(cls.num_active_cells):
             if cls.forces[i, 2] < 0 or cls.knots[i] == 1:
@@ -965,6 +996,18 @@ class Coreop2d():
         new_cell_is_external = np.zeros((cls.num_active_cells * cls.nv_max), dtype=bool)
         pillats = np.zeros((cls.nv_max), dtype=np.int32)
         num_new_cells = 0
+        # FORTRAN 13.f90:1045-1054, 1072-1081: iiii is preserved across the
+        # neighbour search when no new neighbour is found (only kkk is reset,
+        # not iiii). FORTRAN's local-variable lifetime carries the previous
+        # iiii forward; the topology walk relies on this to get stuck and
+        # panic on degenerate cells (e.g. cell with only one neighbour),
+        # which is the safety mechanism that prevents bogus cell additions.
+        # Python must explicitly preserve iiii across both pair iterations
+        # and within-loop searches. A naive `iiii = kkk = 0` reset jumps
+        # the walk to cell index 0 (a real cell in 0-based) instead of
+        # staying stuck, so the walk continues incorrectly and adds cells
+        # FORTRAN refuses to add.
+        iiii = 0
 
         # first we identify and name the new nodes and rescale the mesh matrix and see
         for i in range(cls.num_active_cells):
@@ -1112,7 +1155,7 @@ class Coreop2d():
                         jjj = j
                         break
                 # side j+1(right); we follow the neighbor towards the j+1 side of iii
-                iiii = kkk = 0
+                kkk = 0  # iiii preserved (see comment in add_cell head)
                 for j in range(jjj+1, cls.nv_max):
                     jji = temp_neigh[iii, j]
                     if jji != -1 and jji < cls.num_active_cells + num_new_cells:
@@ -1142,7 +1185,7 @@ class Coreop2d():
                     iii = iiii
                     jjj = jjjj
 
-                    iiii = kkk = 0
+                    kkk = 0  # iiii preserved (see comment in add_cell head)
                     for j in range(jjj+1, cls.nv_max):
                         jji = temp_neigh[iii, j]
                         if jji != -1 and jji < cls.num_active_cells + num_new_cells:
