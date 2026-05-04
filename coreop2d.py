@@ -418,13 +418,23 @@ class Coreop2d():
             # KNOWN ISSUE: when sum_a == 0 (a 1-neighbour cell with collapsed
             # border geometry — common after add_cell since FORTRAN's txungu
             # branch deliberately produces such cells), this divides by zero
-            # and NaN propagates to every cell via diffusion coupling. FORTRAN
-            # avoids the NaN purely by accident: at -O2 on ARM the cross
-            # product (uy*dz - uz*dy) etc. uses fused multiply-add (FMA),
-            # which leaves an ulp-level non-zero residual when the two
+            # and NaN propagates to every cell via diffusion coupling.
+            # FORTRAN avoids the NaN purely by accident: when compiled with
+            # fused multiply-add (FMA) emission enabled, the cross product
+            # (uy*dz − uz*dy) is computed as fma(uy, dz, −uz*dy) with one
+            # rounding step instead of two separate ones, leaving an
+            # ulp-level non-zero residual (~1e-18) even when the two
             # vectors are bit-equal. That ε noise makes sum_a tiny but
-            # positive, so the division is finite. Pure Python with `*` and
-            # `-` does not use FMA, so the cross product is exactly zero.
+            # positive, so the division is finite. Verified by recompiling
+            # the FORTRAN with `-ffp-contract=off` (FMA disabled): the
+            # FORTRAN binary then produces the same NaN cascade as Python.
+            # FMA emission depends on the compile environment: ARMv8 has FMA
+            # in the base ISA so any -O2 build uses it; Intel needs Haswell+
+            # (FMA3, 2013) plus `-march=native` or `-mfma` (gcc/gfortran
+            # default `-march=x86-64` does NOT enable FMA on x86). Pure
+            # Python with `*` and `-` never uses FMA, so the cross product
+            # is exactly zero.
+            #
             # The mathematical limit of areap_sum / (pes_sum + 2·areap_sum)
             # as areap_sum → 0+ with pes_sum = 0 is 1/2, and after the
             # second normalisation (lines below) the limit is 1.0. Applying
@@ -432,7 +442,7 @@ class Coreop2d():
             # a downstream over-division bug (cells multiply exponentially:
             # 37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in 70 iterations,
             # versus FORTRAN's plateau at 57). Both bugs need addressing
-            # together. See PR #12 for the full investigation trace.
+            # together. See PR #12 and PR #14 for the full investigation.
             area_bottom /= sum_a
             pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d):
