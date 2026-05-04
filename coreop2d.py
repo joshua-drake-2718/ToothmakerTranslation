@@ -884,6 +884,18 @@ class Coreop2d():
         new_cell_is_external = np.zeros((cls.num_active_cells * cls.nv_max), dtype=bool)
         pillats = np.zeros((cls.nv_max), dtype=np.int32)
         num_new_cells = 0
+        # FORTRAN 13.f90:1045-1054, 1072-1081: iiii is preserved across the
+        # neighbour search when no new neighbour is found (only kkk is reset,
+        # not iiii). FORTRAN's local-variable lifetime carries the previous
+        # iiii forward; the topology walk relies on this to get stuck and
+        # panic on degenerate cells (e.g. cell with only one neighbour),
+        # which is the safety mechanism that prevents bogus cell additions.
+        # Python must explicitly preserve iiii across both pair iterations
+        # and within-loop searches. A naive `iiii = kkk = 0` reset jumps
+        # the walk to cell index 0 (a real cell in 0-based) instead of
+        # staying stuck, so the walk continues incorrectly and adds cells
+        # FORTRAN refuses to add.
+        iiii = 0
 
         # first we identify and name the new nodes and rescale the mesh matrix and see
         for i in range(cls.num_active_cells):
@@ -1031,7 +1043,7 @@ class Coreop2d():
                         jjj = j
                         break
                 # side j+1(right); we follow the neighbor towards the j+1 side of iii
-                iiii = kkk = 0
+                kkk = 0  # iiii preserved (see comment in add_cell head)
                 for j in range(jjj+1, cls.nv_max):
                     jji = temp_neigh[iii, j]
                     if jji != -1 and jji < cls.num_active_cells + num_new_cells:
@@ -1061,7 +1073,7 @@ class Coreop2d():
                     iii = iiii
                     jjj = jjjj
 
-                    iiii = kkk = 0
+                    kkk = 0  # iiii preserved (see comment in add_cell head)
                     for j in range(jjj+1, cls.nv_max):
                         jji = temp_neigh[iii, j]
                         if jji != -1 and jji < cls.num_active_cells + num_new_cells:
