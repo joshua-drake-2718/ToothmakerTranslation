@@ -856,13 +856,19 @@ class Coreop2d():
     @classmethod
     def update_cell_position(cls):
         # we determine the extremes
+        # FORTRAN 13.f90:863-872 — the forces[:,2] *= Bgr is INSIDE each
+        # x-sign branch. Cells with x exactly == 0 (initial y-axis cells)
+        # don't receive the Bgr boost. Applying Bgr unconditionally when
+        # |y| < Bwi over-pushes y-axis cells in z by Bgr×, breaking the
+        # equilibrium and causing exponential over-division downstream.
         for i in range(cls.first_border_cell):
             if abs(cls.positions[i, 1]) < cls.Bwi:
                 if cls.positions[i, 0] > 0:
                     cls.forces[i, 0] *= cls.Pbi
+                    cls.forces[i, 2] *= cls.Bgr
                 elif cls.positions[i, 0] < 0:
                     cls.forces[i, 0] *= cls.Abi
-                cls.forces[i, 2] *= cls.Bgr
+                    cls.forces[i, 2] *= cls.Bgr
 
         for i in range(cls.num_active_cells):
             if cls.forces[i, 2] < 0 or cls.knots[i] == 1:
