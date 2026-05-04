@@ -415,6 +415,24 @@ class Coreop2d():
                         area_p[i, j] = 0.5 * vector.a_magnitude(vector.cross_product(ux, uy, uz, dx, dy, dz))
             area_bottom = area_p[i, :].sum()
             sum_a = pes[i, :].sum() + 2 * area_bottom
+            # KNOWN ISSUE: when sum_a == 0 (a 1-neighbour cell with collapsed
+            # border geometry — common after add_cell since FORTRAN's txungu
+            # branch deliberately produces such cells), this divides by zero
+            # and NaN propagates to every cell via diffusion coupling. FORTRAN
+            # avoids the NaN purely by accident: at -O2 on ARM the cross
+            # product (uy*dz - uz*dy) etc. uses fused multiply-add (FMA),
+            # which leaves an ulp-level non-zero residual when the two
+            # vectors are bit-equal. That ε noise makes sum_a tiny but
+            # positive, so the division is finite. Pure Python with `*` and
+            # `-` does not use FMA, so the cross product is exactly zero.
+            # The mathematical limit of areap_sum / (pes_sum + 2·areap_sum)
+            # as areap_sum → 0+ with pes_sum = 0 is 1/2, and after the
+            # second normalisation (lines below) the limit is 1.0. Applying
+            # those limits as an explicit guard removes the NaN but exposes
+            # a downstream over-division bug (cells multiply exponentially:
+            # 37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in 70 iterations,
+            # versus FORTRAN's plateau at 57). Both bugs need addressing
+            # together. See PR #12 for the full investigation trace.
             area_bottom /= sum_a
             pes[i, :] /= sum_a
             for k in range(cls.num_species_in_q3d):
