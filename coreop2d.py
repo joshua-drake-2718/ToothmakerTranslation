@@ -7,22 +7,48 @@ import numpy as np
 """
 Translation note — chain of accidental behaviours in the FORTRAN reference
 
-The original FORTRAN simulator (`13.f90`) works through a chain of compile-
-environment- and compiler-dependent accidents that compose into a stable
-numerical result. The Python translation must preserve these accidents
-verbatim or the simulator falls apart. The chain, in order of execution:
+This file is a Python translation of `13.f90`, which is itself an
+English-renamed copy of `humppa_translate.f90` from `jernvall-lab/
+ToothMaker` (see `docs/research/path-b-research.md` for the full
+provenance chain). Where this docstring refers to 'the FORTRAN', it
+means `13.f90` specifically; the upstream Catalan-named ancestor
+(humppa) and its smaller fork (`tgrohens/toothmaker`) differ in the
+ways noted below.
 
-  1. `add_cell`'s txungu else-branch contains a typo (`jjjj` instead of
-     `jjj`, FORTRAN 13.f90:1158) that makes the inner `rtt:` loop dead
-     code. The branch fires ~100 times per save block and always produces
-     `temp_new_neigh[i, :] = [ini, 0, 0, ...]` — single-neighbour cells.
-     Trace evidence in PR #15.
+`13.f90` reaches a stable numerical result on the seal example only
+through a chain of compile-environment- and renaming-process accidents
+that compose. The Python translation preserves these accidents verbatim
+to match the captured goldens. The chain, in order of execution:
+
+  1. `add_cell`'s txungu else-branch executes a `rtt:` loop whose
+     body never runs because of a renaming-introduced inconsistency at
+     `13.f90:1156-1158`: the loop assigns to `jjj` (`jjj=pillats(kkk)`)
+     but its conditionals test `jjjj` (a loop-invariant value set
+     before the loop). The branch fires ~100 times per save block and
+     always produces `temp_new_neigh[i, :] = [ini, 0, 0, ...]` —
+     single-neighbour cells.
+
+     Provenance: this inconsistency is *not* in the upstream FORTRAN.
+     `humppa_translate.f90:1336-1345` and `tgrohens/coreop2d.f90:
+     1276-1285` both write `jjjj=pillats(kkk)` and test `jjjj` —
+     internally consistent, the loop runs. The mismatch was
+     introduced when `13.f90` was renamed from Catalan to English:
+     the assignment was renamed `jjjj` → `jjj` but the conditionals
+     were left untouched. In humppa, the `rtt:` loop is live code
+     and produces multi-neighbour cells in this branch.
+
+     The `goto 899` immediately after the loop (`13.f90:1166`,
+     humppa `:1346`, tgrohens `:1286`) is identical in all three
+     files and skips a large disabled block to the continuation at
+     label 899. That `goto` is unrelated to the renaming typo.
 
   2. `calculate_margins` has label 77 *outside* the `if (neigh /= 0)`
      block (FORTRAN 13.f90:393), so for every empty neighbour slot it
      re-runs `border(i, j, 1:3) = a/cont` using the LAST computed values
      of `a, b, c, cont` from the previous iteration. Empty slots get
-     filled with the same border position as the previous non-empty slot.
+     filled with the same border position as the previous non-empty
+     slot. Present in humppa and tgrohens identically; not a
+     translation artefact.
 
   3. `apply_diffusion`'s fallback branch then computes a cross product of
      two bit-equal vectors (border[i, j, :] - positions[i, :]) ×
@@ -41,37 +67,51 @@ verbatim or the simulator falls apart. The chain, in order of execution:
      after the renormalisation block) — the same values the mathematical
      limit gives.
 
-If any link 1-4 breaks (typo "fixed", label 77 moved, fall-through
-patched, FMA disabled), the FORTRAN also NaN-cascades — confirmed by
-PR #14's `-ffp-contract=off` rebuild. Pure Python breaks link 4 by
-default (`*` and `-` don't use FMA). The Python translation handles
-link 4 by substituting the explicit limit at link 5 (`if sum_a == 0:
-area_bottom = 0.5/1.0`); see the FMA-LIMIT GUARD comment in
-`apply_diffusion`.
+If any link 1-4 breaks in `13.f90` (txungu inconsistency "fixed", label 77
+moved, fall-through patched, FMA disabled), `13.f90` also NaN-cascades
+— confirmed by PR #14's `-ffp-contract=off` rebuild. Pure Python breaks
+link 4 by default (`*` and `-` don't use FMA). The Python translation
+handles link 4 by substituting the explicit limit at link 5
+(`if sum_a == 0: area_bottom = 0.5/1.0`); see the FMA-LIMIT GUARD
+comment in `apply_diffusion`.
+
+humppa and tgrohens, run on equivalent inputs, would not necessarily
+reproduce `13.f90`'s goldens — link 1 is `13.f90`-specific, and the
+txungu else-branch's behaviour differs. Path B (paper-faithful
+re-implementation) targets the upstream model behaviour, not
+`13.f90`'s renaming-typo accidents.
 
 The original handover claimed that fixing link 5 alone exposed a
 single coupled "over-division" bug (cells multiplying exponentially:
 37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in 70 iterations vs
 FORTRAN's plateau at 57). PR #16 traced that to TWO unrelated bugs
-that happened to be masked by the NaN cascade:
+that the NaN cascade had been masking. Both turned out to be
+artefacts of *our* Python migration (and not present in `13.f90` or
+its upstream); the fixes restore the FORTRAN structure verbatim:
 
-  - `update_cell_position`: `forces[:, 2] *= Bgr` was applied to all
-    |y| < Bwi cells; FORTRAN nests it inside each x-sign branch, so
-    cells with x == 0 (initial y-axis cells) don't receive the Bgr
-    boost (FORTRAN 13.f90:863-872).
-  - `add_cell`: a `iiii = kkk = 0` reset clobbered FORTRAN's
-    preserved `iiii` value across the topology walk; FORTRAN's
-    local-variable lifetime carries it forward, which is what causes
-    degenerate walks to get stuck and panic instead of adding bogus
-    cells (FORTRAN 13.f90:1045-1054, 1072-1081).
+  - `update_cell_position`: an earlier Python migration had moved
+    `forces[:, 2] *= Bgr` outside the x-sign branches. `13.f90:
+    863-872`, `humppa:1044-1070` and `tgrohens:984-1010` all nest
+    it inside each branch, so cells with x == 0 don't receive the
+    boost. PR #16 restored the FORTRAN nesting.
+  - `add_cell`: an earlier Python migration had added an explicit
+    `iiii = kkk = 0` reset that the FORTRAN doesn't have — the
+    FORTRAN relies on local-variable lifetime to carry `iiii`
+    forward across topology-walk iterations, which is the
+    mechanism that makes degenerate walks panic instead of
+    adding bogus cells (`13.f90:1045-1054, 1072-1081`,
+    `humppa:1226-1252`). PR #16 removed the spurious reset.
 
-These are independent of FMA. The chain documented in steps 1-4
-remains real and load-bearing at exactly one site (the apply_diffusion
-divide); it is not a global equilibrium effect.
+These two were independent of FMA and independent of the link-1-to-4
+chain. The chain documented in steps 1-4 remains real and load-bearing
+in `13.f90` at exactly one site (the apply_diffusion divide); it is not
+a global equilibrium effect.
 
 Each step in the chain has a `KNOWN ISSUE` (or, for step 4-5, an
 `FMA-LIMIT GUARD`) comment in this file at the relevant code site.
-See PRs #11-#16 for the full investigation.
+See PRs #11-#16 for the full investigation; see
+`docs/research/cpp-port-review.md` and `docs/research/tgrohens-review.md`
+for the cross-fork comparisons that established the link-1 provenance.
 """
 
 
@@ -1286,44 +1326,61 @@ class Coreop2d():
                                 return  # FORTRAN: panic=1; return
                             for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
-                                # KNOWN ISSUE — FORTRAN typo, preserved verbatim
-                                # because it is load-bearing.
+                                # KNOWN ISSUE — `13.f90` renaming inconsistency,
+                                # preserved verbatim because it is load-bearing
+                                # for `13.f90`'s goldens.
                                 #
-                                # FORTRAN 13.f90:1158-1163 tests `jjjj` (loop-
-                                # invariant, set at line 1096 to `sjj-1` — a
-                                # *slot index* in temp_neigh, runs 1..nv_max)
-                                # instead of `jjj` (the freshly-assigned cell
-                                # index from pillats). The two checks
+                                # `13.f90:1156-1163` assigns `jjj=pillats(kkk)`
+                                # but tests `jjjj` (a loop-invariant value set
+                                # at `13.f90:1096` to `sjj-1` — a *slot index*
+                                # in temp_neigh, runs 1..nv_max). The two checks
                                 # `if (jjjj == fi)` and `if (jjjj > num_active_cells)`
-                                # compare a slot index to a cell index — semantically
-                                # nonsense. The author clearly meant `jjj`.
+                                # compare a slot index to a cell index —
+                                # semantically nonsense. The loop body never
+                                # fires; the loop is dead code in `13.f90`.
                                 #
-                                # Trace evidence (PR #15) from gfortran -O2 on the
-                                # seal example: the txungu else-branch fires 506
-                                # times across 5 save blocks, and EVERY firing
-                                # produces temp_new_neigh[i, :] = [ini, 0, 0, ...].
-                                # The conditional checks never fire because jjjj
-                                # is always 1..5 while fi is ~20+ and num_active_cells
-                                # is 37+. The rtt loop is dead code.
+                                # Provenance: this inconsistency is *not* in
+                                # the upstream Catalan FORTRAN.
+                                # `humppa_translate.f90:1336-1345` and
+                                # `tgrohens/coreop2d.f90:1276-1285` both write
+                                # `jjjj=pillats(kkk)` and test `jjjj` —
+                                # internally consistent, the loop runs. The
+                                # Catalan→English renaming changed the
+                                # assignment to `jjj` but missed the
+                                # conditional tests. See the module-level
+                                # docstring for the full chain of accidents
+                                # this triggers.
+                                #
+                                # Trace evidence (PR #15) from gfortran -O2 on
+                                # the seal example: the txungu else-branch
+                                # fires 506 times across 5 save blocks, and
+                                # EVERY firing produces
+                                # temp_new_neigh[i, :] = [ini, 0, 0, ...].
+                                # The conditional checks never fire because
+                                # jjjj is always 1..5 while fi is ~20+ and
+                                # num_active_cells is 37+.
                                 #
                                 # The dead-loop output (single-neighbour cells)
-                                # is what the rest of the simulation expects:
-                                # calculate_margins's label-77 fall-through fills
-                                # empty border slots with the last-computed value;
-                                # apply_diffusion's fallback then computes a cross
-                                # product of bit-equal vectors that FMA turns into
-                                # an ulp-noise non-zero (see comment near
-                                # apply_diffusion's sum_a divide). Break this chain
-                                # at any point — fix this typo, fix label-77, fix
-                                # the fall-through, disable FMA — and the FORTRAN
-                                # also produces a NaN cascade. The simulator is
-                                # self-consistent in its accidents.
+                                # is what the rest of `13.f90` expects:
+                                # calculate_margins's label-77 fall-through
+                                # fills empty border slots with the
+                                # last-computed value; apply_diffusion's
+                                # fallback then computes a cross product of
+                                # bit-equal vectors that FMA turns into an
+                                # ulp-noise non-zero. Break this chain at any
+                                # point — fix this inconsistency, fix
+                                # label-77, fix the fall-through, disable FMA
+                                # — and `13.f90` also produces a NaN cascade.
                                 #
-                                # Naively changing `jjjj` to `jjj` produces 629
-                                # cells/block (FORTRAN target 57) — confirms the
-                                # downstream code assumes the dead-loop output.
+                                # Naively changing `jjjj` to `jjj` here (or
+                                # equivalently renaming the test in `13.f90`
+                                # to match) produces 629 cells/block (target
+                                # 57) — confirms that the rest of `13.f90`
+                                # has been tuned to the dead-loop output.
                                 # See PR #12, PR #14, PR #15 for the full
-                                # investigation chain.
+                                # investigation chain. Path B should NOT
+                                # reproduce this branch's behaviour; humppa
+                                # does not.
                                 if jjjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
