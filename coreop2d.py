@@ -4,6 +4,58 @@ import vector
 import numpy as np
 
 
+"""
+Translation note — chain of accidental behaviours in the FORTRAN reference
+
+The original FORTRAN simulator (`13.f90`) works through a chain of compile-
+environment- and compiler-dependent accidents that compose into a stable
+numerical result. The Python translation must preserve these accidents
+verbatim or the simulator falls apart. The chain, in order of execution:
+
+  1. `add_cell`'s txungu else-branch contains a typo (`jjjj` instead of
+     `jjj`, FORTRAN 13.f90:1158) that makes the inner `rtt:` loop dead
+     code. The branch fires ~100 times per save block and always produces
+     `temp_new_neigh[i, :] = [ini, 0, 0, ...]` — single-neighbour cells.
+     Trace evidence in PR #15.
+
+  2. `calculate_margins` has label 77 *outside* the `if (neigh /= 0)`
+     block (FORTRAN 13.f90:393), so for every empty neighbour slot it
+     re-runs `border(i, j, 1:3) = a/cont` using the LAST computed values
+     of `a, b, c, cont` from the previous iteration. Empty slots get
+     filled with the same border position as the previous non-empty slot.
+
+  3. `apply_diffusion`'s fallback branch then computes a cross product of
+     two bit-equal vectors (border[i, j, :] - positions[i, :]) ×
+     (border[i, 1, :] - positions[i, :]). Mathematically zero.
+
+  4. With FMA emission enabled (default on ARM at -O2; Intel needs
+     Haswell+ and `-march=native` or `-mfma`), the cross product
+     `uy*dz - uz*dy` is computed as `fma(uy, dz, -uz*dy)` with one
+     rounding step instead of two, leaving an ulp-level non-zero
+     residual (~1e-18). Verified in PR #14: rebuilding the FORTRAN with
+     `-ffp-contract=off` produces the same NaN cascade as Python.
+
+  5. That ε noise makes `sum_a` tiny but positive, so the normalisation
+     `area_bottom /= sum_a` is finite. Vertical diffusion proceeds at
+     `area_bottom = 0.5` (first norm) and `area_bottom = 1.0` (second norm
+     after the renormalisation block).
+
+If any link in the chain breaks (typo "fixed", label 77 moved, fall-
+through patched, FMA disabled), the simulator NaN-cascades. Pure Python
+breaks link 4 by default (`*` and `-` don't use FMA), which is why the
+post-migration Python produces NaN where the FORTRAN does not. A naive
+"defensive" fix at link 5 (e.g. set `area_bottom = 0.5` when sum_a == 0)
+removes the NaN but exposes a downstream over-division bug — cells then
+multiply exponentially (37 → 49 → 79 → 139 → 199 → 229 → 289 → 349 in
+70 iterations vs FORTRAN's plateau at 57). The simulator is exquisitely
+tuned to the chain of accidents; nothing in it is robust to fixing
+"obvious" bugs in isolation.
+
+Each step in the chain has a `KNOWN ISSUE` comment in this file at the
+relevant code site. See PRs #11-#15 for the full investigation.
+"""
+
+
 class Coreop2d():
     positions:  np.ndarray
     border:     np.ndarray
@@ -361,7 +413,31 @@ class Coreop2d():
                         calculate_margins_a()
                     else:
                         calculate_margins_b()
-                    # 77
+                    # 77 — KNOWN ISSUE: FORTRAN 13.f90:393 has this assignment
+                    # OUTSIDE the `if (neigh /= 0)` block, so for empty
+                    # neighbour slots (`neigh(i, j) == 0`) the assignment runs
+                    # using the LAST computed values of `a, b, c, count` from
+                    # the previous non-empty j. Effect: a 1-neighbour cell
+                    # (which `add_cell`'s txungu else-branch deliberately
+                    # produces) gets `border[i, j, 0:3]` filled with the same
+                    # position for every j, rather than zeros.
+                    #
+                    # Verified by FORTRAN trace (PR #15): for cell 42 with
+                    # neigh = [2, 0, 0, ...], FORTRAN's border(42, 1, 1:3) =
+                    # border(42, 5, 1:3) = border(42, 10, 1:3) — all the same
+                    # real position. Python's structure (assignment INSIDE
+                    # the if-block, as the migration moved it) sets only
+                    # border[42, 0, 0:3] and leaves the rest at zero.
+                    #
+                    # This difference is then load-bearing for `apply_diffusion`
+                    # — see the KNOWN ISSUE comment near `area_bottom /= sum_a`.
+                    # If border[i, j, 0:3] were also filled here for empty
+                    # slots, the apply_diffusion fallback would have non-zero
+                    # input vectors and the cross product would be small but
+                    # non-zero (without needing FMA). That alone wouldn't fix
+                    # the simulator (the over-division bug is downstream of
+                    # apply_diffusion), but it is one of the chain's load-
+                    # bearing accidents — see the module-level docstring.
                     cls.border[i, j, 0] = a / count
                     cls.border[i, j, 1] = b / count
                     cls.border[i, j, 2] = c / count
@@ -416,9 +492,12 @@ class Coreop2d():
             area_bottom = area_p[i, :].sum()
             sum_a = pes[i, :].sum() + 2 * area_bottom
             # KNOWN ISSUE: when sum_a == 0 (a 1-neighbour cell with collapsed
-            # border geometry — common after add_cell since FORTRAN's txungu
-            # branch deliberately produces such cells), this divides by zero
-            # and NaN propagates to every cell via diffusion coupling.
+            # border geometry — produced by add_cell's txungu else-branch,
+            # whose `rtt:` loop is dead code due to a `jjjj` vs `jjj` typo
+            # in FORTRAN 13.f90:1158 — see the matching KNOWN ISSUE comment
+            # near `temp_new_neigh[i, :] = -1` later in this file), this
+            # divides by zero and NaN propagates to every cell via
+            # diffusion coupling.
             # FORTRAN avoids the NaN purely by accident: when compiled with
             # fused multiply-add (FMA) emission enabled, the cross product
             # (uy*dz − uz*dy) is computed as fma(uy, dz, −uz*dy) with one
@@ -1164,18 +1243,44 @@ class Coreop2d():
                                 return  # FORTRAN: panic=1; return
                             for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
-                                # KNOWN ISSUE (probable FORTRAN bug, preserved for fidelity):
-                                # FORTRAN 13.f90:1158-1163 tests `jjjj` (loop-invariant,
-                                # set outside this loop) instead of `jjj` (the freshly
-                                # assigned value). Author almost certainly meant `jjj`.
-                                # Effect: this branch produces degenerate single-neighbour
-                                # cells, whose zero border area in apply_diffusion divides
-                                # to NaN and propagates through every cell via diffusion
-                                # coupling. Visible as NaN z-coordinates in OFF output.
-                                # Don't "fix" this without instrumenting FORTRAN to confirm
-                                # intended behaviour — naively changing `jjjj` to `jjj`
-                                # produces 629 cells/block (FORTRAN target 57).
-                                # See PR #12 description for full diagnosis.
+                                # KNOWN ISSUE — FORTRAN typo, preserved verbatim
+                                # because it is load-bearing.
+                                #
+                                # FORTRAN 13.f90:1158-1163 tests `jjjj` (loop-
+                                # invariant, set at line 1096 to `sjj-1` — a
+                                # *slot index* in temp_neigh, runs 1..nv_max)
+                                # instead of `jjj` (the freshly-assigned cell
+                                # index from pillats). The two checks
+                                # `if (jjjj == fi)` and `if (jjjj > num_active_cells)`
+                                # compare a slot index to a cell index — semantically
+                                # nonsense. The author clearly meant `jjj`.
+                                #
+                                # Trace evidence (PR #15) from gfortran -O2 on the
+                                # seal example: the txungu else-branch fires 506
+                                # times across 5 save blocks, and EVERY firing
+                                # produces temp_new_neigh[i, :] = [ini, 0, 0, ...].
+                                # The conditional checks never fire because jjjj
+                                # is always 1..5 while fi is ~20+ and num_active_cells
+                                # is 37+. The rtt loop is dead code.
+                                #
+                                # The dead-loop output (single-neighbour cells)
+                                # is what the rest of the simulation expects:
+                                # calculate_margins's label-77 fall-through fills
+                                # empty border slots with the last-computed value;
+                                # apply_diffusion's fallback then computes a cross
+                                # product of bit-equal vectors that FMA turns into
+                                # an ulp-noise non-zero (see comment near
+                                # apply_diffusion's sum_a divide). Break this chain
+                                # at any point — fix this typo, fix label-77, fix
+                                # the fall-through, disable FMA — and the FORTRAN
+                                # also produces a NaN cascade. The simulator is
+                                # self-consistent in its accidents.
+                                #
+                                # Naively changing `jjjj` to `jjj` produces 629
+                                # cells/block (FORTRAN target 57) — confirms the
+                                # downstream code assumes the dead-loop output.
+                                # See PR #12, PR #14, PR #15 for the full
+                                # investigation chain.
                                 if jjjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
