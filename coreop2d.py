@@ -948,19 +948,13 @@ class Coreop2d():
                 # The 0.333 instead of 0.25 is a trick because before we multiplied the parents by 3/4
 
             for i in range(num_new_cells):
-                # FORTRAN 13.f90:1000-1003 reads ii=parents[0], kk=parents[1],
-                # jj=num_active+i and replaces ii's `kk` entry with `jj` (and
-                # vice versa). The previous variable swap below preserves a
-                # working topology by leaving the original parent-parent
-                # links in place, even though it is not faithful to FORTRAN.
-                # The faithful version exposes a downstream txungu-branch
-                # bug (FORTRAN 13.f90:1158 reads stale `jjjj`) that strips
-                # newly-divided cells of their parent links and produces NaN
-                # in apply_diffusion. Until the txungu branch is fixed, the
-                # swap is the lesser evil.
+                # FORTRAN 13.f90:999-1004: replace each parent's reference to
+                # the other parent with the new cell, so the parents are now
+                # separated by the newly-inserted cell instead of directly
+                # adjacent.
                 ii = new_cell_pairs[i, 0]
-                jj = new_cell_pairs[i, 1]
-                kk = cls.num_active_cells + i
+                kk = new_cell_pairs[i, 1]
+                jj = cls.num_active_cells + i
                 for j in range(cls.nv_max):
                     if temp_neigh[ii, j] == kk:
                         temp_neigh[ii, j] = jj
@@ -1142,8 +1136,18 @@ class Coreop2d():
                                 return  # FORTRAN: panic=1; return
                             for kkk in range(cj + 1):
                                 jjj = pillats[kkk]
-                                # FORTRAN 13.f90:1158-1163 reads `jjjj` (loop-invariant
-                                # stale value) — preserved verbatim for fidelity.
+                                # KNOWN ISSUE (probable FORTRAN bug, preserved for fidelity):
+                                # FORTRAN 13.f90:1158-1163 tests `jjjj` (loop-invariant,
+                                # set outside this loop) instead of `jjj` (the freshly
+                                # assigned value). Author almost certainly meant `jjj`.
+                                # Effect: this branch produces degenerate single-neighbour
+                                # cells, whose zero border area in apply_diffusion divides
+                                # to NaN and propagates through every cell via diffusion
+                                # coupling. Visible as NaN z-coordinates in OFF output.
+                                # Don't "fix" this without instrumenting FORTRAN to confirm
+                                # intended behaviour — naively changing `jjjj` to `jjj`
+                                # produces 629 cells/block (FORTRAN target 57).
+                                # See PR #12 description for full diagnosis.
                                 if jjjj == fi:
                                     kkkk += 1
                                     temp_new_neigh[i, kkkk] = fi
