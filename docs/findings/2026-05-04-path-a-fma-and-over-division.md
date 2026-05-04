@@ -4,6 +4,28 @@ author: Lyndon Drake (with Claude Code)
 date: 2026-05-04
 ---
 
+> **Editor's note (added later, same day, after Path B planning research).**
+> Two factual claims in this document have been refined by subsequent
+> cross-fork comparison. Both corrections are noted inline below; the
+> rest of the document stands.
+>
+> 1. The txungu typo (line 67-71 of this document) was originally
+>    described as a FORTRAN ancestor bug. Direct comparison with
+>    `humppa_translate.f90` and `tgrohens/coreop2d.f90` shows the
+>    inconsistency is in `13.f90` only, introduced during the Catalan
+>    → English renaming. See `docs/research/tgrohens-review.md` and
+>    `docs/research/13f90-vs-humppa-divergences.md` for the evidence.
+>
+> 2. The 'practical implication for Path B' section (lines 87-103)
+>    refers to the Zimm et al. PNAS 2023 paper as the Path B reference.
+>    Path B planning research established that `13.f90` is the 2014
+>    tribosphenic mammalian model, not the 2023 shark model. The Path B
+>    paper references are Salazar-Ciudad and Jernvall, *Nature* 464:583
+>    (2010) for the canonical equations and Harjunmaa et al.,
+>    *Nature* 512:44 (2014) for the tribosphenic extension. See
+>    `docs/research/path-b-research.md` and the Path B charter
+>    (`docs/plans/2026-05-04-path-b-charter.md`).
+
 ## Summary
 
 Path A is closed (PR #16). Three coupled bugs in `coreop2d.py` were fixed,
