@@ -92,8 +92,8 @@ The following table cross-classifies every Discretisation field by its kind (fro
 | `eq18_sec_source` | PaperVsCodeTension | not exercised (clause never fires) | LOAD-BEARING under paper presets; not exercised under FORTRAN presets |
 | `eq5_apply_to` | PaperVsCodeTension | dormant on plateau (envelope shifts) | not measured |
 | `knot_threshold_gate` | PaperVsCodeTension | dormant alone; **runaway-on-removal** when removed from `LEGACY_FORTRAN` bundle | not measured (load-bearing in bundle: PAPER 19 cusps vs FORTRAN 7) |
-| `mesenchyme` | PaperVsCodeTension | not exercised (Inh=Sec=0) | LOAD-BEARING under paper presets; not measured under FORTRAN presets |
-| `n_mesenchyme_layers` | PaperVsCodeTension | not exercised (Inh=Sec=0) | not measured |
+| `mesenchyme` | PaperVsCodeTension | inert (Inh=Sec=0) | inert under both preset families at 2500 iters (D1) |
+| `n_mesenchyme_layers` | PaperVsCodeTension | inert (Inh=Sec=0) | inert across {1, 2, 3} layers under paper presets (D1) |
 | `rep_neighbour_set` | PaperVsCodeTension | dormant on plateau (envelope shifts) | not measured |
 | `update_order` | PaperVsCodeTension | dormant on plateau (envelope shifts) | not measured |
 | `border_bias_x_zero_quirk` | FortranAccident (load-bearing) | load-bearing for FORTRAN-golden z envelope (with `lattice_orientation='fortran'`) | not measured |
@@ -273,7 +273,7 @@ The methodological reading of indistinguishability is itself useful. Path A's si
 
 ### E. Parameter-set sensitivity
 
-A Discretisation field can only move biology if its branch fires — that is, the simulator's state visits the regime where the option matters. Many of the §The Discretisation taxonomy classification table's rows are dormant or 'not exercised' because the parameter sets never enter that regime, not because the field is intrinsically unimportant. The following table records, for each field, whether the field's branch makes a difference on each parameter set's run. Where the run logs do not yet permit a clean answer, the cell is marked `unknown`.
+A Discretisation field can only move biology if its branch fires — that is, the simulator's state visits the regime where the option matters AND the option-dependent computation produces an observably different output. The following table distinguishes three cases: **fires** (branch executes and the output observably depends on the choice), **does not fire** (branch never executes — the regime is never reached), and **inert** (branch executes but the output does not depend on the choice; the regime is reached but the choice is mathematically immaterial, or the time budget is too short to amplify the difference). Many of the §The Discretisation taxonomy classification table's rows are dormant or 'not exercised' because the parameter sets never enter the relevant regime, not because the field is intrinsically unimportant.
 
 | Field | Fires on seal.txt? | Fires on wt-tribosphenic-2014.txt? |
 |---|---|---|
@@ -294,13 +294,13 @@ A Discretisation field can only move biology if its branch fires — that is, th
 | `diff_accumulator` | no (Sec = 0 under both anchors; Act-mode would change behaviour but is not the default) | yes (paper presets); no (FORTRAN presets, diff stuck at 0) |
 | `knot_threshold_gate` | no ([Act] < 1 throughout; no preset reaches knot threshold) | yes (Act explosion under FORTRAN; full knot population under paper) |
 | `knot_daughter_di` | no (no knots form) | no (no division to 19 cells, so no knot mother divides) |
-| `mesenchyme` | no (mes_inh = mes_sec = 0 throughout) | yes (paper presets, Sec ~24,500); unknown (FORTRAN presets — mesenchyme branch runs but Inh = Sec = 0 throughout, so the choice between `absent` and `per_column_z_layers` is dormant on observable biology) |
-| `n_mesenchyme_layers` | no (mesenchyme inert; same as above) | unknown (paper presets; no varied-layer-count run in §5) |
+| `mesenchyme` | inert (mes_inh = mes_sec = 0 throughout; vertical Laplacian runs but transports nothing) | yes (paper presets, Sec ~24,500); inert (FORTRAN presets — D1 confirms `absent` vs `per_column_z_layers` produce bit-identical output) |
+| `n_mesenchyme_layers` | inert (same as above) | inert (paper presets — D1 confirms 1, 2, 3 layers produce bit-identical output at this iteration budget) |
 | `border_definition` | yes (every step) | yes |
 | `lattice_orientation` | yes (initial cell layout differs) | yes |
 | `border_bias_x_zero_quirk` | yes (under `lattice_orientation='fortran'`, y-axis cells sit at x = 0) | yes (same condition, under FORTRAN-flavoured presets) |
 
-Two unknowns are recorded above. They are unknown because the wt-tribosphenic-2014 runs do not log enough state to determine whether the branch fires meaningfully — the mes_inh / mes_sec arrays under FORTRAN-flavoured presets and the n-layer dependency under paper presets — and resolving these is straightforward by adding instrumentation to the relevant branches in `silicoshark/{forces,reaction}.py` and re-running. The five-preset-only run on `wt-tribosphenic-2014.txt` is the immediate cause; a full single-field disentanglement on this parameter set is the natural follow-up that would convert most of the 'not measured' cells in the §The Discretisation taxonomy classification table into firm yes/no answers.
+Both previously-unknown cells resolve to **inert** after the targeted D1 runs in `experiments/discretisation-study/sensitivity-closure/`. Under FORTRAN-flavoured presets, mes_inh and mes_sec stay at zero (because Inh and Sec do; see §5D's lock at d_i = 0), so vertical diffusion transports nothing regardless of layer count. Under paper-flavoured presets the eq. 17 clause does fire and Inh accumulates to ~1.94, but at wt-tribosphenic k_di = 0.2 / k_ds = 0.1 and dt = 0.05 the vertical flux is too small to make 1, 2, or 3 layers observably different at 2500 iterations — the OFFs are bit-identical. A longer iteration sweep, or a parameter set with larger vertical-diffusion constants, is the natural follow-up. A full single-field disentanglement on `wt-tribosphenic-2014.txt` would similarly convert most of the §3 table's 'not measured' cells into firm answers.
 
 Not every 'yes' is biologically equal — `update_order` fires every step, but the difference between Jacobi and Gauss–Seidel on the seal example is below the cell-count tolerance (and the disentanglement records the envelope shift). The 'fires' column tells the reader where it is even worth running a single-field study; if the field's branch never fires, the disentanglement is mechanically zero by construction, and a 'dormant' row in §The Discretisation taxonomy reflects that mechanism rather than a hidden insensitivity.
 
@@ -313,6 +313,10 @@ The most pointed methodological case study in the comparison study is the eq. 17
 - **Paper (Salazar-Ciudad and Jernvall 2010, eq. 17).** `partial[Inh] / partial t = [Act] - k_deg [Inh] + k_di nabla^2 [Inh]` for cells with `d_i >= k_int`. The source is the Act *concentration*. The same form appears in Zimm et al. (2023) as the basis for the shark-extension fork.
 - **`13.f90:487` (literal FORTRAN).** `hq3d(i,1,2) = q3d(i,1,1)*DiffState(i) - Deg*q3d(i,1,2)`, i.e. `[Inh]' = [Act] * d_i - Deg [Inh]`. The source is the Act *concentration* multiplied by `d_i` (a smooth ramp on the differentiation state). humppa's `q3d(i,1,1)*q2d(i,1)` matches after the cosmetic `q2d(i,1) -> DiffState(i)` rename. tgrohens and the C++ port match.
 - **Path A `coreop2d.py:647` (silent rewrite).** `hq3d[i, 0, 1] = hq3d[i, 0, 0] * cls.diff_state[i] - cls.Deg * cls.q3d[i, 0, 1]`. `hq3d[i, 0, 0]` is the post-eq.14 Act *rate* temporary variable (numerator divided by Michaelis–Menten denominator, minus Deg×Act), not the Act concentration. The form is `[Inh]' = (rate of [Act]) * d_i - Deg [Inh]`. This is a translation drift not present in any FORTRAN ancestor or the C++ port.
+
+![Figure 4: eq.17 lineage diagram](figures/fig4-eq17-lineage.png)
+
+**Figure 4.** The eq.17 inhibitor source clause across the code-base lineage: paper concentration → FORTRAN concentration × d_i → Path A rate × d_i. The Catalan FORTRAN added a smooth-onset d_i scaling not in the paper; this is documented as a modelling decision. The Python translation at `coreop2d.py:647` then silently substituted the activator's rate-of-change variable for the activator's concentration — a translation drift that survived multiple manual code reviews and was caught only when the Path B v2 audit cross-checked 13.f90 against the Python translation line by line. silicoshark v2 captures all three forms as named Discretisation options (`act_concentration`, `act_times_di`, `act_rate_times_di`) bound to named presets, so the comparison study can directly test whether each rewrite step changes biology. On the parameter sets exercised so far the Path A rewrite is biologically harmless because the eq.17 source clause never fires under FORTRAN-flavoured presets (§5E); this constraint is now testable rather than implicit.
 
 The drift is the kind a translator introduces when 'tidying up' an expression they assume is equivalent. `hq3d[i, 0, 0]` was already the temporary variable in scope; using it instead of the original `q3d[i, 0, 0]` (the start-of-step Act concentration) felt natural. The rewrite is invisible to a code-only review and only surfaces when an audit cross-references the source and the destination at expression-level granularity.
 
