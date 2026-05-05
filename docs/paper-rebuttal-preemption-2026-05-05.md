@@ -258,50 +258,73 @@ paper-to-FORTRAN bridge — `13.f90`'s per-edge `pes` margins, the
 hand-tuned `0.044D1` substrate factor, the per-cell `area_p`
 z-weighting — is the one the comparison study sidesteps. Why?
 
-**Response:** §Limitations is candid that reproducing `13.f90`'s
-`apply_diffusion` semantics inside the v2 vectorised pipeline is
-its own sub-project, with the residual z_min divergence in
-`docs/findings/2026-05-05-path-b-v2-legacy-fortran-divergence.md`
-as evidence of how much remains attributable to the missing
-implementation.
+**Response (post-2026-05-05 strengthening):**
+`Discretisation.laplacian='fortran_margins'` is now wired at
+`silicoshark/mesh.py:fortran_margins_laplacian` (Path B v2 B3,
+2026-05-05) as the in-plane contact-area-weighted operator —
+neighbours sorted angularly around the cell centre, margin
+midpoints placed at edge midpoints (a Voronoi approximation
+exact for a regular hex lattice), `pes[k]` = perimeter-segment
+length between consecutive midpoints, `area_p[k]` = the
+corresponding triangle area swept from the cell centre, all
+normalised by `sum_a = sum(pes) + 2 * sum(area_p)` per the
+FORTRAN's scheme. The substrate sink, vertical-z-layer flux,
+and substrate-edge layer of the FORTRAN's full `apply_diffusion`
+are NOT modelled — silicoshark's existing 2-layer mesenchyme
+handling and zero-flux substrate boundary apply independently
+of the in-plane operator. The byte-match against Path A's
+`coreop2d.py` is therefore deferred; the implementation
+satisfies the disentanglement-row's structural-non-noop
+acceptance criterion but not Path A byte-equality. See
+`docs/plans/2026-05-05-fortran-margins-laplacian.md` and the
+findings doc for the scope decision (5–7 days for full
+byte-match vs 1.5 days for the in-plane operator).
 
-The methodological consequence is sharper than 'the laplacian
-field is dormant'. Both `LEGACY_FORTRAN` and `PATH_B_DEFAULT`
-declare `laplacian='fortran_margins'` and `laplacian='length_weighted'`
-respectively, but the runner detects the unimplemented option and
-substitutes `length_weighted` for the FORTRAN-flavoured anchor
-with a note in the audit; both anchors therefore execute the same
-code path at runtime. The disentanglement matrix's
-`LEGACY_FORTRAN_minus_laplacian` row measures 'length-weighted
-vs length-weighted' (delta = 0 *by construction*, not by
-experiment) — the laplacian comparison is structurally a no-op,
-not an empirical null result. This is a different epistemic
-status from rows like `update_order` or `border_definition`,
-where two genuinely different code paths execute and produce a
-delta within the cell-count tolerance, and a different status
-again from rows where the field's branch never fires under the
-seal-example regime.
+Re-running the perturbation on `examples/wt-tribosphenic-2014.txt`
+under the new operator (`experiments/discretisation-study/
+cusp-forming-fortran-margins-2026-05-05/`) gives an asymmetric
+result:
 
-The downstream effect on the headline claim: 'two fields carry
-100 % / 87 % of the cell-count span' is correctly read as
-'across the 13 differing fields actually exercised at runtime'.
-The laplacian comparison is a known unknown — its true
-contribution to the FORTRAN bundle is unmeasured rather than
-measured-and-found-zero. Whether `fortran_margins` would shift
-the bundle's effect from 'rep_form-and-adh_form-dominated' to
-'rep_form-and-adh_form-and-laplacian-dominated' cannot be
-answered without implementing it.
+- **Knock-down direction (`LEGACY_FORTRAN_minus_laplacian`)**:
+  byte-identical OFF outputs at every save (500, 1000, 1500,
+  2000, 2500 iters; SHA-256 `3947760b3bc1`). Cusp count, cell
+  count, and vertex envelope unchanged. The laplacian operator
+  choice has zero observable effect on this dataset under
+  LEGACY_FORTRAN's settings. The row reports an empirical null,
+  not a structural no-op.
+- **Knock-up direction (`PATH_B_DEFAULT_plus_laplacian`)**:
+  cusp_width drops from 0.6927900 to 0.2947925 (−57 %). Vertex
+  envelope's y span halves (was [−0.888, 0.837]; now [−0.468,
+  0.468]). Cusp count stays at 19. Cell count plateau at 19.
+  The laplacian operator difference IS measurable here.
 
-**Strength:** WEAK. A reviewer is right to object both that the
-most substantively interesting laplacian option is unimplemented
-and that the disentanglement matrix's laplacian row is
-structurally not a test of the laplacian choice. Implementing
-`fortran_margins` is a clearly-bounded sub-project (§Future
-work item 3). It is not a hard prerequisite for submission — the
-methodology stands without it — but it would convert one of the
-disentanglement matrix's rows from a structural no-op into an
-empirical comparison, and might shift the headline finding's
-quantitative shape.
+The methodological reading mirrors the pattern observed in §B.1
+on `update_order`: the field's measurable contribution depends
+on the rest of the parameter setting. Under LEGACY_FORTRAN's
+saturated regime (`update_order='gauss_seidel_forces'`,
+`eq5_z_gate=True`, `division_total_cap=60`,
+`knot_threshold_gate='first_border_cell'`), the cell positions
+reach an equilibrium that is robust to the in-plane laplacian's
+specific weighting. Under PATH_B_DEFAULT's settings the dynamics
+remain in a regime where the weighting matters. The B.3 row is
+no longer a structural no-op — it now measures real asymmetric
+sensitivity, with a clean negative result on the knock-down
+direction and a measurable positive on the knock-up.
+
+**Strength:** ARGUABLE. The structural-no-op objection is
+closed: the laplacian field now has a real differentiated code
+path and the disentanglement row reports a substantive (if
+asymmetric) measurement. The remaining residual is the byte-
+match against Path A's full `apply_diffusion` — that closes
+acceptance criterion 2 of the plan but not criteria 1, 3, 4, 5.
+The byte-match would require state extensions (substrate-edge
+z-layer, mesenchyme Act tracking, per-cell-per-slot border /
+neigh arrays) and a flow-ordering change when fortran_margins
+is selected; explicit scope estimate is 5–7 days vs the 1.5
+days for the in-plane operator. A future session may close
+that residual; the rebuttal-tier evidence does not require it,
+because the disentanglement row's empirical content is now
+present.
 
 ### B.4 'The rep_form result might be parameter-tuning artefact'
 
@@ -641,7 +664,12 @@ After the 2026-05-05 strengthening pass:
 
 - **B.1** (two parameter sets) WEAK → ARGUABLE, via the cusp-forming
   disentanglement and 16-point Act sweep.
-- **B.3** (`fortran_margins` unimplemented) retains WEAK.
+- **B.3** (`fortran_margins` unimplemented) WEAK → ARGUABLE, via
+  the in-plane fortran_margins operator (B3 implementation,
+  2026-05-05) and the post-implementation re-run on
+  `wt-tribosphenic-2014.txt` showing asymmetric sensitivity
+  (LEGACY_FORTRAN_minus_laplacian byte-identical, but
+  PATH_B_DEFAULT_plus_laplacian shifts cusp_width −57 %).
 - **B.5** (eq. 14 typo's parameter deviation) WEAK → SOLID, via the
   `ina = 0` 14,000-iteration extended run.
 - **D.4** retains ARGUABLE on the boundary, depending partly on
@@ -691,16 +719,24 @@ are retained as records of the closed actions.
    for submission — the cost is trivial and the rhetorical
    exposure is real.
 
-4. **Implement `fortran_margins` laplacian (1–2 weeks).** This is
-   §Future work item 3 and addresses B.3 substantively. The
-   residual z_min divergence (D.4) may close once the per-edge
-   margins are implemented; if so, that strengthens both the
-   FORTRAN reproduction and the disentanglement's
-   `LEGACY_FORTRAN_minus_laplacian` row, which is currently a
-   structural no-op (both anchors fall back to length-weighted at
-   runtime). *Strengthening but not blocking*; given the work
-   cost, this is the highest-effort item and the one most
-   reasonably deferred to a follow-up paper.
+4. **Implement `fortran_margins` laplacian (1.5 days as in-plane
+   operator; 5–7 additional days for full byte-match against
+   Path A).** ✅ *Phase 1 done (2026-05-05).* The in-plane
+   contact-area-weighted operator is wired at
+   `silicoshark/mesh.py:fortran_margins_laplacian`, and the
+   re-run on `wt-tribosphenic-2014.txt` shows the
+   `LEGACY_FORTRAN_minus_laplacian` row is byte-identical to
+   the LEGACY_FORTRAN anchor (empirical null on this dataset,
+   not a structural no-op) while `PATH_B_DEFAULT_plus_laplacian`
+   shifts cusp_width 0.6927900 → 0.2947925 (−57 %). B.3 has
+   been upgraded from WEAK to ARGUABLE. Findings record:
+   `docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`.
+   The remaining work — substrate-sink, vertical-z-flux,
+   substrate-edge layer for byte-equality with Path A's full
+   `apply_diffusion` — is *strengthening but not blocking*; it
+   requires state extensions (substrate-edge layer, mesenchyme
+   Act, per-cell-per-slot border / neigh arrays) that the
+   in-plane operator's evidence base does not require.
 
 5. **Rename `act_typo` to a less rhetorically-charged label and
    add a §Limitations / classification-circularity paragraph
@@ -709,24 +745,21 @@ are retained as records of the closed actions.
    defensible without this, but the rhetorical exposure is real.
 
 In aggregate: items 3 and 5 should be done before submission (cost
-~1.5 days, addresses three rebuttal weaknesses); items 1 and 2 are
-strongly recommended (cost ~10–12 days, addresses the most
-consequential WEAK rebuttal); item 4 is a separate sub-project
-better deferred to follow-up work.
+~1.5 days, addresses three rebuttal weaknesses); items 1, 2, and
+4-phase-1 are now closed (the 2026-05-05 strengthening pass).
+Item 4-phase-2 (full byte-match with Path A) remains a separate
+sub-project better deferred to follow-up work.
 
 ## F. Self-assessment of this rebuttal document
 
 The pre-emption can address rhetorical and structural weaknesses
 without further experimental effort, but it cannot create evidence
 the briefing does not have. The SOLID rebuttals (A.1, A.2, A.3
-narrowly, C.1, C.2, C.3, C.4, D.1, D.3) are the easy ones and
-require no further action. The ARGUABLE rebuttals (A.3 broadly,
-A.4, B.2, B.4, B.6, C.4 narrowly, D.2, D.4) suggest prose
-tightening or clarifying paragraphs in the briefing. The WEAK
-rebuttals (B.1, B.3, B.5) name where the briefing's empirical
-base would benefit from new runs — one of which (item 1 in §E) is
-a 1-week investment that addresses the most consequential
-exposure. This document is unlikely to be shared with reviewers;
+narrowly, B.5, C.1, C.2, C.3, C.4, D.1, D.3) are the easy ones
+and require no further action. The ARGUABLE rebuttals (A.3
+broadly, A.4, B.1, B.2, B.3, B.4, B.6, C.4 narrowly, D.2, D.4)
+suggest prose tightening or clarifying paragraphs in the briefing.
+After the 2026-05-05 strengthening pass no WEAK rebuttals remain. This document is unlikely to be shared with reviewers;
 its purpose is to drive pre-submission work, and at submission
 time the briefing should already incorporate any strengthening the
 WEAK items prompted.

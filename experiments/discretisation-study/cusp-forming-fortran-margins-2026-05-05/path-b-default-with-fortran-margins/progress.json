@@ -1,0 +1,17 @@
+{
+  "experiment": "batch_runner_discretisation_study",
+  "status": "completed",
+  "started_at": "2026-05-05T17:39:32.520781+00:00",
+  "updated_at": "2026-05-05T17:39:36.406800+00:00",
+  "elapsed_s": 3.9,
+  "phase": "PATH_B_DEFAULT/wt-tribosphenic-2014",
+  "phase_description": "running silicoshark",
+  "phase_number": 1,
+  "total_phases": 1,
+  "step": 500,
+  "total_steps": 500,
+  "step_pct": 100.0,
+  "rate": 128.67,
+  "eta_s": 0,
+  "message": "finished"
+}

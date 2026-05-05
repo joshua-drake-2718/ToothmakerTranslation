@@ -1,8 +1,8 @@
 ---
 title: 'Path B v2: implementing fortran_margins laplacian'
 date: 2026-05-05
-status: planning (rebuttal §B.3 strengthening, item 3 of HANDOVER 2026-05-05)
-estimate: 2–3 days of focused work
+status: phase 1 complete (in-plane operator, B.3 WEAK → ARGUABLE); phase 2 deferred (full byte-match against Path A)
+estimate: 1.5 days for phase 1 (done); 5–7 days additional for phase 2
 ---
 
 ## Why this is open
