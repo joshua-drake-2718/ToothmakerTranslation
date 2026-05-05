@@ -1,0 +1,17 @@
+{
+  "experiment": "silicoshark_LEGACY_FORTRAN_run",
+  "status": "completed",
+  "started_at": "2026-05-05T14:10:54.761346+00:00",
+  "updated_at": "2026-05-05T14:11:06.362903+00:00",
+  "elapsed_s": 11.6,
+  "phase": "block_28",
+  "phase_description": "Save block 28/28",
+  "phase_number": 28,
+  "total_phases": 28,
+  "step": 500,
+  "total_steps": 500,
+  "step_pct": 100.0,
+  "rate": 1133.4,
+  "eta_s": 0,
+  "message": "wrote 14000_run_.off"
+}

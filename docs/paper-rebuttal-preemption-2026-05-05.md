@@ -319,16 +319,48 @@ claim is therefore 'on parameter sets that drive Act above zero,
 the typo is catastrophic'; the deviation reveals the typo's cost
 rather than manufacturing it.
 
-**Strength:** WEAK. A reviewer is right that the headline number
-(19 cusps vs 0) depends on the deviation. A 5,000-iteration run
-with the literal `ina = 0` and an extended `k_da` warm-up phase
-might still expose the typo (Act seeded by mesenchymal Sec
-diffusing back, or by floating-point seeding of the eq. 14 source)
-but the existing run does not test this. Either an extended `ina =
-0` run that lands in the typo regime, or a tightening of §C's
-prose to clarify that the deviation is what allows the typo to
-manifest within 500 iterations, would strengthen the finding. See
-§E.
+The `ina = 0` extended run that the briefing's §5C now reports
+(14,000 iterations, all five presets, results in
+`experiments/discretisation-study/cusp-forming-paper-ina/`)
+confirms this empirically and rather more sharply than the
+mechanistic argument predicted. `PAPER_2010` and
+`PAPER_LITERAL_2010` produce *byte-identical* final OFFs
+(SHA-256 `92b4615630b9`) and zero cusps at every save block,
+because Act is identically zero on every cell throughout the
+14,000-iteration run, and both denominator branches therefore
+produce numerically identical output at every step. This is a
+hard mechanistic confirmation: the typo branch and the corrected
+branch agree to the bit when their input is zero. The
+methodological claim now reads cleanly as 'on parameter sets that
+drive Act above zero, the typo is catastrophic; on parameter
+sets where Act stays at exactly zero, the typo is mathematically
+dormant'. See `docs/findings/2026-05-05-path-b-v2-ina-zero-extended-run.md`
+for the full per-save numbers.
+
+A separate question this run does not answer: whether `13.f90`'s
+own 14,000-iteration sweep at `ina = 0` (which Ext Data Fig. 4a
+shows producing ~5 cusps under wild-type) lifts Act above zero
+via a mechanism silicoshark does not yet replicate (the buccal /
+lingual border-bias floors `Bbi` / `Lbi`, mesenchymal back-
+diffusion of Sec). The FORTRAN cusps under wild-type `ina = 0`
+indicate that the FORTRAN does have an Act-seeding path the
+silicoshark replication's `mesenchyme='absent'` /
+`topology='static_with_local_update'` configuration suppresses.
+Reproducing that path is §Future work item 1; until it is done,
+silicoshark cannot independently verify the published cusp count
+under paper-literal parameters. What it can verify is the typo's
+mechanism, which the byte-identicality result confirms.
+
+**Strength:** SOLID. The `ina = 0` extended run closes the WEAK
+residual. A reviewer is right that the headline number
+(19 cusps vs 0) depends on the deviation, and the rebuttal now
+shows precisely which property of the parameter set the deviation
+is needed to expose: the regime where Act becomes non-zero. The
+methodology claim has been narrowed and confirmed in the same
+move. The remaining residual concerns the FORTRAN's own Act-
+seeding path under `ina = 0`, which is a follow-up question
+about the FORTRAN replication rather than about the typo finding,
+and is tracked separately in §Future work item 1.
 
 ### B.6 'You are circularly defending the FORTRAN'
 
@@ -565,12 +597,15 @@ LEGACY_FORTRAN plateau, not the FORTRAN binary's plateau.
 
 ## E. Synthesis: what to strengthen before submission
 
-Three rebuttals carry WEAK strength tags: B.1 (two parameter
-sets), B.3 (`fortran_margins` unimplemented), and B.5 (eq. 14 typo
-finding's parameter deviation). One — D.4 — is ARGUABLE but on the
+Two rebuttals retain WEAK strength tags after the 2026-05-05
+strengthening pass: B.1 (two parameter sets) and B.3
+(`fortran_margins` unimplemented). B.5 (eq. 14 typo finding's
+parameter deviation) was upgraded to SOLID by the `ina = 0`
+extended run on 2026-05-05. One — D.4 — is ARGUABLE but on the
 boundary, and depends partly on prose tightening that costs no
 experimental effort. I list the strengthening priorities in rough
-order of consequence-for-submission and rough work-in-days.
+order of consequence-for-submission and rough work-in-days; item 2
+is retained as a record of the closed action.
 
 1. **Run the disentanglement on the cusp-forming dataset
    (1 week).** This addresses B.1 and B.4 simultaneously: a single-
@@ -587,17 +622,17 @@ order of consequence-for-submission and rough work-in-days.
    the part that would be strengthened.
 
 2. **Run wt-tribosphenic-2014 with `ina = 0` and extended
-   iterations (3–5 days).** This addresses B.5: a 5,000-iteration
-   run with the paper-literal `ina = 0` value, possibly with a
-   lengthened `k_da` warm-up, to test whether the eq. 14 typo's
-   effect survives or vanishes when no Act seed is present. If it
-   survives, the headline finding is strengthened from 'on a
-   parameter set with one tuning deviation' to 'on the paper-
-   literal parameter set, given enough iterations'. If it
-   vanishes, the briefing's §C prose needs tightening to
-   clarify the regime in which the typo is catastrophic.
-   *Strengthening but not blocking*; if the result is positive, it
-   is the most consequential single experiment to add.
+   iterations.** ✅ *Done (2026-05-05).* The run was completed at
+   14,000 iterations across all five presets;
+   `examples/wt-tribosphenic-2014-paper-ina.txt` is the parameter
+   file and `experiments/discretisation-study/cusp-forming-paper-ina/`
+   holds the results. Outcome: zero cusps on every preset at
+   every save block, with `PAPER_2010` and `PAPER_LITERAL_2010`
+   producing byte-identical final OFFs (SHA-256 `92b4615630b9`).
+   The methodology claim has been narrowed to 'on parameter sets
+   that drive Act above zero, the typo is catastrophic'. B.5 has
+   been upgraded from WEAK to SOLID. Findings record:
+   `docs/findings/2026-05-05-path-b-v2-ina-zero-extended-run.md`.
 
 3. **Tighten §Findings summary prose to make parameter-dependence
    explicit (1 day).** Items 2 and 4 of the §Findings summary

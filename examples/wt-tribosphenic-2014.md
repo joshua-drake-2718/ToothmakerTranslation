@@ -54,3 +54,11 @@ provenance instead.
 - Knot formation: confirmed under `LEGACY_FORTRAN` within 500
   iterations (see `experiments/discretisation-study/cusp-forming/`).
 - Non-trivial Inh: confirmed (see same).
+
+## Companion paper-literal file
+
+`wt-tribosphenic-2014-paper-ina.txt` is the same parameter set
+restored to the paper-literal `ina = 0`. Used by the rebuttal §B.5
+extended run (`experiments/discretisation-study/cusp-forming-paper-ina/`,
+14,000 iterations under five presets, all producing zero cusps).
+See `docs/findings/2026-05-05-path-b-v2-ina-zero-extended-run.md`.
