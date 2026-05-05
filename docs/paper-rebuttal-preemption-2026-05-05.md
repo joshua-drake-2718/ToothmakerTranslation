@@ -223,24 +223,45 @@ z-weighting — is the one the comparison study sidesteps. Why?
 its own sub-project, with the residual z_min divergence in
 `docs/findings/2026-05-05-path-b-v2-legacy-fortran-divergence.md`
 as evidence of how much remains attributable to the missing
-implementation. The comparison study uses `length_weighted` (the
-v1 numpy-idiomatic choice that the audit cites as the simplest
-defensible Fick's-law reading) for the seal-example smoke runs;
-the runner detects the unimplemented option and falls back to
-length-weighted with a note in the audit. The disentanglement
-study's `LEGACY_FORTRAN_minus_laplacian` row therefore measures
-'length-weighted vs length-weighted' (delta = 0), not the actual
-laplacian-choice consequence; this is acknowledged in §B of the
-comparison study.
+implementation.
 
-**Strength:** WEAK. A reviewer is right to object that the most
-substantively interesting laplacian option is unimplemented, and
-the briefing's headline 'rep_form and adh_form carry the entire
-span' is partly an artefact of the laplacian comparison being a
-no-op. Implementing `fortran_margins` is a clearly-bounded sub-
-project (§Future work item 3). It is not a hard prerequisite for
-submission — the methodology stands without it — but it would
-substantially strengthen the empirical base.
+The methodological consequence is sharper than 'the laplacian
+field is dormant'. Both `LEGACY_FORTRAN` and `PATH_B_DEFAULT`
+declare `laplacian='fortran_margins'` and `laplacian='length_weighted'`
+respectively, but the runner detects the unimplemented option and
+substitutes `length_weighted` for the FORTRAN-flavoured anchor
+with a note in the audit; both anchors therefore execute the same
+code path at runtime. The disentanglement matrix's
+`LEGACY_FORTRAN_minus_laplacian` row measures 'length-weighted
+vs length-weighted' (delta = 0 *by construction*, not by
+experiment) — the laplacian comparison is structurally a no-op,
+not an empirical null result. This is a different epistemic
+status from rows like `update_order` or `border_definition`,
+where two genuinely different code paths execute and produce a
+delta within the cell-count tolerance, and a different status
+again from rows where the field's branch never fires under the
+seal-example regime.
+
+The downstream effect on the headline claim: 'two fields carry
+100 % / 87 % of the cell-count span' is correctly read as
+'across the 13 differing fields actually exercised at runtime'.
+The laplacian comparison is a known unknown — its true
+contribution to the FORTRAN bundle is unmeasured rather than
+measured-and-found-zero. Whether `fortran_margins` would shift
+the bundle's effect from 'rep_form-and-adh_form-dominated' to
+'rep_form-and-adh_form-and-laplacian-dominated' cannot be
+answered without implementing it.
+
+**Strength:** WEAK. A reviewer is right to object both that the
+most substantively interesting laplacian option is unimplemented
+and that the disentanglement matrix's laplacian row is
+structurally not a test of the laplacian choice. Implementing
+`fortran_margins` is a clearly-bounded sub-project (§Future
+work item 3). It is not a hard prerequisite for submission — the
+methodology stands without it — but it would convert one of the
+disentanglement matrix's rows from a structural no-op into an
+empirical comparison, and might shift the headline finding's
+quantitative shape.
 
 ### B.4 'The rep_form result might be parameter-tuning artefact'
 
@@ -592,10 +613,11 @@ order of consequence-for-submission and rough work-in-days.
    residual z_min divergence (D.4) may close once the per-edge
    margins are implemented; if so, that strengthens both the
    FORTRAN reproduction and the disentanglement's
-   `LEGACY_FORTRAN_minus_laplacian` row, which currently measures
-   length-weighted vs length-weighted. *Strengthening but not
-   blocking*; given the work cost, this is the highest-effort
-   item and the one most reasonably deferred to a follow-up paper.
+   `LEGACY_FORTRAN_minus_laplacian` row, which is currently a
+   structural no-op (both anchors fall back to length-weighted at
+   runtime). *Strengthening but not blocking*; given the work
+   cost, this is the highest-effort item and the one most
+   reasonably deferred to a follow-up paper.
 
 5. **Rename `act_typo` to a less rhetorically-charged label and
    add a §Limitations / classification-circularity paragraph
