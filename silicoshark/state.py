@@ -91,6 +91,19 @@ class State:
     init_buccal: np.ndarray
     rest_length: float = 1.0
     iter_count: int = 0
+    first_border_cell: int = 0
+    """Threshold index used by the FORTRAN's `first_border_cell` gate.
+
+    Computed at construction time from the initial hex lattice as
+    `6 * (rad - 1)` (the count of cells in the outermost ring). Used
+    by `Discretisation.knot_threshold_gate='first_border_cell'` (and,
+    eventually, by `eq5_apply_to='interior_only'`) to restrict
+    knot formation to cells with index `>= first_border_cell`. The
+    paper's `'none'` default ignores this field.
+
+    The exact value matches the FORTRAN's `first_border_cell`
+    arithmetic per Path B v2 charter §A3.
+    """
 
     @property
     def num_active(self) -> int:
@@ -190,6 +203,12 @@ def build_initial_state(params: Params) -> State:
     init_lingual = positions[:, 0] > 0
     init_buccal = positions[:, 0] < 0
 
+    # FORTRAN's first_border_cell: 6 * (rad - 1) per the Path B v2
+    # charter (knot_threshold_gate field). For rad=1 this is 0, which
+    # means the gate is inert (every cell qualifies); for rad>=2 it
+    # excludes the inner cells from knot formation.
+    first_border_cell = 6 * (params.rad - 1)
+
     return State(
         positions=positions,
         act=act,
@@ -203,4 +222,5 @@ def build_initial_state(params: Params) -> State:
         init_posterior=init_posterior,
         init_lingual=init_lingual,
         init_buccal=init_buccal,
+        first_border_cell=first_border_cell,
     )

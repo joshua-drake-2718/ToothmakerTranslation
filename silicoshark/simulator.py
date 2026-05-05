@@ -27,21 +27,34 @@ from .state import State, N_MESENCHYME_LAYERS
 from .mesh import Mesh
 from .reaction import step_reaction_diffusion
 from .forces import compute_forces, apply_border_multipliers
+from .discretisation import Discretisation, PATH_B_DEFAULT
 
 
 DEFAULT_DT: float = 0.05
 DIVISION_FACTOR: float = 2.0  # edge length threshold = DIVISION_FACTOR * rest
 
 
-def step_differentiation(state: State, params: Params, dt: float) -> None:
-    """Update differentiation state via FORTRAN-style accumulator on Sec.
+def step_differentiation(
+    state: State,
+    params: Params,
+    dt: float,
+    disc: Discretisation = PATH_B_DEFAULT,
+) -> None:
+    """Update differentiation state via the eq. 6 accumulator.
 
-    d_i_{t+1} = clip(d_i_t + dt * k_dff * [Sec]_i, 0, 1).
+    d_i_{t+1} = clip(d_i_t + dt * k_dff * X, 0, 1)
 
-    The paper writes eq. 6 with [Act]; the FORTRAN uses [Sec] (humppa
-    line 659). Path B follows the FORTRAN per the charter.
+    where X is `[Sec]` (FORTRAN; humppa line 659; default per the
+    Path B v1 charter) or `[Act]` (paper Eq. 6). The branch is
+    selected by `disc.diff_accumulator`.
     """
-    state.diff += dt * params.k_dff * state.sec
+    # disc.diff_accumulator: paper Eq. 6 (`act`) vs FORTRAN (`sec`).
+    if disc.diff_accumulator == 'sec':
+        state.diff += dt * params.k_dff * state.sec
+    elif disc.diff_accumulator == 'act':
+        state.diff += dt * params.k_dff * state.act
+    else:
+        raise ValueError(f'unknown diff_accumulator: {disc.diff_accumulator!r}')
     np.clip(state.diff, 0.0, 1.0, out=state.diff)
 
 
@@ -164,16 +177,26 @@ def divide_cells(
     return True
 
 
-def step(state: State, params: Params, dt: float = DEFAULT_DT) -> Mesh:
+def step(
+    state: State,
+    params: Params,
+    dt: float = DEFAULT_DT,
+    disc: Discretisation = PATH_B_DEFAULT,
+) -> Mesh:
     """Run one forward-Euler iteration. Returns the mesh used this step.
 
     Side effects: mutates `state` (positions, concentrations, diff, knot,
     iter_count). The caller can re-use the returned mesh for inspection
     or rendering between iterations.
+
+    `disc` selects the Path B v2 implementer-choice configuration. The
+    default `PATH_B_DEFAULT` reproduces the v1 behaviour byte-for-byte
+    on the reaction-diffusion + differentiation path; force-side
+    branching arrives in A4.
     """
     mesh = Mesh.from_positions(state.positions)
-    step_reaction_diffusion(state, params, mesh, dt)
-    step_differentiation(state, params, dt)
+    step_reaction_diffusion(state, params, mesh, dt, disc)
+    step_differentiation(state, params, dt, disc)
     forces = compute_forces(state, params, mesh)
     apply_border_multipliers(forces, state, params, mesh)
     state.positions = state.positions + dt * forces
@@ -191,11 +214,17 @@ def step(state: State, params: Params, dt: float = DEFAULT_DT) -> Mesh:
     return mesh
 
 
-def run(state: State, params: Params, n_iters: int, dt: float = DEFAULT_DT) -> Mesh:
+def run(
+    state: State,
+    params: Params,
+    n_iters: int,
+    dt: float = DEFAULT_DT,
+    disc: Discretisation = PATH_B_DEFAULT,
+) -> Mesh:
     """Run `n_iters` iterations. Returns the final mesh."""
     mesh: Mesh | None = None
     for _ in range(n_iters):
-        mesh = step(state, params, dt)
+        mesh = step(state, params, dt, disc)
     if mesh is None:
         mesh = Mesh.from_positions(state.positions)
     return mesh
