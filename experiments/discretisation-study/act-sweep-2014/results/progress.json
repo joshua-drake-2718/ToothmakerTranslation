@@ -1,0 +1,17 @@
+{
+  "experiment": "batch_runner_discretisation_study",
+  "status": "completed",
+  "started_at": "2026-05-05T14:42:06.123396+00:00",
+  "updated_at": "2026-05-05T14:43:26.943764+00:00",
+  "elapsed_s": 80.8,
+  "phase": "PATH_B_DEFAULT/Act_1.6",
+  "phase_description": "running silicoshark",
+  "phase_number": 80,
+  "total_phases": 80,
+  "step": 500,
+  "total_steps": 500,
+  "step_pct": 100.0,
+  "rate": 869.86,
+  "eta_s": 0,
+  "message": "finished"
+}

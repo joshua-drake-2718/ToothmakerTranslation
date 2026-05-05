@@ -40,13 +40,20 @@ from .utils import ProgressReporter
 
 
 def _coerce(value: str):
-    """Coerce a string to int -> float -> bool -> str."""
+    """Coerce a string to None -> int -> float -> bool -> str.
+
+    The literal `null` (JSON convention) coerces to Python `None`. The
+    string `none` is *not* coerced to `None` — `knot_threshold_gate`
+    accepts the literal string value `'none'` as one of its valid
+    options, and that case must round-trip through the CLI without
+    collapsing to Python's None singleton.
+    """
+    low = value.lower()
     # Bool first — `'1'`/`'0'` should be int, not bool, so we check
     # bool only against the explicit literals.
-    low = value.lower()
     if low in ('true', 'false'):
         return low == 'true'
-    if value.lower() == 'none':
+    if low == 'null':
         return None
     try:
         return int(value)

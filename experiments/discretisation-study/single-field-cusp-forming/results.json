@@ -1,0 +1,888 @@
+{
+  "LEGACY_FORTRAN": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_adh_form": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.495158849008238,
+      "vertex_envelope": {
+        "x_min": 2.4587854992201863,
+        "x_max": 3.9871628294198547,
+        "y_min": 9.089698770827356,
+        "y_max": 10.22580578196014,
+        "z_min": 57.18558969475147,
+        "z_max": 58.08500560090534
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_adh_form",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "adh_form": "unit_vector"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_border_definition": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.7508075397885194,
+      "vertex_envelope": {
+        "x_min": 1.9153805065913292,
+        "x_max": 6.363864548850471,
+        "y_min": -0.11155277149788435,
+        "y_max": -0.1115527103013668,
+        "z_min": 30.471319413883894,
+        "z_max": 31.66214544916989
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_border_definition",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "border_definition": "neighbour_count"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_division_total_cap": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_division_total_cap",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "division_total_cap": "None"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_eq17_inh_source": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_eq17_inh_source",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "eq17_inh_source": "act_concentration"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_eq18_sec_source": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.363436238797696,
+      "vertex_envelope": {
+        "x_min": 1.2034687040470686,
+        "x_max": 6.178752230759158,
+        "y_min": -0.2286965830473053,
+        "y_max": 0.2288454486397163,
+        "z_min": 101.5529747342092,
+        "z_max": 102.65891116583882
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_eq18_sec_source",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "eq18_sec_source": "constant_k_sec"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_eq5_apply_to": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49144559872566523,
+      "vertex_envelope": {
+        "x_min": 2.357272348645275,
+        "x_max": 3.8458999899695048,
+        "y_min": 6.85524013446141,
+        "y_max": 7.975819012374137,
+        "z_min": 61.438925680687795,
+        "z_max": 62.34794971111406
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_eq5_apply_to",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "eq5_apply_to": "all"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_knot_daughter_di": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_knot_daughter_di",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "knot_daughter_di": "zero_reset"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_knot_threshold_gate": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.7777481170888498,
+      "vertex_envelope": {
+        "x_min": -0.08078428761602846,
+        "x_max": 5.107848601690471,
+        "y_min": -0.6027564405977381,
+        "y_max": 0.6027564405977373,
+        "z_min": 1.0138404519136395,
+        "z_max": 1.013840451913648
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_knot_threshold_gate",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "knot_threshold_gate": "none"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_laplacian": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_laplacian",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "laplacian": "length_weighted"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_lattice_orientation": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.8175231983117827,
+      "vertex_envelope": {
+        "x_min": 2.1512095307118346,
+        "x_max": 6.969382216162386,
+        "y_min": 0.34525925805815516,
+        "y_max": 0.3452603207343099,
+        "z_min": 44.444580070259654,
+        "z_max": 46.311121126379895
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_lattice_orientation",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "lattice_orientation": "axial"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_rep_form": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.5153230666184154,
+      "vertex_envelope": {
+        "x_min": 0.8156630536580692,
+        "x_max": 5.377534144967085,
+        "y_min": -0.28864236935612525,
+        "y_max": 0.2565962271490997,
+        "z_min": 76.57354390941168,
+        "z_max": 77.43473082284257
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_rep_form",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "rep_form": "hookean_signed"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_rep_neighbour_set": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": NaN,
+      "vertex_envelope": {
+        "x_min": 0.7146576884798976,
+        "x_max": 5.8959583280330214,
+        "y_min": 7.219116817057566e-16,
+        "y_max": 7.291063151174288e-16,
+        "z_min": 70.10818022072236,
+        "z_max": 70.93346268639839
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_rep_neighbour_set",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "rep_neighbour_set": "mesh"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN_minus_update_order": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        37,
+        60,
+        60,
+        60,
+        60
+      ],
+      "cell_count_plateau": 60.0,
+      "cell_count_final": 60,
+      "cusp_count": 7,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.30021946287034157,
+        "x_max": 0.6621536681004774,
+        "y_min": -0.5083329055123533,
+        "y_max": 0.7048067818889816,
+        "z_min": 1.0011700106743482,
+        "z_max": 9.182574745934778
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN_minus_update_order",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {
+        "update_order": "jacobi"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_adh_form": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6986247844759214,
+      "vertex_envelope": {
+        "x_min": -0.9964008836473006,
+        "x_max": 1.4130544635193567,
+        "y_min": -0.8507084514041318,
+        "y_max": 0.888688814448081,
+        "z_min": 1.0006173372911986,
+        "z_max": 1.0139405860559498
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_adh_form",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "adh_form": "hookean_attraction"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_border_definition": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.5192078375850055,
+      "vertex_envelope": {
+        "x_min": -5.056074549025442,
+        "x_max": -3.4114813912492,
+        "y_min": -0.9994181132990424,
+        "y_max": 0.9865428151566074,
+        "z_min": 1.002241563782682,
+        "z_max": 1.0206133766916579
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_border_definition",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "border_definition": "topological_descendants"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_division_total_cap": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_division_total_cap",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "division_total_cap": "60"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_eq17_inh_source": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_eq17_inh_source",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "eq17_inh_source": "act_times_di"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_eq18_sec_source": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.2830264983953213,
+      "vertex_envelope": {
+        "x_min": -1.0148449249299745,
+        "x_max": -0.042258907952323566,
+        "y_min": -0.43724938793898527,
+        "y_max": 0.4372493879389851,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_eq18_sec_source",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "eq18_sec_source": "k_sec_times_di"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_eq5_apply_to": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928090887977159,
+      "vertex_envelope": {
+        "x_min": -1.2702260556308944,
+        "x_max": 1.1259730126528378,
+        "y_min": -0.893445132208044,
+        "y_max": 0.8310377738685516,
+        "z_min": 1.0006228392804513,
+        "z_max": 1.0139261693350903
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_eq5_apply_to",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "eq5_apply_to": "interior_only"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_knot_daughter_di": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_knot_daughter_di",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "knot_daughter_di": "inherit_avg"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_knot_threshold_gate": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.44458575725975275,
+      "vertex_envelope": {
+        "x_min": -0.8981525781914991,
+        "x_max": 0.0036616140097491963,
+        "y_min": -0.38469284898638434,
+        "y_max": 0.38469284898638456,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.2785916249095894
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_knot_threshold_gate",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "knot_threshold_gate": "first_border_cell"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_laplacian": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_laplacian",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "laplacian": "fortran_margins"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_lattice_orientation": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.5657992025065365,
+      "vertex_envelope": {
+        "x_min": -1.0547797725180494,
+        "x_max": 0.9434792410708036,
+        "y_min": -0.9167505177734004,
+        "y_max": 0.9341745887759811,
+        "z_min": 1.0004788694582551,
+        "z_max": 1.0126334280402758
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_lattice_orientation",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "lattice_orientation": "fortran"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_rep_form": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "cell_count_plateau": NaN,
+      "cell_count_final": null,
+      "cusp_count": null,
+      "cusp_width": null,
+      "vertex_envelope": null,
+      "regime": "NaN",
+      "note": "no final OFF file",
+      "row_label": "PATH_B_DEFAULT_plus_rep_form",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "rep_form": "paper_gated"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": -1,
+      "timed_out": true
+    }
+  },
+  "PATH_B_DEFAULT_plus_rep_neighbour_set": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.35278870532681494,
+      "vertex_envelope": {
+        "x_min": -0.9953805882548881,
+        "x_max": 0.33605492463446274,
+        "y_min": -0.6333050424081968,
+        "y_max": 0.6333050424081961,
+        "z_min": 1.000623219121268,
+        "z_max": 1.0140932683536112
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_rep_neighbour_set",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "rep_neighbour_set": "mesh_plus_all_close"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT_plus_update_order": {
+    "wt-tribosphenic-2014": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": NaN,
+      "vertex_envelope": {
+        "x_min": -0.09707502640800392,
+        "x_max": 4.50023835193898,
+        "y_min": -5.1959531695465665e-15,
+        "y_max": 5.148639016760129e-15,
+        "z_min": 1.008918783588485,
+        "z_max": 1.008918783588491
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT_plus_update_order",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {
+        "update_order": "gauss_seidel_forces"
+      },
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  }
+}

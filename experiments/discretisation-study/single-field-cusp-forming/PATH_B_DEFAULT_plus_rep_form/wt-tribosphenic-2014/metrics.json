@@ -1,0 +1,24 @@
+{
+  "cell_count_history": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+  ],
+  "cell_count_plateau": NaN,
+  "cell_count_final": null,
+  "cusp_count": null,
+  "cusp_width": null,
+  "vertex_envelope": null,
+  "regime": "NaN",
+  "note": "no final OFF file",
+  "row_label": "PATH_B_DEFAULT_plus_rep_form",
+  "base_preset": "PATH_B_DEFAULT",
+  "perturbation": {
+    "rep_form": "paper_gated"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+  "returncode": -1,
+  "timed_out": true
+}

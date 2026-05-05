@@ -239,6 +239,8 @@ The knock-up table is, by symmetry, mostly null. Adding any single FORTRAN field
 
 The methodological reading is that the FORTRAN bundle's effect on cell count is concentrated in two fields, and the rest of the FORTRAN's choices are structurally invisible on this metric and parameter set. The audit catalogue is much wider than that — twenty-two fields — but most of the catalogue is dormant under the seal-example regime. This is a vindication of the methodology: the comparison study identifies which part of the catalogue is load-bearing, which is dormant, and which is mutually load-bearing; without the catalogue and the perturbation matrix, none of these would be visible.
 
+Running the same disentanglement on the cusp-forming dataset (`experiments/discretisation-study/single-field-cusp-forming/`) produces a similarly-shaped result with a parameter-set-specific identity of dominant fields. Both anchors plateau at 19 cells on `wt-tribosphenic-2014.txt`, so the cell-count axis collapses, but the cusp count separates them: `LEGACY_FORTRAN` produces 7 cusps and `PATH_B_DEFAULT` produces 19. Of the 14 differing fields, only `knot_threshold_gate` carries the cusp-count span — symmetrically, with knock-down moving 7 → 19 and knock-up moving 19 → 7 (100 % of the span on either direction). `update_order` carries 41 cells of the cell-count delta in the knock-down direction (the FORTRAN's Gauss-Seidel ordering is what holds cell count at 19; Jacobi triggers division beyond that). `rep_form` produces the same NaN runaway under `PATH_B_DEFAULT_plus_rep_form` as on the seal example, confirming the field's instability is not a parameter-set artefact. Eleven of the 14 fields stay dormant in both directions. The methodological reading: the *shape* of the load-bearing structure (small dominant subset, long dormant tail, `rep_form` instability across both datasets) is parameter-set-robust; the *identity* of the dominant fields is parameter-set-specific (`rep_form` and `adh_form` on seal, `knot_threshold_gate` and `update_order` on cusp-forming). The catalogue's structural regularity and its parametric specificity are both visible, and only by running the perturbation matrix on more than one parameter set. See `docs/findings/2026-05-05-path-b-v2-cusp-forming-disentanglement-and-act-sweep.md` for the full per-row table.
+
 ### C. The cusp-forming dataset
 
 On `examples/wt-tribosphenic-2014.txt` (the 2014 wild-type tribosphenic mouse parameter set, transcribed from Ext Data Fig. 2 of the 2014 paper with one tuning deviation: `ina = 0.5` rather than the paper's literal `0.0`, the smallest deviation that lifts Act above the knot threshold within 500 iterations under silicoshark's current configuration), the eq. 14 typo is biologically decisive.
@@ -264,6 +266,14 @@ This is the headline biological finding of the comparison study. The 2010 paper'
 A complementary confirmation run on the paper-literal parameter set strengthens the methodological reading. `examples/wt-tribosphenic-2014-paper-ina.txt` restores the `ina = 0` value the paper specifies (matching Harjunmaa et al.'s caption 'Ina is not used in the model' for wild-type) and is otherwise identical to `wt-tribosphenic-2014.txt`. Run for 14,000 iterations (the Harjunmaa published sweep length) under all five named presets, this run produces zero cusps on every preset at every save block, and the two PAPER presets produce *byte-identical* final OFFs (SHA-256 `92b4615630b9`); the two FORTRAN-flavoured presets are likewise byte-identical to each other (`9f2507cdba6c`). The mechanism is exact: with Act identically zero on every cell at every timestep, the typo branch `1 + k_inh × [Act] = 1 + 0` and the corrected branch `1 + k_inh × [Inh] = 1 + 0` produce numerically identical denominators, and the trajectories agree to the bit. The headline claim therefore admits a sharper phrasing: the eq. 14 typo is biologically catastrophic on parameter sets that drive Act above zero; on parameter sets where Act stays at exactly zero, the typo is mathematically dormant. The `ina = 0.5` deviation in `wt-tribosphenic-2014.txt` does not manufacture the typo's effect — it exposes it, by putting the simulator into the regime where the typo's denominator branch produces a different value from the corrected branch. See `docs/findings/2026-05-05-path-b-v2-ina-zero-extended-run.md` for full per-save numbers.
 
 (A separate observation the `ina = 0` run does not address: `13.f90` itself, run for 14,000 iterations under wild-type `ina = 0`, produces ~5 cusps per Ext Data Fig. 4a, so the FORTRAN has an Act-seeding path — likely via the buccal/lingual border-bias terms `Bbi` / `Lbi` and the mesenchymal back-diffusion of Sec — that silicoshark's `mesenchyme='absent'` / `topology='static_with_local_update'` configuration suppresses. Reproducing the FORTRAN's Act-seeding path is item 1 of §Future work; until that is done, the silicoshark replication cannot independently verify the paper's claim that wild-type `ina = 0` produces five cusps. What the silicoshark replication can verify is the typo's mechanism, which the byte-identicality result confirms exactly.)
+
+A complementary Act sweep across Harjunmaa et al. Ext Data Fig. 4a's published activator-strength range (`Act ∈ [0.1, 1.6]` in 0.1 increments) extends the typo finding from a single-Act-point observation to a 16-point invariance. `experiments/discretisation-study/act-sweep-2014/` runs all five named presets across all 16 Act values on `wt-tribosphenic-2014.txt` (with the `ina = 0.5` deviation; the paper-literal `ina = 0` regime separately closed by the byte-identicality result above). The cusp count is exactly flat across the entire range under every preset: HUMPPA_LITERAL and LEGACY_FORTRAN at 7 cusps, PAPER_2010 and PATH_B_DEFAULT at 19 cusps, PAPER_LITERAL_2010 at 0 cusps. The eq. 14 typo divergence (PAPER_2010 = 19 vs PAPER_LITERAL_2010 = 0) holds invariantly across the full published Act range, raising the typo's empirical base from one parameter-set-point to seventeen (16 Act values + the 14,000-iter `ina = 0` confirmation).
+
+![Figure 5: cusp count vs Act under five presets](figures/fig5-act-sweep/fig5-act-sweep.png)
+
+**Figure 5.** Cusp count vs Act on `examples/wt-tribosphenic-2014.txt` (with `ina = 0.5` lift) for all five named presets, sweeping `Act` in 0.1 increments across Harjunmaa et al. Ext Data Fig. 4a's published range. The eq. 14 typo divergence between PAPER_2010 (19 cusps) and PAPER_LITERAL_2010 (0 cusps) is invariant across the full Act range. The flat lines are themselves a methodologically useful negative result: silicoshark's `mesenchyme='absent'` / `topology='static_with_local_update'` configuration is in a saturated regime where `Act` does not modulate cusp count, and so silicoshark cannot quantitatively reproduce the paper's monotonic 1 → 5 cusp progression across this Act range. That progression depends on inhibitor-mediated suppression of neighbour-cell knot formation, which requires the FORTRAN's mesenchymal Inh diffusion path — §Future work item 1.
+
+The Act-sweep result therefore separates two methodologically distinct questions. 'Does the eq. 14 typo matter?' is answered yes, robustly, across 16 published parameter-set variants and the analytical Act = 0 reduction. 'Does silicoshark reproduce the FORTRAN's quantitative Act-sweep curve?' is answered no, because silicoshark's mesenchyme-absent configuration provides no inhibitory bath to cap cusp formation. The paper's main contribution rests on the first question; the second is a faithfulness-of-reproduction question that §Limitations and §Future work track separately.
 
 The `LEGACY_FORTRAN` and `HUMPPA_LITERAL` results on this dataset are slightly more complex. They produce seven knots (the FORTRAN's `knot_threshold_gate='first_border_cell'` restricts knot eligibility to certain cell indices) but exhibit a separate pathology: Act explodes to ~4e15 because the FORTRAN-flavoured `eq17_inh_source='act_times_di'` and `eq18_sec_source='k_sec_times_di'` keep Inh and Sec at zero on this parameter set (diff never reaches the Int threshold within the run, so the eq. 17 and eq. 18 secretion clauses never fire under the FORTRAN-flavoured presets, and there is no negative feedback). This is a separate finding documented in B2; it is the failure mode that motivated the B4 three-way split of `eq17_inh_source`.
 
@@ -304,7 +314,9 @@ A Discretisation field can only move biology if its branch fires — that is, th
 | `lattice_orientation` | yes (initial cell layout differs) | yes |
 | `border_bias_x_zero_quirk` | yes (under `lattice_orientation='fortran'`, y-axis cells sit at x = 0) | yes (same condition, under FORTRAN-flavoured presets) |
 
-Both previously-unknown cells resolve to **inert** after the targeted D1 runs in `experiments/discretisation-study/sensitivity-closure/`. Under FORTRAN-flavoured presets, mes_inh and mes_sec stay at zero (because Inh and Sec do; see §5D's lock at d_i = 0), so vertical diffusion transports nothing regardless of layer count. Under paper-flavoured presets the eq. 17 clause does fire and Inh accumulates to ~1.94, but at wt-tribosphenic k_di = 0.2 / k_ds = 0.1 and dt = 0.05 the vertical flux is too small to make 1, 2, or 3 layers observably different at 2500 iterations — the OFFs are bit-identical. A longer iteration sweep, or a parameter set with larger vertical-diffusion constants, is the natural follow-up. A full single-field disentanglement on `wt-tribosphenic-2014.txt` would similarly convert most of the §3 table's 'not measured' cells into firm answers.
+Both previously-unknown cells resolve to **inert** after the targeted D1 runs in `experiments/discretisation-study/sensitivity-closure/`. Under FORTRAN-flavoured presets, mes_inh and mes_sec stay at zero (because Inh and Sec do; see §5D's lock at d_i = 0), so vertical diffusion transports nothing regardless of layer count. Under paper-flavoured presets the eq. 17 clause does fire and Inh accumulates to ~1.94, but at wt-tribosphenic k_di = 0.2 / k_ds = 0.1 and dt = 0.05 the vertical flux is too small to make 1, 2, or 3 layers observably different at 2500 iterations — the OFFs are bit-identical. A longer iteration sweep, or a parameter set with larger vertical-diffusion constants, is the natural follow-up.
+
+The full single-field disentanglement on `wt-tribosphenic-2014.txt` has now been run (§5B; `experiments/discretisation-study/single-field-cusp-forming/`) and converts most of the table's 'not measured' cusp-forming-column cells into firm answers. The dominant fields on cusp-forming are `knot_threshold_gate` (carries 100 % of the 7→19 cusp-count span symmetrically), `update_order` (carries 41 cells of cell-count delta in the knock-down direction), and `rep_form` (NaN runaway under `PATH_B_DEFAULT_plus_rep_form`, the same instability signature it carries on the seal example). Eleven of the 14 differing fields stay dormant on this dataset under both directions of perturbation. The shape of the result — small dominant set, long dormant tail, `rep_form` instability robust across both datasets — matches the seal example's structure with a different identity of dominant fields, supporting the methodological reading that the catalogue's load-bearing structure is parameter-set-specific in identity but parameter-set-robust in shape.
 
 Not every 'yes' is biologically equal — `update_order` fires every step, but the difference between Jacobi and Gauss–Seidel on the seal example is below the cell-count tolerance (and the disentanglement records the envelope shift). The 'fires' column tells the reader where it is even worth running a single-field study; if the field's branch never fires, the disentanglement is mechanically zero by construction, and a 'dormant' row in §The Discretisation taxonomy reflects that mechanism rather than a hidden insensitivity.
 
@@ -416,7 +428,7 @@ The first two are within reach of the existing infrastructure; (3) is a clearly-
 
 ## Reproduction
 
-The three figures in `docs/figures/` are reproduced by running the scripts in `scripts/figures/`. How to rerun every result in the briefing:
+The figures in `docs/figures/` are reproduced by running the scripts in `scripts/figures/` (figs 1–4) and `scripts/analyse_act_sweep.py` (fig 5). How to rerun every result in the briefing:
 
 ```bash
 # Path A regression (FORTRAN-faithful coreop2d.py oracle)
@@ -440,6 +452,24 @@ TMPDIR=.tmp .venv/bin/python scripts/run-discretisation-study.py \
     --params examples/wt-tribosphenic-2014.txt \
     --iters 500 --saves 5 \
     --out experiments/discretisation-study/cusp-forming
+
+# Cusp-forming disentanglement and Act sweep (B.1 strengthening,
+# 2026-05-05)
+TMPDIR=.tmp .venv/bin/python scripts/run-discretisation-study.py \
+    --params examples/wt-tribosphenic-2014.txt \
+    --single-field-mode both --iters 500 --saves 5 \
+    --out experiments/discretisation-study/single-field-cusp-forming
+TMPDIR=.tmp .venv/bin/python scripts/run-discretisation-study.py \
+    --params experiments/discretisation-study/act-sweep-2014/params/Act_*.txt \
+    --iters 500 --saves 5 \
+    --out experiments/discretisation-study/act-sweep-2014/results
+.venv/bin/python scripts/analyse_act_sweep.py
+
+# Paper-literal ina=0 14,000-iter run (B.5 strengthening, 2026-05-05)
+TMPDIR=.tmp .venv/bin/python scripts/run-discretisation-study.py \
+    --params examples/wt-tribosphenic-2014-paper-ina.txt \
+    --iters 500 --saves 28 \
+    --out experiments/discretisation-study/cusp-forming-paper-ina
 ```
 
 Wall-clock cost on a contemporary laptop: ~60 s per silicoshark run. The five-preset baselines complete in around 60 s; the single-field disentanglement takes ~5 min on the seal example.

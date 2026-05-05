@@ -1,0 +1,30 @@
+{
+  "cell_count_history": [
+    19,
+    19,
+    19,
+    19,
+    19
+  ],
+  "cell_count_plateau": 19.0,
+  "cell_count_final": 19,
+  "cusp_count": 7,
+  "cusp_width": 0.7508075397885194,
+  "vertex_envelope": {
+    "x_min": 1.9153805065913292,
+    "x_max": 6.363864548850471,
+    "y_min": -0.11155277149788435,
+    "y_max": -0.1115527103013668,
+    "z_min": 30.471319413883894,
+    "z_max": 31.66214544916989
+  },
+  "regime": "plateau",
+  "row_label": "LEGACY_FORTRAN_minus_border_definition",
+  "base_preset": "LEGACY_FORTRAN",
+  "perturbation": {
+    "border_definition": "neighbour_count"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+  "returncode": 0,
+  "timed_out": false
+}

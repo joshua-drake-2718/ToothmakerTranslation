@@ -1,0 +1,35 @@
+{
+  "row_label": "PATH_B_DEFAULT_plus_rep_form",
+  "base_preset": "PATH_B_DEFAULT",
+  "perturbation": {
+    "rep_form": "paper_gated"
+  },
+  "overrides": {
+    "mesenchyme": "absent",
+    "rep_form": "paper_gated"
+  },
+  "effective": {
+    "laplacian": "length_weighted",
+    "update_order": "jacobi",
+    "topology": "static_with_local_update",
+    "division_per_step_cap": null,
+    "division_max_edge": null,
+    "division_total_cap": null,
+    "eq5_z_gate": true,
+    "eq5_apply_to": "all",
+    "rep_form": "paper_gated",
+    "adh_form": "unit_vector",
+    "rep_neighbour_set": "mesh",
+    "eq14_denominator": "inh_corrected",
+    "eq17_inh_source": "act_concentration",
+    "eq18_sec_source": "constant_k_sec",
+    "diff_accumulator": "sec",
+    "knot_threshold_gate": "none",
+    "knot_daughter_di": "zero_reset",
+    "mesenchyme": "absent",
+    "n_mesenchyme_layers": 2,
+    "border_definition": "neighbour_count",
+    "lattice_orientation": "axial",
+    "border_bias_x_zero_quirk": true
+  }
+}

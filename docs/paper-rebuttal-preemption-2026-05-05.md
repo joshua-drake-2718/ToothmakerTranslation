@@ -170,15 +170,55 @@ records 'fires on parameter set' as an explicit column rather than
 asserting unconditional applicability. The methodology paper makes
 a worked-example claim, not a parameter-space-coverage claim.
 
-**Strength:** WEAK. This is the most consequential exposure. Two
-parameter sets is enough to ground the existence claim ('on at
-least one parameter set, the eq. 14 typo is biologically
-catastrophic') but not the load-bearing-fields claim ('the FORTRAN
-bundle's effect on the seal example is concentrated in two
-fields'), which a reviewer will reasonably read as wanting a
-parameter-sweep generalisation. A 1-week run on the 2014 Act sweep
-would substantially strengthen the empirical base before
-submission. See §E.
+The 2026-05-05 strengthening pass adds two empirical extensions
+that change the WEAK rating substantively. First, the single-field
+disentanglement was run on `examples/wt-tribosphenic-2014.txt`
+(`experiments/discretisation-study/single-field-cusp-forming/`),
+giving a second parameter set's perturbation matrix. The result:
+the *shape* of the load-bearing structure (small dominant subset,
+long dormant tail, `rep_form` instability) is parameter-set-robust;
+the *identity* of the dominant fields is parameter-set-specific
+(`rep_form` and `adh_form` on seal; `knot_threshold_gate` and
+`update_order` on cusp-forming). The methodological claim — that
+the comparison study reveals which part of the catalogue is
+load-bearing on a given parameter set — is now empirically
+grounded on two distinct parameter sets, with structurally similar
+but contents-distinct results. Second, the Act sweep across
+Harjunmaa et al. Ext Data Fig. 4a's published range (16 parameter
+points, Act ∈ [0.1, 1.6]) shows that the eq. 14 typo divergence
+(PAPER_2010 = 19 cusps, PAPER_LITERAL_2010 = 0) is invariant
+across the entire published Act range. Combined with the
+14,000-iteration `ina = 0` extended run (B.5), the typo finding
+now rests on 17 parameter-set variants of cusp-forming plus the
+analytical Act = 0 reduction — not the single-point
+parameter-deviation observation the original briefing reported.
+See `docs/findings/2026-05-05-path-b-v2-cusp-forming-disentanglement-and-act-sweep.md`.
+
+The Act-sweep result also surfaces a methodological caveat the
+briefing now treats explicitly: silicoshark's `mesenchyme='absent'`
+/ `topology='static_with_local_update'` configuration is in a
+saturated regime where Act does not modulate cusp count, so the
+silicoshark replication does *not* reproduce the FORTRAN's
+quantitative monotonic 1 → 5 progression. The paper's main
+contribution rests on 'does the typo matter?' (yes, robustly across
+17 parameter-set variants); 'does silicoshark reproduce the
+FORTRAN's quantitative Act-sweep curve?' (no; requires
+implementing `mesenchyme='per_column_z_layers'` with parameter
+values that allow inhibitor accumulation between knot loci, plus
+the `fortran_margins` laplacian — §Future work items 1 and 3).
+These two questions are kept methodologically distinct.
+
+**Strength:** ARGUABLE. The 17-parameter-set base, plus the
+disentanglement on a second dataset, plus the structural regularity
+finding (catalogue shape is parameter-set-robust, contents are
+parameter-set-specific) is a substantive answer to the original
+WEAK exposure. Residual: all 17 parameter-set variants are
+perturbations of one biological problem (the 2014 wild-type
+tribosphenic mouse), so 'breadth' in the strict
+across-different-biological-problems sense is still bounded.
+A reviewer can legitimately request a second, independent
+biological problem (a different species' parameter set, a
+knock-out variant); §Future work item 1 names that explicitly.
 
 ### B.2 'Cusp count is a coarse metric'
 
@@ -597,29 +637,37 @@ LEGACY_FORTRAN plateau, not the FORTRAN binary's plateau.
 
 ## E. Synthesis: what to strengthen before submission
 
-Two rebuttals retain WEAK strength tags after the 2026-05-05
-strengthening pass: B.1 (two parameter sets) and B.3
-(`fortran_margins` unimplemented). B.5 (eq. 14 typo finding's
-parameter deviation) was upgraded to SOLID by the `ina = 0`
-extended run on 2026-05-05. One — D.4 — is ARGUABLE but on the
-boundary, and depends partly on prose tightening that costs no
-experimental effort. I list the strengthening priorities in rough
-order of consequence-for-submission and rough work-in-days; item 2
-is retained as a record of the closed action.
+After the 2026-05-05 strengthening pass:
 
-1. **Run the disentanglement on the cusp-forming dataset
-   (1 week).** This addresses B.1 and B.4 simultaneously: a single-
-   field disentanglement on
-   `examples/wt-tribosphenic-2014.txt`, with the existing
-   `scripts/run-discretisation-study.py --single-field-mode both
-   --params examples/wt-tribosphenic-2014.txt` invocation, would
-   convert most of the 'not measured' cells in §The Discretisation
-   taxonomy classification table into firm yes/no answers and
-   would expose whether `rep_form` / `adh_form` retain their load-
-   bearing role on a different parameter set. *Strengthening but
-   not blocking* — the briefing's existence claims survive without
-   this; the methodological claim about parameter-independence is
-   the part that would be strengthened.
+- **B.1** (two parameter sets) WEAK → ARGUABLE, via the cusp-forming
+  disentanglement and 16-point Act sweep.
+- **B.3** (`fortran_margins` unimplemented) retains WEAK.
+- **B.5** (eq. 14 typo's parameter deviation) WEAK → SOLID, via the
+  `ina = 0` 14,000-iteration extended run.
+- **D.4** retains ARGUABLE on the boundary, depending partly on
+  prose tightening that costs no experimental effort.
+
+I list the strengthening priorities in rough order of
+consequence-for-submission and rough work-in-days; items 1 and 2
+are retained as records of the closed actions.
+
+1. **Run the disentanglement on the cusp-forming dataset.**
+   ✅ *Done (2026-05-05).* `scripts/run-discretisation-study.py
+   --single-field-mode both --params
+   examples/wt-tribosphenic-2014.txt` was run; output at
+   `experiments/discretisation-study/single-field-cusp-forming/`.
+   Headline: `knot_threshold_gate` carries 100 % of the cusp-count
+   span symmetrically (7 ↔ 19); `update_order` shifts cell count
+   19 → 60 in the knock-down direction; `rep_form` produces NaN
+   runaway under `PATH_B_DEFAULT_plus_rep_form` (same instability
+   signature as on seal). 11 of the 14 differing fields stay
+   dormant. The shape of the load-bearing structure is robust
+   across both parameter sets; the identity of dominant fields is
+   parameter-set-specific. A 16-point Act sweep was also run
+   (`experiments/discretisation-study/act-sweep-2014/`) showing
+   the eq. 14 typo divergence holds across `Act ∈ [0.1, 1.6]`.
+   B.1 has been upgraded from WEAK to ARGUABLE. Findings record:
+   `docs/findings/2026-05-05-path-b-v2-cusp-forming-disentanglement-and-act-sweep.md`.
 
 2. **Run wt-tribosphenic-2014 with `ina = 0` and extended
    iterations.** ✅ *Done (2026-05-05).* The run was completed at

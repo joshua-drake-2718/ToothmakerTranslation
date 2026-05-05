@@ -1,0 +1,2252 @@
+{
+  "HUMPPA_LITERAL": {
+    "Act_0.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.495117382055604,
+      "vertex_envelope": {
+        "x_min": 2.5466856505684152,
+        "x_max": 4.0743022334095045,
+        "y_min": 9.97562329048564,
+        "y_max": 11.111839609541882,
+        "z_min": 55.736479829495,
+        "z_max": 56.636075074587445
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.7": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951652646345308,
+      "vertex_envelope": {
+        "x_min": 2.546649768783989,
+        "x_max": 4.075144190642534,
+        "y_min": -10.123986849857562,
+        "y_max": -8.987897461539701,
+        "z_min": 57.07230853293332,
+        "z_max": 57.97169703539615
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.7.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.8": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951532352455194,
+      "vertex_envelope": {
+        "x_min": 2.547305908618819,
+        "x_max": 4.075588299847102,
+        "y_min": -10.304922111598426,
+        "y_max": -9.16880299931032,
+        "z_min": 56.82710296106576,
+        "z_max": 57.726539794630604
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.8.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.9": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49517011916641734,
+      "vertex_envelope": {
+        "x_min": 2.5479340435867806,
+        "x_max": 4.076512834445888,
+        "y_min": 8.922120538907839,
+        "y_max": 10.058198240803573,
+        "z_min": 57.16325644345172,
+        "z_max": 58.062625953291736
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.9.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.0": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951596200634935,
+      "vertex_envelope": {
+        "x_min": 2.548533830546829,
+        "x_max": 4.076929020740912,
+        "y_min": 9.07044702658646,
+        "y_max": 10.20655030484731,
+        "z_min": 56.96996019867762,
+        "z_max": 57.8693712637953
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.0.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.495209267173132,
+      "vertex_envelope": {
+        "x_min": 2.548616836899188,
+        "x_max": 4.0778557158443665,
+        "y_min": -9.630307651497402,
+        "y_max": -8.494319279155945,
+        "z_min": 57.74631874183812,
+        "z_max": 58.645543808910155
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49516299314604545,
+      "vertex_envelope": {
+        "x_min": 2.549124290263739,
+        "x_max": 4.077578706406488,
+        "y_min": -10.157241868337985,
+        "y_max": -9.02114686742267,
+        "z_min": 57.038034378705206,
+        "z_max": 57.93743198880925
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951168508389456,
+      "vertex_envelope": {
+        "x_min": 2.5497581178178255,
+        "x_max": 4.077364467064592,
+        "y_min": 9.991749752531636,
+        "y_max": 11.12796761073762,
+        "z_min": 55.71098652325625,
+        "z_max": 56.61058427273202
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952557072477248,
+      "vertex_envelope": {
+        "x_min": 2.5486439388015234,
+        "x_max": 4.078629695933488,
+        "y_min": 8.132713499376885,
+        "y_max": 9.26860464860032,
+        "z_min": 58.247052098729164,
+        "z_max": 59.14612147265679
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952557072477248,
+      "vertex_envelope": {
+        "x_min": 2.5486439388015234,
+        "x_max": 4.078629695933488,
+        "y_min": 8.132713499376885,
+        "y_max": 9.26860464860032,
+        "z_min": 58.247052098729164,
+        "z_max": 59.14612147265679
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "HUMPPA_LITERAL",
+      "base_preset": "HUMPPA_LITERAL",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "LEGACY_FORTRAN": {
+    "Act_0.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952847124086183,
+      "vertex_envelope": {
+        "x_min": 2.5470375931615417,
+        "x_max": 4.077476065650182,
+        "y_min": 7.951503332473554,
+        "y_max": 9.087336948988495,
+        "z_min": 58.481051730854546,
+        "z_max": 59.38002990397155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.495117382055604,
+      "vertex_envelope": {
+        "x_min": 2.5466856505684152,
+        "x_max": 4.0743022334095045,
+        "y_min": 9.97562329048564,
+        "y_max": 11.111839609541882,
+        "z_min": 55.736479829495,
+        "z_max": 56.636075074587445
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.7": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951652646345308,
+      "vertex_envelope": {
+        "x_min": 2.546649768783989,
+        "x_max": 4.075144190642534,
+        "y_min": -10.123986849857562,
+        "y_max": -8.987897461539701,
+        "z_min": 57.07230853293332,
+        "z_max": 57.97169703539615
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.7.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.8": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951532352455194,
+      "vertex_envelope": {
+        "x_min": 2.547305908618819,
+        "x_max": 4.075588299847102,
+        "y_min": -10.304922111598426,
+        "y_max": -9.16880299931032,
+        "z_min": 56.82710296106576,
+        "z_max": 57.726539794630604
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.8.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.9": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49517011916641734,
+      "vertex_envelope": {
+        "x_min": 2.5479340435867806,
+        "x_max": 4.076512834445888,
+        "y_min": 8.922120538907839,
+        "y_max": 10.058198240803573,
+        "z_min": 57.16325644345172,
+        "z_max": 58.062625953291736
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.9.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.0": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951596200634935,
+      "vertex_envelope": {
+        "x_min": 2.548533830546829,
+        "x_max": 4.076929020740912,
+        "y_min": 9.07044702658646,
+        "y_max": 10.20655030484731,
+        "z_min": 56.96996019867762,
+        "z_max": 57.8693712637953
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.0.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.495209267173132,
+      "vertex_envelope": {
+        "x_min": 2.548616836899188,
+        "x_max": 4.0778557158443665,
+        "y_min": -9.630307651497402,
+        "y_max": -8.494319279155945,
+        "z_min": 57.74631874183812,
+        "z_max": 58.645543808910155
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49516299314604545,
+      "vertex_envelope": {
+        "x_min": 2.549124290263739,
+        "x_max": 4.077578706406488,
+        "y_min": -10.157241868337985,
+        "y_max": -9.02114686742267,
+        "z_min": 57.038034378705206,
+        "z_max": 57.93743198880925
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4951168508389456,
+      "vertex_envelope": {
+        "x_min": 2.5497581178178255,
+        "x_max": 4.077364467064592,
+        "y_min": 9.991749752531636,
+        "y_max": 11.12796761073762,
+        "z_min": 55.71098652325625,
+        "z_max": 56.61058427273202
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952557072477248,
+      "vertex_envelope": {
+        "x_min": 2.5486439388015234,
+        "x_max": 4.078629695933488,
+        "y_min": 8.132713499376885,
+        "y_max": 9.26860464860032,
+        "z_min": 58.247052098729164,
+        "z_max": 59.14612147265679
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.4952557072477248,
+      "vertex_envelope": {
+        "x_min": 2.5486439388015234,
+        "x_max": 4.078629695933488,
+        "y_min": 8.132713499376885,
+        "y_max": 9.26860464860032,
+        "z_min": 58.247052098729164,
+        "z_max": 59.14612147265679
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 7,
+      "cusp_width": 0.49529647251946524,
+      "vertex_envelope": {
+        "x_min": 2.5483321284774987,
+        "x_max": 4.078951223190843,
+        "y_min": 7.885722335612265,
+        "y_max": 9.021533307633328,
+        "z_min": 58.575665961442695,
+        "z_max": 59.47460843969199
+      },
+      "regime": "plateau",
+      "row_label": "LEGACY_FORTRAN",
+      "base_preset": "LEGACY_FORTRAN",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PAPER_2010": {
+    "Act_0.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.27549082019802107,
+      "vertex_envelope": {
+        "x_min": -0.6369398641031253,
+        "x_max": 0.2956616067132662,
+        "y_min": -0.4606893893346073,
+        "y_max": 0.46068938933460585,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.27753881786256485,
+      "vertex_envelope": {
+        "x_min": -0.6664179530427485,
+        "x_max": 0.27313908399735665,
+        "y_min": -0.4649372353443528,
+        "y_max": 0.46493723534435283,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0623929399513392
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.2838431519963178,
+      "vertex_envelope": {
+        "x_min": -1.0419365976747834,
+        "x_max": -0.09773827237117196,
+        "y_min": -0.4664880135486109,
+        "y_max": 0.46708133236928184,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0467415744393003
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.2974103334927775,
+      "vertex_envelope": {
+        "x_min": -1.0539963386915963,
+        "x_max": -0.09765990605743295,
+        "y_min": -0.47470253939826185,
+        "y_max": 0.4655760911786934,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0380074799153947
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.5001878103129227,
+      "vertex_envelope": {
+        "x_min": 2.2646214286234536,
+        "x_max": 3.8879159217953587,
+        "y_min": -3.515357745514585,
+        "y_max": -1.6014585143292672,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0326002197467943
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6937969861474375,
+      "vertex_envelope": {
+        "x_min": -1.2426588206988327,
+        "x_max": 1.1545321257582335,
+        "y_min": -0.8320894660737467,
+        "y_max": 0.8922821668068097,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0284534617338843
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.7": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6934496914824764,
+      "vertex_envelope": {
+        "x_min": -1.156859739366773,
+        "x_max": 1.2452389460755962,
+        "y_min": -0.8370965096132714,
+        "y_max": 0.8882671093973757,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.02574318149583
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.7.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.8": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6932960479079417,
+      "vertex_envelope": {
+        "x_min": -1.1336435038025798,
+        "x_max": 1.2682398970252287,
+        "y_min": -0.8882070436858697,
+        "y_max": 0.8368614286647268,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0234755291217241
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.8.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.9": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6931986328835077,
+      "vertex_envelope": {
+        "x_min": -1.1573018786299953,
+        "x_max": 1.2450904675519798,
+        "y_min": -0.8883184707808717,
+        "y_max": 0.8373722746920402,
+        "z_min": 1.0011949374588307,
+        "z_max": 1.021821089518995
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.9.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.0": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6930915503657775,
+      "vertex_envelope": {
+        "x_min": -1.1556988478570736,
+        "x_max": 1.246452610423323,
+        "y_min": -0.8882645329078181,
+        "y_max": 0.8371123693170768,
+        "z_min": 1.0011341722946319,
+        "z_max": 1.0200325337046143
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.0.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6929904620330072,
+      "vertex_envelope": {
+        "x_min": -1.1593401821683365,
+        "x_max": 1.242805256529987,
+        "y_min": -0.8370970467801587,
+        "y_max": 0.8882599542807207,
+        "z_min": 1.0008979451058568,
+        "z_max": 1.0181020399336338
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6929394096431489,
+      "vertex_envelope": {
+        "x_min": -1.1637018461214028,
+        "x_max": 1.2384209145167069,
+        "y_min": -0.8370696501439355,
+        "y_max": 0.8882522644896391,
+        "z_min": 1.0008615991861929,
+        "z_max": 1.0170844692944285
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928889434119824,
+      "vertex_envelope": {
+        "x_min": -1.164073750734461,
+        "x_max": 1.2383347058185605,
+        "y_min": -0.8373467556070995,
+        "y_max": 0.8883231615005107,
+        "z_min": 1.0008300286106266,
+        "z_max": 1.0160348673113258
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928407611588064,
+      "vertex_envelope": {
+        "x_min": -1.1590797237046582,
+        "x_max": 1.2430899230547963,
+        "y_min": -0.8371016872781347,
+        "y_max": 0.8882601551900375,
+        "z_min": 1.000646883604141,
+        "z_max": 1.0149657135614447
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928407611588064,
+      "vertex_envelope": {
+        "x_min": -1.1590797237046582,
+        "x_max": 1.2430899230547963,
+        "y_min": -0.8371016872781347,
+        "y_max": 0.8882601551900375,
+        "z_min": 1.000646883604141,
+        "z_max": 1.0149657135614447
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_2010",
+      "base_preset": "PAPER_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PAPER_LITERAL_2010": {
+    "Act_0.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.7": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.7.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.8": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.8.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.9": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.9.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.0": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.0.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -0.6533321187812354,
+        "x_max": 0.30995593592692283,
+        "y_min": -0.4344051497858439,
+        "y_max": 0.43440514978584177,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PAPER_LITERAL_2010",
+      "base_preset": "PAPER_LITERAL_2010",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  },
+  "PATH_B_DEFAULT": {
+    "Act_0.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.27549082019802107,
+      "vertex_envelope": {
+        "x_min": -0.6369398641031253,
+        "x_max": 0.2956616067132662,
+        "y_min": -0.4606893893346073,
+        "y_max": 0.46068938933460585,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0630341815639968
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.27753881786256485,
+      "vertex_envelope": {
+        "x_min": -0.6664179530427485,
+        "x_max": 0.27313908399735665,
+        "y_min": -0.4649372353443528,
+        "y_max": 0.46493723534435283,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0623929399513392
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.2838431519963178,
+      "vertex_envelope": {
+        "x_min": -1.0419365976747834,
+        "x_max": -0.09773827237117196,
+        "y_min": -0.4664880135486109,
+        "y_max": 0.46708133236928184,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0467415744393003
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.2974103334927775,
+      "vertex_envelope": {
+        "x_min": -1.0539963386915963,
+        "x_max": -0.09765990605743295,
+        "y_min": -0.47470253939826185,
+        "y_max": 0.4655760911786934,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0380074799153947
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.5001878103129227,
+      "vertex_envelope": {
+        "x_min": 2.2646214286234536,
+        "x_max": 3.8879159217953587,
+        "y_min": -3.515357745514585,
+        "y_max": -1.6014585143292672,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0326002197467943
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6937969861474375,
+      "vertex_envelope": {
+        "x_min": -1.2426588206988327,
+        "x_max": 1.1545321257582335,
+        "y_min": -0.8320894660737467,
+        "y_max": 0.8922821668068097,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0284534617338843
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.7": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6934496914824764,
+      "vertex_envelope": {
+        "x_min": -1.156859739366773,
+        "x_max": 1.2452389460755962,
+        "y_min": -0.8370965096132714,
+        "y_max": 0.8882671093973757,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.02574318149583
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.7.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.8": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6932960479079417,
+      "vertex_envelope": {
+        "x_min": -1.1336435038025798,
+        "x_max": 1.2682398970252287,
+        "y_min": -0.8882070436858697,
+        "y_max": 0.8368614286647268,
+        "z_min": 1.0012049809912493,
+        "z_max": 1.0234755291217241
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.8.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_0.9": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6931986328835077,
+      "vertex_envelope": {
+        "x_min": -1.1573018786299953,
+        "x_max": 1.2450904675519798,
+        "y_min": -0.8883184707808717,
+        "y_max": 0.8373722746920402,
+        "z_min": 1.0011949374588307,
+        "z_max": 1.021821089518995
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.9.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.0": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6930915503657775,
+      "vertex_envelope": {
+        "x_min": -1.1556988478570736,
+        "x_max": 1.246452610423323,
+        "y_min": -0.8882645329078181,
+        "y_max": 0.8371123693170768,
+        "z_min": 1.0011341722946319,
+        "z_max": 1.0200325337046143
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.0.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.1": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6929904620330072,
+      "vertex_envelope": {
+        "x_min": -1.1593401821683365,
+        "x_max": 1.242805256529987,
+        "y_min": -0.8370970467801587,
+        "y_max": 0.8882599542807207,
+        "z_min": 1.0008979451058568,
+        "z_max": 1.0181020399336338
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.1.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.2": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6929394096431489,
+      "vertex_envelope": {
+        "x_min": -1.1637018461214028,
+        "x_max": 1.2384209145167069,
+        "y_min": -0.8370696501439355,
+        "y_max": 0.8882522644896391,
+        "z_min": 1.0008615991861929,
+        "z_max": 1.0170844692944285
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.3": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928889434119824,
+      "vertex_envelope": {
+        "x_min": -1.164073750734461,
+        "x_max": 1.2383347058185605,
+        "y_min": -0.8373467556070995,
+        "y_max": 0.8883231615005107,
+        "z_min": 1.0008300286106266,
+        "z_max": 1.0160348673113258
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.3.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.4": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928407611588064,
+      "vertex_envelope": {
+        "x_min": -1.1590797237046582,
+        "x_max": 1.2430899230547963,
+        "y_min": -0.8371016872781347,
+        "y_max": 0.8882601551900375,
+        "z_min": 1.000646883604141,
+        "z_max": 1.0149657135614447
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.4.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.5": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6928407611588064,
+      "vertex_envelope": {
+        "x_min": -1.1590797237046582,
+        "x_max": 1.2430899230547963,
+        "y_min": -0.8371016872781347,
+        "y_max": 0.8882601551900375,
+        "z_min": 1.000646883604141,
+        "z_max": 1.0149657135614447
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.5.txt",
+      "returncode": 0,
+      "timed_out": false
+    },
+    "Act_1.6": {
+      "cell_count_history": [
+        19,
+        19,
+        19,
+        19,
+        19
+      ],
+      "cell_count_plateau": 19.0,
+      "cell_count_final": 19,
+      "cusp_count": 19,
+      "cusp_width": 0.6927900198487115,
+      "vertex_envelope": {
+        "x_min": -1.1579174532172738,
+        "x_max": 1.2442813594969406,
+        "y_min": -0.8882815311664347,
+        "y_max": 0.837109009254661,
+        "z_min": 1.0006173396094318,
+        "z_max": 1.0139408532763716
+      },
+      "regime": "plateau",
+      "row_label": "PATH_B_DEFAULT",
+      "base_preset": "PATH_B_DEFAULT",
+      "perturbation": {},
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.6.txt",
+      "returncode": 0,
+      "timed_out": false
+    }
+  }
+}

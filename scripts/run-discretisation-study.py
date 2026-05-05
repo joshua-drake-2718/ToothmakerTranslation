@@ -316,9 +316,14 @@ def _build_subprocess_args(
         '--preset', preset_name,
     ]
     for k, v in overrides.items():
-        # The CLI's _coerce reverses int/float/bool/str; we must emit
-        # a string the CLI can re-coerce back to the same value.
-        args.extend(['--override', f'{k}={v}'])
+        # The CLI's _coerce reverses int/float/bool/str/None; we must
+        # emit a string the CLI can re-coerce back to the same value.
+        # Python None must be passed as the literal `null` (JSON
+        # convention); the string `'none'` is a valid Discretisation
+        # field value (knot_threshold_gate='none') and must NOT be
+        # coerced to None on the receiving side.
+        rendered = 'null' if v is None else str(v)
+        args.extend(['--override', f'{k}={rendered}'])
     return args
 
 

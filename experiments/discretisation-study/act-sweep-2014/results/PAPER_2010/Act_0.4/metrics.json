@@ -1,0 +1,28 @@
+{
+  "cell_count_history": [
+    19,
+    19,
+    19,
+    19,
+    19
+  ],
+  "cell_count_plateau": 19.0,
+  "cell_count_final": 19,
+  "cusp_count": 19,
+  "cusp_width": 0.2974103334927775,
+  "vertex_envelope": {
+    "x_min": -1.0539963386915963,
+    "x_max": -0.09765990605743295,
+    "y_min": -0.47470253939826185,
+    "y_max": 0.4655760911786934,
+    "z_min": 1.0012049809912493,
+    "z_max": 1.0380074799153947
+  },
+  "regime": "plateau",
+  "row_label": "PAPER_2010",
+  "base_preset": "PAPER_2010",
+  "perturbation": {},
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_0.4.txt",
+  "returncode": 0,
+  "timed_out": false
+}
