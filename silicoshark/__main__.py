@@ -36,6 +36,7 @@ from .io import write_off
 from .params import Params
 from .simulator import DEFAULT_DT, build_topology, run
 from .state import build_initial_state
+from .utils import ProgressReporter
 
 
 def _coerce(value: str):
@@ -147,20 +148,38 @@ def main(argv: list[str] | None = None) -> int:
     out_folder.mkdir(parents=True, exist_ok=True)
 
     sstep = abs(args.save_blocks)
-    for block in range(1, sstep + 1):
-        mesh = run(state, params, args.iterations, DEFAULT_DT, disc, top)
 
-        iter_label = str(block * args.iterations)
-        nff = out_folder / (iter_label + '_' + args.output_name)
-        # Mirror main.py's output-name normalisation (spaces -> underscores).
-        nff = out_folder / nff.name.replace(' ', '_')
-        nfoff = nff.with_name(nff.name + '_.off')
+    # ProgressReporter integration (per CLAUDE.md §Experiment monitoring).
+    # One phase per save block so the TASK line in exptop shows
+    # something like 'block 3/5'. Experiment name embeds the preset and
+    # output name so the parent batch runner's WORK line plus this TASK
+    # line together identify the run.
+    progress_path = out_folder / 'progress.json'
+    experiment_name = f'silicoshark_{args.preset}_{args.output_name}'
+    with ProgressReporter(
+        progress_path, experiment=experiment_name, total_phases=sstep
+    ) as progress:
+        for block in range(1, sstep + 1):
+            progress.begin_phase(
+                name=f'block_{block}',
+                description=f'Save block {block}/{sstep}',
+                total_steps=args.iterations,
+            )
+            mesh = run(state, params, args.iterations, DEFAULT_DT, disc, top)
 
-        # Triangles come from whichever Mesh the run last built.
-        with open(nfoff, 'w') as f:
-            write_off(state, mesh.triangles, f)
+            iter_label = str(block * args.iterations)
+            nff = out_folder / (iter_label + '_' + args.output_name)
+            # Mirror main.py's output-name normalisation (spaces -> underscores).
+            nff = out_folder / nff.name.replace(' ', '_')
+            nfoff = nff.with_name(nff.name + '_.off')
 
-        print(f'Block {block}/{sstep} complete: {nfoff}')
+            # Triangles come from whichever Mesh the run last built.
+            with open(nfoff, 'w') as f:
+                write_off(state, mesh.triangles, f)
+
+            # Mark step at end of block so step_pct reflects completion.
+            progress.step(args.iterations, f'wrote {nfoff.name}')
+            print(f'Block {block}/{sstep} complete: {nfoff}')
 
     return 0
 

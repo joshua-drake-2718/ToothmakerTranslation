@@ -1,0 +1,137 @@
+{
+  "HUMPPA_LITERAL": {
+    "seal": {
+      "cell_count_history": [
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "cell_count_plateau": 60.0,
+      "cell_count_final": 60,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -1.487668483458742,
+        "x_max": 1.7267132117292099,
+        "y_min": -2.128721030112734,
+        "y_max": 1.9299451063530761,
+        "z_min": 455.3062830956118,
+        "z_max": 609.2541576006009
+      },
+      "regime": "plateau",
+      "preset": "HUMPPA_LITERAL",
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+      "returncode": 0
+    }
+  },
+  "LEGACY_FORTRAN": {
+    "seal": {
+      "cell_count_history": [
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "cell_count_plateau": 60.0,
+      "cell_count_final": 60,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -1.487668483458742,
+        "x_max": 1.7267132117292099,
+        "y_min": -2.128721030112734,
+        "y_max": 1.9299451063530761,
+        "z_min": 455.3062830956118,
+        "z_max": 609.2541576006009
+      },
+      "regime": "plateau",
+      "preset": "LEGACY_FORTRAN",
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+      "returncode": 0
+    }
+  },
+  "PAPER_2010": {
+    "seal": {
+      "cell_count_history": [
+        37,
+        37,
+        37,
+        37,
+        37
+      ],
+      "cell_count_plateau": 37.0,
+      "cell_count_final": 37,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -3.0,
+        "x_max": 3.0,
+        "y_min": -0.3198432354200165,
+        "y_max": 0.3198432354200172,
+        "z_min": 138.85025151788273,
+        "z_max": 141.38205087783905
+      },
+      "regime": "plateau",
+      "preset": "PAPER_2010",
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+      "returncode": 0
+    }
+  },
+  "PAPER_LITERAL_2010": {
+    "seal": {
+      "cell_count_history": [
+        37,
+        37,
+        37,
+        37,
+        37
+      ],
+      "cell_count_plateau": 37.0,
+      "cell_count_final": 37,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -3.0,
+        "x_max": 3.0,
+        "y_min": -0.3198432354200165,
+        "y_max": 0.3198432354200172,
+        "z_min": 138.85025151788273,
+        "z_max": 141.38205087783905
+      },
+      "regime": "plateau",
+      "preset": "PAPER_LITERAL_2010",
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+      "returncode": 0
+    }
+  },
+  "PATH_B_DEFAULT": {
+    "seal": {
+      "cell_count_history": [
+        37,
+        37,
+        37,
+        37,
+        37
+      ],
+      "cell_count_plateau": 37.0,
+      "cell_count_final": 37,
+      "cusp_count": 0,
+      "cusp_width": 0.0,
+      "vertex_envelope": {
+        "x_min": -3.0,
+        "x_max": 3.0,
+        "y_min": -0.3198432354200165,
+        "y_max": 0.3198432354200172,
+        "z_min": 138.85025151788273,
+        "z_max": 141.38205087783905
+      },
+      "regime": "plateau",
+      "preset": "PATH_B_DEFAULT",
+      "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+      "returncode": 0
+    }
+  }
+}
