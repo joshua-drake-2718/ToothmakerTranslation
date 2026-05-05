@@ -184,6 +184,10 @@ Two NaN cases stand out:
 
 Both NaN cases are 'mutually load-bearing': the field is not consequential in isolation, but pairing it with a Sec-driven differentiation accumulator and the FORTRAN's smooth-onset eq. 18 source produces a runaway under perturbation. This is the kind of finding the methodology paper can lean on: the FORTRAN's bundle is not a set of independently-defensible choices; some of them are stable only as a bundle.
 
+![Figure 3: single-field disentanglement heatmap](figures/fig3-disentanglement.png)
+
+**Figure 3.** Single-field disentanglement on `examples/seal.txt`. For each `Discretisation` field that differs between `LEGACY_FORTRAN` and `PATH_B_DEFAULT`, the heatmap shows the absolute cell-count delta from the corresponding anchor when that field is changed in isolation. Knock-down: starting from `LEGACY_FORTRAN` (plateau 60), reset one field to its `PATH_B_DEFAULT` value. Knock-up: starting from `PATH_B_DEFAULT` (plateau 37), set one field to its `LEGACY_FORTRAN` value. Two fields — `rep_form` and `adh_form` — carry almost all of the cell-count span; the remaining fields are biologically dormant on this metric for this parameter set. Three configurations diverge (red hatching): knocking out `division_total_cap` or `knot_threshold_gate` from `LEGACY_FORTRAN`, or adding `rep_form` alone to `PATH_B_DEFAULT`, each produces runaway division — the FORTRAN bundle is mutually load-bearing for stability.
+
 The knock-up table is, by symmetry, mostly null. Adding any single FORTRAN field to `PATH_B_DEFAULT` does not lift the plateau from 37 to 60, except for `rep_form`, which produces NaN for the same reason as the corresponding knockdown failure. The single-field knock-ups produce small envelope changes (the y-range under `PATH_B_DEFAULT_plus_adh_form` widens, the z-range under `PATH_B_DEFAULT_plus_update_order` shifts upward) but not a regime change on the cell-count metric.
 
 The methodological reading is that the FORTRAN bundle's effect on cell count is concentrated in two fields, and the rest of the FORTRAN's choices are structurally invisible on this metric and parameter set. The audit catalogue is much wider than that — twenty-two fields — but most of the catalogue is dormant under the seal-example regime. This is a vindication of the methodology: the comparison study identifies which part of the catalogue is load-bearing, which is dormant, and which is mutually load-bearing; without the catalogue and the perturbation matrix, none of these would be visible.
@@ -201,6 +205,10 @@ On `examples/wt-tribosphenic-2014.txt` (the 2014 wild-type tribosphenic mouse pa
 | `PATH_B_DEFAULT` | 19 | 19 | 0.693 | plateau |
 
 `PAPER_2010` (`eq14_denominator='inh_corrected'`) produces nineteen cusps. `PAPER_LITERAL_2010` (`eq14_denominator='act_typo'`) produces zero. The typo is biologically catastrophic.
+
+![Figure 2: PAPER_2010 vs PAPER_LITERAL_2010 cusp comparison on wt-tribosphenic-2014](figures/fig2-eq14-typo.png)
+
+**Figure 2.** The eq. 14 denominator typo is biologically dramatic on the 2014 wild-type tribosphenic mouse parameter set (`examples/wt-tribosphenic-2014.txt`). Top row: top-down view of the cell layout at iteration 2500. Bottom row: side-on view. Left column: `PAPER_2010` preset, with the FORTRAN-corrected denominator 1 + k_inh × [Inh] — every cell becomes a knot (cyan), as the paper predicts. Right column: `PAPER_LITERAL_2010` preset, with the paper's denominator as written (1 + k_inh × [Act], a typo) — Act amplification is saturated from t = 0 because the seed Act = 0.5 makes 1 + 800 × 0.5 ≈ 400, and Act decays to zero. No cusps form. The typo, if implemented as written, would silently disable cusp formation entirely on this parameter set.
 
 The mechanism is straightforward: with the 2014 wt's `Act = 1.6` and `Inh = 800`, and an `ina` value that admits any non-zero starting Act, the literal-paper denominator `1 + k_inh * [Act]` evaluates to ~401 from t=0 (the Inh parameter scales the saturation), saturating Act amplification immediately. Act decays monotonically toward zero and never crosses the knot threshold. The corrected `1 + k_inh * [Inh]` denominator only saturates once Inh has had time to accumulate, allowing Act to amplify and trigger knot formation before the inhibitor catches up.
 
