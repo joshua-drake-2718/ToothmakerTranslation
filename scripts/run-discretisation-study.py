@@ -776,6 +776,17 @@ def main(argv: list[str] | None = None) -> int:
              'replacement on PATH_B_DEFAULT; `both` runs the union. '
              'The two anchor presets are always included as rows.',
     )
+    parser.add_argument(
+        '--per-run-timeout', type=float, default=300.0,
+        help='Maximum wall-clock seconds for any single silicoshark '
+             'subprocess. On timeout the run is killed, its progress.json '
+             'is marked failed, and the metrics row records regime=NaN. '
+             'Default 300s. Set to 0 to disable. The B1 disentanglement '
+             'matrix discovered that knocking out stability fields '
+             '(division_total_cap, knot_threshold_gate; rep_form on the '
+             'knock-up direction) produces runaway division — the timeout '
+             'gives the same protection as a manual watchdog.',
+    )
     args = parser.parse_args(argv)
 
     params_files = [Path(p).resolve() for p in args.params]
@@ -914,19 +925,29 @@ def main(argv: list[str] | None = None) -> int:
                 print(f'  [{row.row_label}/{params_basename}] launching '
                       f'{args.iters}×{args.saves} iters',
                       flush=True)
+                timeout = args.per_run_timeout if args.per_run_timeout > 0 else None
+                timed_out = False
                 with stdout_path.open('w') as so, stderr_path.open('w') as se:
-                    proc = subprocess.run(
-                        cmd, cwd=REPO_ROOT, stdout=so, stderr=se,
-                        env=env, text=True,
-                    )
+                    try:
+                        proc = subprocess.run(
+                            cmd, cwd=REPO_ROOT, stdout=so, stderr=se,
+                            env=env, text=True, timeout=timeout,
+                        )
+                    except subprocess.TimeoutExpired:
+                        timed_out = True
+                        proc = None
 
                 # Per-run progress.json status correction (CLAUDE.md
-                # §Stale progress cleanup). On non-zero exit we mark the
-                # per-run progress.json as failed; on zero exit the CLI's
-                # ProgressReporter context manager has already marked it
-                # 'completed' on its way out.
+                # §Stale progress cleanup). On non-zero exit OR timeout
+                # we mark the per-run progress.json as failed; on zero
+                # exit the CLI's ProgressReporter context manager has
+                # already marked it 'completed' on its way out.
                 run_progress = run_dir / 'progress.json'
-                if proc.returncode != 0:
+                if timed_out:
+                    msg = f'silicoshark timed out after {timeout}s (runaway protection)'
+                    _mark_progress_failed(run_progress, msg)
+                    print(f'    TIMEOUT: {msg}', flush=True)
+                elif proc.returncode != 0:
                     err_tail = stderr_path.read_text().strip().splitlines()[-5:]
                     msg = (
                         f'silicoshark exited {proc.returncode}; '
@@ -955,7 +976,8 @@ def main(argv: list[str] | None = None) -> int:
                     k: str(v) for k, v in row.perturbation.items()
                 }
                 metrics['params_file'] = str(params_file)
-                metrics['returncode'] = proc.returncode
+                metrics['returncode'] = -1 if timed_out else proc.returncode
+                metrics['timed_out'] = timed_out
                 (run_dir / 'metrics.json').write_text(
                     json.dumps(metrics, indent=2) + '\n'
                 )

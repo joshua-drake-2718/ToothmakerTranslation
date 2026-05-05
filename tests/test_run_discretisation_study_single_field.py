@@ -39,6 +39,12 @@ def test_single_field_mode_knock_down_smoke(tmp_path):
         '--out', str(out_dir),
         '--override', 'mesenchyme=absent',
         '--override', 'laplacian=length_weighted',
+        # Tight per-run timeout: B1 found that knocking out
+        # division_total_cap, knot_threshold_gate, and rep_form
+        # produces runaway division. The runner records each as
+        # regime=NaN and continues; without the timeout this test
+        # would hang for hours.
+        '--per-run-timeout', '20',
     ]
     proc = subprocess.run(
         cmd, cwd=REPO_ROOT, capture_output=True, text=True,
