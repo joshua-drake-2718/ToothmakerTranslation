@@ -198,3 +198,33 @@ class Topology:
             dtype=bool,
             count=self.num_cells,
         )
+
+    def triangles(self) -> np.ndarray:
+        """Enumerate the unique triangular 3-cycles in the adjacency graph.
+
+        For each triple (i, j, k) with `i < j < k`, emit a triangle iff
+        all three pairs are mutually adjacent. The `i < j < k` ordering
+        prevents duplicate enumeration (each undirected triangle is
+        emitted exactly once).
+
+        Returns
+        -------
+        triangles : (T, 3) int32 array
+            Triangle vertex indices, sorted within each row.
+        """
+        tris: list[tuple[int, int, int]] = []
+        for i, ns in enumerate(self.neighbours):
+            # Only consider neighbours j > i so each (i, j) pair appears
+            # once per triangle. Convert to a sorted list for stable
+            # ordering of emitted triangles.
+            higher = sorted(j for j in ns if j > i)
+            for a_pos, j in enumerate(higher):
+                # k must be a neighbour of both i (i.e. in `higher`,
+                # later than j) and of j.
+                nj = self.neighbours[j]
+                for k in higher[a_pos + 1:]:
+                    if k in nj:
+                        tris.append((i, j, k))
+        if not tris:
+            return np.zeros((0, 3), dtype=np.int32)
+        return np.asarray(tris, dtype=np.int32)
