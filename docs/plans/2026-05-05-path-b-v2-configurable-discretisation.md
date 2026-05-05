@@ -234,6 +234,53 @@ audit lives in `docs/research/discretisation-audit.md`; this charter
 section names the question, sketches the options, and points at
 where the paper / FORTRAN evidence lives.
 
+### Summary table — kind of disagreement per field
+
+The 'kind' column classifies what each option pair (or trio) really
+is. There are three categories:
+
+- **PaperAmbiguity**: the paper is silent or sketches the answer in
+  prose without pinning a discrete formula. Multiple options are
+  defensible readings; none is uniquely right; this is exactly the
+  ambiguity the methodological study is meant to expose.
+- **PaperVsCodeTension**: the paper says one thing and the FORTRAN
+  does another, and one side is more credibly the intended model.
+  These are the rows where v1's charter took a position; the
+  presets `PAPER_*` and `LEGACY_FORTRAN` exercise both sides.
+- **FortranAccident**: a 13.f90-only artefact (renaming bug, fp
+  fluke, dead branch) that is preserved in `LEGACY_FORTRAN` only
+  for golden compatibility, not because it represents a real
+  modelling choice.
+
+| Field | Kind | Paper says | FORTRAN does | Notes |
+|---|---|---|---|---|
+| `laplacian` | PaperAmbiguity | 'finite-volume on triangular mesh, flux ∝ contact area' (no formula) | per-edge `pes` margins with `area_p` z-weighting | Cotangent and length-weighted are textbook alternatives |
+| `update_order` | PaperVsCodeTension | Prose strongly suggests Jacobi | Mixed: reactions Jacobi, mechanical Gauss–Seidel | Paper-prose is reasonable but ambiguous |
+| `topology` | PaperAmbiguity | SI fig. 1 picture only — no algorithm | Static graph + local update via topology walk | Delaunay re-triangulation is a v1 numpy-idiomatic alternative; v1 evidence shows it is unstable on the seal example |
+| `division_per_step_cap` | PaperAmbiguity | Silent | No cap (all qualifying edges split) | Safeguard knob for `delaunay_each_step`; inert under static |
+| `division_max_edge` | PaperAmbiguity | Silent | No cap | Same as above |
+| `eq5_z_gate` | PaperAmbiguity | 'outward unit vector' along apical direction | Gates on `b < -1e-4` (neighbours strictly above in z) | Gate is FORTRAN's reading of 'outward' for a curved sheet |
+| `eq5_apply_to` | PaperVsCodeTension | All cells (no restriction) | Inner cells only (`i >= first_border_cell`) | The paper formula has no border / interior split |
+| `rep_form` | PaperAmbiguity | Eq. 1 written as Hookean spring; prose treats rep + adh as separate | Hookean (always-on) when shifted by sign | Both are defensible readings of eq. 1 |
+| `adh_form` | PaperVsCodeTension | Unit-vector pull (eq. 2) | Hookean (`Adh * d_vec`, not unit-normed) | FORTRAN form is stronger at distance |
+| `rep_neighbour_set` | PaperVsCodeTension | Mesh neighbours only | Mesh + extra `pushingnovei` loop over close non-mesh cells | Paper formula has no extra loop; FORTRAN's is plausibly load-bearing for stability |
+| `eq14_denominator` | PaperVsCodeTension | `1 + k_inh * [Act]` (typo) | `1 + Inh * [Inh]` (biologically right) | Charter follows FORTRAN; PAPER_LITERAL_2010 tests the typo's biological cost |
+| `eq17_inh_source` | PaperVsCodeTension | `[Act]` (concentration) | `(rate of [Act]) * d_i` (uses temp variable) | FORTRAN form is suspicious as a faithful translation |
+| `eq18_sec_source` | PaperVsCodeTension | `k_sec` (constant) | `k_sec * d_i` (smooth ramp) | FORTRAN's `d_i` modulation is not in paper |
+| `diff_accumulator` | PaperVsCodeTension | Eq. 6: `[Act]` | `[Sec]` (humppa line 659) | v1 charter followed FORTRAN; this preset matrix is what justifies revisiting |
+| `knot_threshold_gate` | PaperVsCodeTension | Any cell with `[Act] >= 1` | Only cells with `i >= first_border_cell` | FORTRAN excludes innermost cells from knot formation; biologically odd |
+| `knot_daughter_di` | PaperAmbiguity | 'New cell is not a knot cell' (silent on `d_i`) | Inherit avg of mothers' `d_i` | Paper-aligned reading is to reset to 0 |
+| `mesenchyme` | PaperVsCodeTension | 'Two layers of mesenchymal cells underneath' | 4 z-layers per epithelial column | Path B v1 used `absent` as a shortcut; not paper-faithful |
+| `n_mesenchyme_layers` | PaperVsCodeTension | 2 | 2 + substrate-edge boundary layer | FORTRAN's 4th layer is a boundary condition, not a real layer |
+| `border_definition` | PaperAmbiguity | Conflates topological (descendants of initial border) and geometric (low neighbour count) | Mostly topological (`first_border_cell`) with some geometric promotion via `update_border_cells` | Paper conflates; FORTRAN is also mixed |
+| `border_bias_x_zero_quirk` | FortranAccident | n/a (paper does not describe the multiplier scheme at this level of detail) | Cells with x exactly == 0 don't receive Pbi/Abi/Bgr (because of `if x>0` / `elif x<0` chain) | Documented as load-bearing for the seal 57-cell plateau in coreop2d.py docstring |
+
+The classification is itself an output of LLM-assisted analysis,
+informed by reading the 2010 paper, the 2014 paper, all four
+FORTRAN code-bases (humppa, 13.f90, tgrohens, silicoshark) and the
+C++ port. A goal of the comparison study is to test how well this
+classification predicts which fields actually move biology.
+
 ### Spatial discretisation
 
 **`laplacian`** — How is `nabla^2 c` discretised on the triangular
@@ -360,4 +407,4 @@ docstring-documented FORTRAN accident. Options: `True`, `False`.
    matrix runner with per-cell metrics.
 4. `docs/research/discretisation-audit.md` — citation trail per
    Discretisation field option.
-5. (Eventually) a manuscript draft drawing on (3) and (4).
+5. (Eventually) a briefing document to support a human-written manuscript draft drawing on (3) and (4).
