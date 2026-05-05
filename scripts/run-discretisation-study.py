@@ -57,7 +57,12 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from silicoshark.discretisation import ALL_PRESETS, Discretisation
+from silicoshark.discretisation import (
+    ALL_PRESETS,
+    LEGACY_FORTRAN,
+    PATH_B_DEFAULT,
+    Discretisation,
+)
 from silicoshark.metrics import (
     cell_count_plateau,
     cusp_count,
@@ -85,6 +90,25 @@ DEFERRED_FIELD_OVERRIDES: dict[str, tuple[str, str]] = {
     'mesenchyme': ('per_column_z_layers', 'absent'),
     'laplacian': ('fortran_margins', 'length_weighted'),
 }
+
+
+# A single row in the results table. In the default `--presets` mode each
+# preset becomes one row with `base_preset == row_label`; in single-field
+# mode each row is a perturbation of one of the two anchor presets,
+# expressed as `base_preset` plus a one-element `perturbation` dict.
+@dataclasses.dataclass(frozen=True)
+class RowSpec:
+    """Recipe for one row in the results table.
+
+    `row_label` is the table row and run-directory name. `base_preset`
+    is the named preset passed to silicoshark via `--preset`.
+    `perturbation` is the additional `{field: value}` patch on top of the
+    base preset, applied via `--override` in addition to user overrides
+    and auto-overrides.
+    """
+    row_label: str
+    base_preset: str
+    perturbation: dict[str, object]
 
 
 # ------------------------------------------------------------ helpers
@@ -149,6 +173,86 @@ def _effective_disc(
     if bad:
         raise SystemExit(f'unknown Discretisation fields: {sorted(bad)}')
     return dataclasses.replace(preset, **user_overrides)
+
+
+# ------------------------------------------------------------ single-field mode
+
+
+def _differing_fields(a: Discretisation, b: Discretisation) -> list[str]:
+    """Return the names of Discretisation fields where `a` and `b`
+    disagree. Drives the single-field-mode perturbation matrix so the
+    suite picks up new fields automatically as they are added.
+    """
+    out: list[str] = []
+    for f in dataclasses.fields(a):
+        if getattr(a, f.name) != getattr(b, f.name):
+            out.append(f.name)
+    return out
+
+
+def _build_single_field_rows(mode: str) -> list[RowSpec]:
+    """Build the row specs for single-field-mode.
+
+    The two anchor presets (`LEGACY_FORTRAN` and `PATH_B_DEFAULT`) are
+    each emitted once; for each of the fields where they disagree, a
+    knock-down row (LEGACY_FORTRAN with that field replaced by
+    PATH_B_DEFAULT's value) and/or a knock-up row (the symmetric one)
+    is generated, depending on `mode`.
+
+    The returned list is ordered: anchors first in their canonical
+    pairing direction, then the perturbations (knock-down then
+    knock-up), with field names sorted so the table is reproducible.
+    """
+    if mode not in ('knock-down', 'knock-up', 'both'):
+        raise SystemExit(
+            f'unknown --single-field-mode: {mode!r}. '
+            "Valid: 'knock-down', 'knock-up', 'both'."
+        )
+    diff_fields = sorted(_differing_fields(LEGACY_FORTRAN, PATH_B_DEFAULT))
+    if not diff_fields:
+        raise SystemExit(
+            'LEGACY_FORTRAN and PATH_B_DEFAULT carry identical field '
+            'values; nothing to disentangle.'
+        )
+
+    rows: list[RowSpec] = []
+    seen: set[str] = set()
+
+    def _push(row: RowSpec) -> None:
+        if row.row_label in seen:
+            return
+        seen.add(row.row_label)
+        rows.append(row)
+
+    # Anchor for the knock-down half (LEGACY_FORTRAN baseline).
+    if mode in ('knock-down', 'both'):
+        _push(RowSpec(
+            row_label='LEGACY_FORTRAN',
+            base_preset='LEGACY_FORTRAN',
+            perturbation={},
+        ))
+        for fname in diff_fields:
+            _push(RowSpec(
+                row_label=f'LEGACY_FORTRAN_minus_{fname}',
+                base_preset='LEGACY_FORTRAN',
+                perturbation={fname: getattr(PATH_B_DEFAULT, fname)},
+            ))
+
+    # Anchor for the knock-up half (PATH_B_DEFAULT baseline).
+    if mode in ('knock-up', 'both'):
+        _push(RowSpec(
+            row_label='PATH_B_DEFAULT',
+            base_preset='PATH_B_DEFAULT',
+            perturbation={},
+        ))
+        for fname in diff_fields:
+            _push(RowSpec(
+                row_label=f'PATH_B_DEFAULT_plus_{fname}',
+                base_preset='PATH_B_DEFAULT',
+                perturbation={fname: getattr(LEGACY_FORTRAN, fname)},
+            ))
+
+    return rows
 
 
 # ------------------------------------------------------------ OFF reader
@@ -384,6 +488,203 @@ def _format_float(x: float | None, fmt: str = '.2f') -> str:
     return format(x, fmt)
 
 
+def _format_axis_range(env: dict[str, float] | None, axis: str) -> str:
+    """Format one axis of an envelope dict as `[min, max]`.
+
+    `axis` is `'x'`, `'y'`, or `'z'`. Returns `'—'` if env is None.
+    """
+    if env is None:
+        return '—'
+    lo = env.get(f'{axis}_min')
+    hi = env.get(f'{axis}_max')
+    if lo is None or hi is None:
+        return '—'
+    return f'[{lo:.2f}, {hi:.2f}]'
+
+
+def _write_single_field_table(
+    out_dir: Path,
+    rows: list[RowSpec],
+    results: dict[str, dict[str, dict]],
+    params_basenames: list[str],
+    mode: str,
+) -> None:
+    """Write the single-field-mode results table.
+
+    One section per direction (knock-down, knock-up); within each
+    section, one markdown table per parameter file. Columns:
+    `Preset, Plateau, Cusps, x range, y range, z range, Regime`.
+
+    The interpretation paragraph below each table calls out the
+    plateau delta induced by each perturbation, classifying each
+    field as strongly / moderately / not consequential.
+    """
+    lines: list[str] = []
+    lines.append('# Path B v2 single-field disentanglement\n')
+    lines.append(
+        'Generated: ' + datetime.now(timezone.utc).isoformat() + '\n'
+    )
+    lines.append(
+        '\nFor each field where `LEGACY_FORTRAN` and `PATH_B_DEFAULT` '
+        'differ, this study runs a single-field perturbation:\n'
+        '\n- *Knock-down*: `LEGACY_FORTRAN` with that field reset to '
+        'its `PATH_B_DEFAULT` value. If the plateau collapses toward '
+        '`PATH_B_DEFAULT`, the field is doing the work in the '
+        'FORTRAN-flavoured bundle.\n'
+        '- *Knock-up*: `PATH_B_DEFAULT` with that field set to its '
+        '`LEGACY_FORTRAN` value. If the plateau lifts toward '
+        '`LEGACY_FORTRAN`, that field alone is sufficient.\n'
+    )
+
+    # Partition rows by direction (the row_label prefix encodes the
+    # base anchor and direction).
+    knock_down = [
+        r for r in rows
+        if r.base_preset == 'LEGACY_FORTRAN'
+    ]
+    knock_up = [
+        r for r in rows
+        if r.base_preset == 'PATH_B_DEFAULT'
+    ]
+
+    sections: list[tuple[str, list[RowSpec], str]] = []
+    if mode in ('knock-down', 'both') and knock_down:
+        sections.append(('Knock-down: LEGACY_FORTRAN minus each field',
+                         knock_down, 'LEGACY_FORTRAN'))
+    if mode in ('knock-up', 'both') and knock_up:
+        sections.append(('Knock-up: PATH_B_DEFAULT plus each field',
+                         knock_up, 'PATH_B_DEFAULT'))
+
+    for section_title, section_rows, anchor_label in sections:
+        lines.append(f'\n## {section_title}\n')
+        for params_basename in params_basenames:
+            lines.append(f'\n### `{params_basename}`\n')
+            lines.append(
+                '| Preset | Plateau | Cusps | x range | y range | '
+                'z range | Regime |'
+            )
+            lines.append(
+                '|---|---:|---:|---|---|---|---|'
+            )
+            anchor_plateau: float | None = None
+            for row in section_rows:
+                entry = results.get(row.row_label, {}).get(params_basename)
+                if entry is None:
+                    label = row.row_label
+                    suffix = ' (anchor)' if row.row_label == anchor_label else ''
+                    lines.append(
+                        f'| `{label}`{suffix} | — | — | — | — | — | (no run) |'
+                    )
+                    continue
+                plateau_val = entry.get('cell_count_plateau')
+                plateau = _format_float(plateau_val)
+                cusps = entry.get('cusp_count')
+                cusps_s = '—' if cusps is None else str(cusps)
+                env = entry.get('vertex_envelope')
+                x_range = _format_axis_range(env, 'x')
+                y_range = _format_axis_range(env, 'y')
+                z_range = _format_axis_range(env, 'z')
+                run_regime = entry.get('regime', '—')
+
+                # Anchor row gets a label suffix; capture its plateau
+                # so the interpretation paragraph can compute deltas.
+                if row.row_label == anchor_label:
+                    label_disp = f'`{row.row_label}` (anchor)'
+                    if isinstance(plateau_val, (int, float)) and \
+                            plateau_val == plateau_val:  # not nan
+                        anchor_plateau = float(plateau_val)
+                else:
+                    label_disp = f'`{row.row_label}`'
+
+                lines.append(
+                    f'| {label_disp} | {plateau} | {cusps_s} | '
+                    f'{x_range} | {y_range} | {z_range} | {run_regime} |'
+                )
+
+            # Interpretation paragraph.
+            lines.append('')
+            if anchor_plateau is None:
+                lines.append(
+                    '_Anchor plateau unavailable; skipping '
+                    'interpretation paragraph._\n'
+                )
+                continue
+            # Determine the comparison baseline (the other anchor's
+            # plateau) so we know what 'collapse toward' / 'lift toward'
+            # means quantitatively.
+            other_anchor = (
+                'PATH_B_DEFAULT' if anchor_label == 'LEGACY_FORTRAN'
+                else 'LEGACY_FORTRAN'
+            )
+            other_entry = results.get(other_anchor, {}).get(params_basename)
+            other_plateau: float | None = None
+            if other_entry is not None:
+                op = other_entry.get('cell_count_plateau')
+                if isinstance(op, (int, float)) and op == op:  # not nan
+                    other_plateau = float(op)
+            span = (
+                abs(anchor_plateau - other_plateau)
+                if other_plateau is not None else 0.0
+            )
+
+            verdicts: list[str] = []
+            for row in section_rows:
+                if row.row_label == anchor_label:
+                    continue
+                # The single perturbed field is the one entry in the
+                # perturbation dict. Anchor rows (perturbation={})
+                # short-circuited above.
+                if not row.perturbation:
+                    continue
+                fname = next(iter(row.perturbation))
+                entry = results.get(row.row_label, {}).get(params_basename)
+                if entry is None:
+                    continue
+                pv = entry.get('cell_count_plateau')
+                if not isinstance(pv, (int, float)) or pv != pv:  # nan
+                    verdicts.append(
+                        f'- Field `{fname}`: run failed or produced '
+                        'NaN plateau; effect cannot be assessed.'
+                    )
+                    continue
+                pv = float(pv)
+                delta = pv - anchor_plateau
+                # 'Strong' = perturbation moves at least 50% of the way
+                # toward the other anchor; 'moderate' = 15-50%; 'not'
+                # = < 15%. If the two anchors are equal (span=0), every
+                # field is reported as 'not consequential'.
+                if span > 0:
+                    fraction = abs(delta) / span
+                else:
+                    fraction = 0.0
+                if fraction >= 0.5:
+                    verdict = 'strongly'
+                elif fraction >= 0.15:
+                    verdict = 'moderately'
+                else:
+                    verdict = 'not'
+                if anchor_label == 'LEGACY_FORTRAN':
+                    direction = 'Removing'
+                else:
+                    direction = 'Adding'
+                verdicts.append(
+                    f'- {direction} field `{fname}` '
+                    f'{"from" if anchor_label == "LEGACY_FORTRAN" else "to"} '
+                    f'`{anchor_label}` shifts the plateau from '
+                    f'{anchor_plateau:.2f} to {pv:.2f} '
+                    f'(delta {delta:+.2f}; '
+                    f'{fraction*100:.0f}% of the {span:.2f}-cell span '
+                    f'between anchors) — field `{fname}` is therefore '
+                    f'**{verdict} consequential**.'
+                )
+            if verdicts:
+                lines.append('Interpretation:\n')
+                lines.extend(verdicts)
+                lines.append('')
+
+    (out_dir / 'results-table.md').write_text('\n'.join(lines) + '\n')
+
+
 def _write_results_table(
     out_dir: Path,
     results: dict[str, dict[str, dict]],
@@ -463,27 +764,53 @@ def main(argv: list[str] | None = None) -> int:
              'mesenchyme / fortran_margins fields are applied '
              'automatically and need not be passed here.',
     )
+    parser.add_argument(
+        '--single-field-mode',
+        choices=('knock-down', 'knock-up', 'both'),
+        default=None,
+        help='Run a single-field perturbation matrix instead of '
+             'iterating over `--presets`. `knock-down` derives one row '
+             'per field that differs between LEGACY_FORTRAN and '
+             'PATH_B_DEFAULT, replacing that field on LEGACY_FORTRAN '
+             "with PATH_B_DEFAULT's value; `knock-up` is the symmetric "
+             'replacement on PATH_B_DEFAULT; `both` runs the union. '
+             'The two anchor presets are always included as rows.',
+    )
     args = parser.parse_args(argv)
 
     params_files = [Path(p).resolve() for p in args.params]
     for p in params_files:
         if not p.exists():
             raise SystemExit(f'params file not found: {p}')
-    presets = list(args.presets)
-    for name in presets:
-        if name not in ALL_PRESETS:
-            raise SystemExit(
-                f'unknown preset: {name!r}. Valid: {sorted(ALL_PRESETS)}'
-            )
 
     user_overrides = _parse_overrides(args.override)
 
     out_dir = Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Build the row list. In default mode each `--presets` entry
+    # becomes one row whose base preset is itself with no perturbation;
+    # in single-field mode the anchors plus per-field perturbations are
+    # generated programmatically.
+    if args.single_field_mode:
+        rows = _build_single_field_rows(args.single_field_mode)
+        mode_desc = f'single-field-mode={args.single_field_mode}'
+    else:
+        presets = list(args.presets)
+        for name in presets:
+            if name not in ALL_PRESETS:
+                raise SystemExit(
+                    f'unknown preset: {name!r}. Valid: {sorted(ALL_PRESETS)}'
+                )
+        rows = [
+            RowSpec(row_label=p, base_preset=p, perturbation={})
+            for p in presets
+        ]
+        mode_desc = f'{len(rows)} presets'
+
     # Batch-level ProgressReporter (WORK line for exptop). Total phases
-    # = one per (preset × params_file) combination.
-    total_phases = len(presets) * len(params_files)
+    # = one per (row × params_file) combination.
+    total_phases = len(rows) * len(params_files)
     batch_progress_path = out_dir / 'progress.json'
 
     results: dict[str, dict[str, dict]] = {}
@@ -492,7 +819,7 @@ def main(argv: list[str] | None = None) -> int:
     # `flush=True` per CLAUDE.md §Flushed output under nohup so that
     # status messages between subprocess launches reach the log
     # synchronously, not when the buffer fills.
-    print(f'Running discretisation study: {len(presets)} presets × '
+    print(f'Running discretisation study: {mode_desc} × '
           f'{len(params_files)} params = {total_phases} runs',
           flush=True)
     print(f'Output: {out_dir}', flush=True)
@@ -502,39 +829,62 @@ def main(argv: list[str] | None = None) -> int:
         experiment='batch_runner_discretisation_study',
         total_phases=total_phases,
     ) as batch_progress:
-        for preset_name in presets:
-            results.setdefault(preset_name, {})
-            preset_disc = ALL_PRESETS[preset_name]
+        for row in rows:
+            results.setdefault(row.row_label, {})
+            base_disc = ALL_PRESETS[row.base_preset]
 
             for params_file in params_files:
                 params_basename = params_file.stem
                 batch_progress.begin_phase(
-                    name=f'{preset_name}/{params_basename}',
+                    name=f'{row.row_label}/{params_basename}',
                     description='running silicoshark',
                     total_steps=args.iters,
                 )
 
-                run_dir = out_dir / preset_name / params_basename
+                run_dir = out_dir / row.row_label / params_basename
                 # Wipe stale OFF files so we don't read previous-run
                 # artefacts if the new run terminates early.
                 if run_dir.exists():
                     shutil.rmtree(run_dir)
                 run_dir.mkdir(parents=True, exist_ok=True)
 
-                # Effective overrides = user overrides + auto-overrides
-                # for any deferred field options the preset uses.
-                auto_ov = _auto_overrides_for(preset_disc)
+                # Effective overrides = auto-overrides + the row's
+                # single-field perturbation + user overrides. User
+                # overrides take precedence over the perturbation,
+                # which takes precedence over auto-overrides.
+                auto_ov = _auto_overrides_for(base_disc)
                 effective_ov: dict[str, object] = dict(auto_ov)
+                effective_ov.update(row.perturbation)
                 effective_ov.update(user_overrides)
+                # If the perturbation moves a field into a deferred
+                # value (e.g. mesenchyme=per_column_z_layers, which
+                # is unimplemented), we have to add the auto-override
+                # for the perturbed field too. Recompute auto-overrides
+                # against the post-perturbation Discretisation for safety.
+                post_perturb = _effective_disc(base_disc, dict(row.perturbation))
+                for fname, (forbidden, replacement) in \
+                        DEFERRED_FIELD_OVERRIDES.items():
+                    # User overrides win; only auto-fill if user didn't.
+                    if fname in user_overrides:
+                        continue
+                    if getattr(post_perturb, fname) == forbidden:
+                        effective_ov[fname] = replacement
+
                 # Snapshot the resolved Discretisation alongside.
-                effective_disc = _effective_disc(preset_disc, effective_ov)
+                effective_disc = _effective_disc(base_disc, effective_ov)
 
                 # Snapshots for reproducibility.
                 shutil.copy(params_file, run_dir / 'params-snapshot.txt')
                 (run_dir / 'preset-snapshot.json').write_text(
                     json.dumps({
-                        'preset_name': preset_name,
-                        'overrides': {k: str(v) for k, v in effective_ov.items()},
+                        'row_label': row.row_label,
+                        'base_preset': row.base_preset,
+                        'perturbation': {
+                            k: str(v) for k, v in row.perturbation.items()
+                        },
+                        'overrides': {
+                            k: str(v) for k, v in effective_ov.items()
+                        },
                         'effective': dataclasses.asdict(effective_disc),
                     }, indent=2) + '\n'
                 )
@@ -546,7 +896,7 @@ def main(argv: list[str] | None = None) -> int:
                     out_name=out_name,
                     iters=args.iters,
                     saves=args.saves,
-                    preset_name=preset_name,
+                    preset_name=row.base_preset,
                     overrides=effective_ov,
                 )
 
@@ -561,7 +911,7 @@ def main(argv: list[str] | None = None) -> int:
                     f'{REPO_ROOT}{os.pathsep}{pp}' if pp else str(REPO_ROOT)
                 )
 
-                print(f'  [{preset_name}/{params_basename}] launching '
+                print(f'  [{row.row_label}/{params_basename}] launching '
                       f'{args.iters}×{args.saves} iters',
                       flush=True)
                 with stdout_path.open('w') as so, stderr_path.open('w') as se:
@@ -599,14 +949,18 @@ def main(argv: list[str] | None = None) -> int:
                         'traceback': traceback.format_exc(),
                     }
 
-                metrics['preset'] = preset_name
+                metrics['row_label'] = row.row_label
+                metrics['base_preset'] = row.base_preset
+                metrics['perturbation'] = {
+                    k: str(v) for k, v in row.perturbation.items()
+                }
                 metrics['params_file'] = str(params_file)
                 metrics['returncode'] = proc.returncode
                 (run_dir / 'metrics.json').write_text(
                     json.dumps(metrics, indent=2) + '\n'
                 )
 
-                results[preset_name][params_basename] = metrics
+                results[row.row_label][params_basename] = metrics
 
                 cells = metrics.get('cell_count_final')
                 cusps = metrics.get('cusp_count')
@@ -621,7 +975,16 @@ def main(argv: list[str] | None = None) -> int:
     (out_dir / 'results.json').write_text(
         json.dumps(results, indent=2) + '\n'
     )
-    _write_results_table(out_dir, results, presets, params_basenames)
+    if args.single_field_mode:
+        _write_single_field_table(
+            out_dir, rows, results, params_basenames,
+            args.single_field_mode,
+        )
+    else:
+        _write_results_table(
+            out_dir, results,
+            [r.row_label for r in rows], params_basenames,
+        )
     print(f'Wrote {out_dir / "results.json"} and {out_dir / "results-table.md"}',
           flush=True)
     return 0

@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/__main__.py", line 186, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/__main__.py", line 166, in main
+    mesh = run(state, params, args.iterations, DEFAULT_DT, disc, top)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/simulator.py", line 497, in run
+    mesh = step(state, params, dt, disc, top)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/simulator.py", line 433, in step
+    _step_gauss_seidel(state, params, mesh, dt, disc)
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/simulator.py", line 325, in _step_gauss_seidel
+    step_reaction_diffusion(state, params, mesh, dt, disc)
+  File "/home/lyndon/repo/project/ToothmakerTranslation/silicoshark/reaction.py", line 180, in step_reaction_diffusion
+    raise ValueError(f'unknown knot_threshold_gate: {disc.knot_threshold_gate!r}')
+ValueError: unknown knot_threshold_gate: None
