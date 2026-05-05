@@ -19,7 +19,7 @@ int -> float -> bool -> str, and unknown keys are rejected.
 Example:
 
     python -m silicoshark examples/seal.txt out/ run 100 5 \\
-        --preset PATH_B_DEFAULT --override mesenchyme=absent
+        --preset PATH_B_DEFAULT
 """
 from __future__ import annotations
 
@@ -83,17 +83,15 @@ def _apply_overrides(disc: Discretisation, overrides: list[str]) -> Discretisati
 
 
 def _check_implemented(disc: Discretisation) -> None:
-    """Reject preset/override combinations whose A5 code path is not yet
+    """Reject preset/override combinations whose code path is not yet
     implemented. Currently:
-      - mesenchyme != 'absent' (per_column_z_layers is a TODO).
       - laplacian == 'fortran_margins' (deferred to its own sub-project).
+
+    `mesenchyme='per_column_z_layers'` was unimplemented in A5 and is
+    now wired through `silicoshark/reaction.step_mesenchyme_diffusion`
+    plus the cervical-loop / buoyancy reads in `silicoshark/forces.py`
+    (Path B v2 B3, 2026-05-05).
     """
-    if disc.mesenchyme != 'absent':
-        raise SystemExit(
-            f"discretisation field mesenchyme={disc.mesenchyme!r} is not "
-            'implemented in this phase. Use --override mesenchyme=absent '
-            'until A6/A7 lands the per-column z-layer mesenchyme model.'
-        )
     if disc.laplacian == 'fortran_margins':
         raise SystemExit(
             "discretisation field laplacian='fortran_margins' is not "

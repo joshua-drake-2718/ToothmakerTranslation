@@ -375,7 +375,17 @@ def compute_forces(
         outward_xy = -(mean_neigh[border] - pos[border])[:, :2]
         out_h = np.maximum(np.linalg.norm(outward_xy, axis=1), _SAFE_DIV_EPS)
         # Mesenchyme thickening factor (eqs. 10–12).
-        sec_b = state.sec[border]
+        # disc.mesenchyme: 'absent' uses epithelial Sec as a stand-in
+        # (the v1 shortcut for parameter sets where Sec stays zero,
+        # making the term inert); 'per_column_z_layers' reads from the
+        # top mesenchymal layer's Sec underneath each border cell, per
+        # the paper's 'cervical-loop downgrowth is driven by mesenchyme
+        # thickness, controlled by Sec in the underlying mesenchyme'
+        # (p. 587, eqs. 10–12).
+        if disc.mesenchyme == 'per_column_z_layers':
+            sec_b = state.mes_sec[border, 0]
+        else:
+            sec_b = state.sec[border]
         thicken = (out_h + params.k_mgr * sec_b + params.k_umgr) / out_h
         outward_xy = outward_xy * thicken[:, None]
         cc = np.full(border.sum(), params.k_dgr, dtype=np.float64)
@@ -387,9 +397,17 @@ def compute_forces(
         forces[border] += f_cl
 
     # --- Buoyancy (eq. 13) -------------------------------------------
-    sec_active = state.sec > 0.0
+    # disc.mesenchyme: 'absent' reads epithelial Sec (v1 shortcut, inert
+    # for parameter sets with zero Sec); 'per_column_z_layers' reads
+    # the top mesenchymal layer's Sec, per the paper (eq. 13: buoyancy
+    # responds to mesenchymal Sec under each epithelial cell).
+    if disc.mesenchyme == 'per_column_z_layers':
+        sec_buoy = state.mes_sec[:, 0]
+    else:
+        sec_buoy = state.sec
+    sec_active = sec_buoy > 0.0
     if np.any(sec_active):
-        boy_factor = params.k_boy * state.sec * np.maximum(1.0 - state.diff, 0.0)
+        boy_factor = params.k_boy * sec_buoy * np.maximum(1.0 - state.diff, 0.0)
         forces[sec_active, 2] -= -boy_factor[sec_active]
 
     return forces
