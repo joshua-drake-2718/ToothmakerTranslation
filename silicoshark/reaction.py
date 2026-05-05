@@ -23,7 +23,8 @@ Equations implemented (citations to Salazar-Ciudad and Jernvall 2010):
 
   d[Inh]/dt =  [Act] - k_deg * [Inh] + k_di * lap[Inh]           (eq. 17)
        (cells where d_i >= k_int OR cell is a knot;
-        FORTRAN variant uses (rate of [Act]) * d_i in place of [Act])
+        13.f90 literal variant uses [Act] * d_i in place of [Act];
+        Path A's coreop2d.py rewrite uses (rate of [Act]) * d_i)
 
   d[Sec]/dt = -k_deg * [Sec] + k_ds * lap[Sec]                   (eq. 16)
        (default for non-secreting cells)
@@ -92,13 +93,22 @@ def step_reaction_diffusion(
         raise ValueError(f'unknown eq14_denominator: {disc.eq14_denominator!r}')
 
     # --- Eq. 17 inhibitor source -------------------------------------
-    # disc.eq17_inh_source: paper Eq. 17 ([Act] concentration) vs
-    # FORTRAN ((rate of [Act]) * d_i — the temp-variable form, used
-    # only for cells where d_i > Int or the cell is a knot).
+    # disc.eq17_inh_source: three forms in play, used only for cells
+    # where d_i > Int or the cell is a knot.
+    #   - 'act_concentration': paper Eq. 17 — source is plain [Act].
+    #   - 'act_times_di': 13.f90:487 literal — source is
+    #       q3d(i,1,1) * DiffState(i), i.e. [Act] concentration * d_i.
+    #     Humppa's humppa_translate.f90:617 matches.
+    #   - 'act_rate_times_di': Path A's coreop2d.py:647 rewrite —
+    #       source is hq3d[i, 0, 0] * diff_state[i], i.e. the
+    #       (post-eq.14) Act *rate* * d_i. NOT a faithful translation
+    #       of 13.f90; the A8 audit identified this divergence.
     rd_inh = -params.k_deg * inh
     secrete_inh = knot | (diff >= params.k_int)
     if disc.eq17_inh_source == 'act_concentration':
         rd_inh = np.where(secrete_inh, act - params.k_deg * inh, rd_inh)
+    elif disc.eq17_inh_source == 'act_times_di':
+        rd_inh = np.where(secrete_inh, act * diff - params.k_deg * inh, rd_inh)
     elif disc.eq17_inh_source == 'act_rate_times_di':
         rd_inh = np.where(secrete_inh, rd_act * diff - params.k_deg * inh, rd_inh)
     else:

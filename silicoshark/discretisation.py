@@ -6,7 +6,7 @@ exist for several. Path B v2 makes each choice point a named field
 in this dataclass, with paper-citation, FORTRAN-citation, and
 rationale recorded in `docs/research/discretisation-audit.md`.
 
-Five named presets cover the canonical configurations:
+Six named presets cover the canonical configurations:
 
 - `LEGACY_FORTRAN`: reproduces 13.f90 semantically (modulo
   paper-vs-FORTRAN tensions where Path B has chosen the paper —
@@ -16,6 +16,13 @@ Five named presets cover the canonical configurations:
   from genuine model behaviour. Currently identical to
   `LEGACY_FORTRAN`; differences will be teased out as the
   comparison study runs and the divergences become observable.
+- `PATH_A_REWRITE`: identical to `LEGACY_FORTRAN` except
+  `eq17_inh_source = 'act_rate_times_di'` — the form Path A's
+  `coreop2d.py:647` silently introduced by rewriting 13.f90:487
+  to use the Act-rate temporary variable rather than the Act
+  concentration. Documents the implementer drift the A8 audit
+  identified; comparison vs `LEGACY_FORTRAN` quantifies whether
+  the rewrite is biologically observable.
 - `PAPER_2010`: the 2010 paper as written, with the eq. 14
   denominator typo corrected and choices made by best-faith
   reading where the paper is silent.
@@ -51,7 +58,7 @@ AdhFormOpt = Literal['unit_vector', 'hookean_attraction']
 RepNeighOpt = Literal['mesh', 'mesh_plus_all_close']
 
 Eq14DenomOpt = Literal['act_typo', 'inh_corrected']
-Eq17SourceOpt = Literal['act_concentration', 'act_rate_times_di']
+Eq17SourceOpt = Literal['act_concentration', 'act_times_di', 'act_rate_times_di']
 Eq18SourceOpt = Literal['constant_k_sec', 'k_sec_times_di']
 
 DiffAccumOpt = Literal['act', 'sec']
@@ -293,14 +300,31 @@ class Discretisation:
     """Eq. 17 Inh production source for cells with `d_i >= Int`:
 
       - `act_concentration`: paper Eq. 17 — `[Inh]' = [Act] - Deg [Inh]`.
-      - `act_rate_times_di`: FORTRAN — `[Inh]' = (rate of Act) * d_i - Deg [Inh]`.
-        Uses the temporary Act-rate variable, not the Act
-        concentration itself. Suspicious as a faithful translation
-        of the paper.
+        The published equation; source is the Act *concentration*
+        with no d_i factor.
+      - `act_times_di`: literal 13.f90 line 487 —
+        `hq3d(i,1,2) = q3d(i,1,1)*DiffState(i) - Deg*q3d(i,1,2)`,
+        i.e. `[Inh]' = [Act] * d_i - Deg [Inh]`. Source is the Act
+        *concentration* multiplied by d_i (smooth ramp on the
+        differentiation state). Matches humppa's
+        `q3d(i,1,1)*q2d(i,1)` at humppa_translate.f90:617 and the
+        C++ port (per docs/research/discretisation-audit.md).
+      - `act_rate_times_di`: Path A's `coreop2d.py:647` rewrite —
+        `hq3d[i, 0, 1] = hq3d[i, 0, 0] * diff_state[i] - Deg * q3d[i, 0, 1]`,
+        i.e. `[Inh]' = (rate of [Act]) * d_i - Deg [Inh]`. Uses the
+        temporary `hq3d[i, 0, 0]` Act-rate variable (post-eq.14
+        Michaelis–Menten-and-degradation), not the Act
+        concentration. NOT a faithful translation of 13.f90; the
+        rewrite is a documented translation drift the A8 audit
+        identified by cross-checking 13.f90 against coreop2d.py
+        line by line.
 
     Default `act_concentration` per the paper.
 
-    Citations: paper main p. 586 (eq. 17); coreop2d.py:647.
+    Citations: paper main p. 586 (eq. 17); 13.f90:487
+    (`q3d(i,1,1) * DiffState(i)`); coreop2d.py:647
+    (`hq3d[i, 0, 0] * diff_state[i]`);
+    docs/research/discretisation-audit.md §`eq17_inh_source`.
     """
 
     eq18_sec_source: Eq18SourceOpt = 'constant_k_sec'
@@ -516,7 +540,7 @@ LEGACY_FORTRAN = Discretisation(
     adh_form='hookean_attraction',
     rep_neighbour_set='mesh_plus_all_close',
     eq14_denominator='inh_corrected',
-    eq17_inh_source='act_rate_times_di',
+    eq17_inh_source='act_times_di',
     eq18_sec_source='k_sec_times_di',
     diff_accumulator='sec',
     knot_threshold_gate='first_border_cell',
@@ -564,7 +588,7 @@ HUMPPA_LITERAL = Discretisation(
     adh_form='hookean_attraction',
     rep_neighbour_set='mesh_plus_all_close',
     eq14_denominator='inh_corrected',
-    eq17_inh_source='act_rate_times_di',
+    eq17_inh_source='act_times_di',
     eq18_sec_source='k_sec_times_di',
     diff_accumulator='sec',
     knot_threshold_gate='first_border_cell',
@@ -582,9 +606,64 @@ Currently identical to `LEGACY_FORTRAN` because all the
 topology-walk machinery that v2 replaces with static-update
 (rendering the divergences inert) — except for the `Swi` /
 parap[6] handling, which v1 already accepts as a parameter
-and routes nowhere yet. As humppa-specific behaviour becomes
-observable through future Discretisation fields, this preset
-will diverge from `LEGACY_FORTRAN`.
+and routes nowhere yet. The eq.17 inhibitor source is
+`'act_times_di'`: humppa_translate.f90:617 reads
+`hq3d(i,1,2) = q3d(i,1,1)*q2d(i,1) - mu*q3d(i,1,2)`, i.e.
+the literal `[Act] * d_i` form — identical to 13.f90:487's
+`q3d(i,1,1)*DiffState(i)` after the cosmetic
+`q2d(i,1)` → `DiffState(i)` rename. As humppa-specific
+behaviour becomes observable through future Discretisation
+fields, this preset will diverge from `LEGACY_FORTRAN`.
+"""
+
+
+PATH_A_REWRITE = Discretisation(
+    laplacian='fortran_margins',
+    update_order='gauss_seidel_forces',
+    topology='static_with_local_update',
+    eq5_z_gate=True,
+    eq5_apply_to='interior_only',
+    rep_form='paper_gated',
+    adh_form='hookean_attraction',
+    rep_neighbour_set='mesh_plus_all_close',
+    eq14_denominator='inh_corrected',
+    eq17_inh_source='act_rate_times_di',
+    eq18_sec_source='k_sec_times_di',
+    diff_accumulator='sec',
+    knot_threshold_gate='first_border_cell',
+    knot_daughter_di='inherit_avg',
+    border_definition='topological_descendants',
+    border_bias_x_zero_quirk=True,
+    lattice_orientation='fortran',
+    division_total_cap=60,
+)
+"""Documents the implementer drift Path A introduced when
+translating 13.f90 to Python.
+
+Identical to `LEGACY_FORTRAN` in every field *except*
+`eq17_inh_source = 'act_rate_times_di'` (vs LEGACY_FORTRAN's
+`'act_times_di'`). 13.f90:487 reads `q3d(i,1,1) * DiffState(i)`
+— the Act *concentration* times d_i. Path A's `coreop2d.py:647`
+silently rewrote this as `hq3d[i, 0, 0] * diff_state[i]` — the
+Act *rate* (the post-eq.14 Michaelis–Menten-and-degradation
+temporary variable) times d_i. Humppa, tgrohens, and the C++
+port all match 13.f90 literally; Path A is the single
+implementer that diverges.
+
+Comparison-study purpose: `PATH_A_REWRITE vs LEGACY_FORTRAN`
+quantifies whether the rewrite is biologically observable. If
+the two presets are indistinguishable on the comparison-matrix
+parameter sets, Path A's rewrite is harmless and the audit
+records a translation drift of historical interest. If the two
+presets diverge, the rewrite would have produced different
+results from a faithful translation — a finding the methodology
+paper can use as a worked example of LLM-assisted analysis
+catching a divergence that human-only review missed.
+
+This preset was added in Path B v2 B4 (2026-05-05) when the
+A8 discretisation audit identified the three-way 13.f90 ↔
+Path A ↔ paper divergence that the original two-option
+`eq17_inh_source` field had collapsed.
 """
 
 
@@ -594,6 +673,7 @@ ALL_PRESETS: dict[str, Discretisation] = {
     'PAPER_LITERAL_2010': PAPER_LITERAL_2010,
     'LEGACY_FORTRAN': LEGACY_FORTRAN,
     'HUMPPA_LITERAL': HUMPPA_LITERAL,
+    'PATH_A_REWRITE': PATH_A_REWRITE,
 }
 """Registry of named presets. Used by the CLI's `--preset` flag and
 by the comparison-study runner to enumerate configurations.

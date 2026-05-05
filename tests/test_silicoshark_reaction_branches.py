@@ -147,6 +147,7 @@ def test_eq17_inh_source_branches_differ():
     """1-cell state with knot=False, diff=0.5 (> Int=0.4), Act=0.7.
 
       act_concentration: rd_inh = 0.7 - Deg * Inh
+      act_times_di:      rd_inh = 0.7 * 0.5 - Deg * Inh
       act_rate_times_di: rd_inh = (rate-of-Act) * 0.5 - Deg * Inh
 
     Where rate-of-Act = k_act * Act / (1 + k_inh * Inh) - k_deg * Act.
@@ -154,9 +155,11 @@ def test_eq17_inh_source_branches_differ():
       rate-of-Act = 1.0 * 0.7 / (1 + 2.0 * 0.2) - 0.1 * 0.7
                   = 0.7 / 1.4 - 0.07 = 0.5 - 0.07 = 0.43
       act_concentration: rd_inh = 0.7 - 0.1 * 0.2 = 0.68
+      act_times_di:      rd_inh = 0.7 * 0.5 - 0.1 * 0.2 = 0.35 - 0.02 = 0.33
       act_rate_times_di: rd_inh = 0.43 * 0.5 - 0.1 * 0.2 = 0.215 - 0.02 = 0.195
 
-    With dt=1.0: new Inh = 0.2 + rd_inh, so 0.88 vs 0.395.
+    With dt=1.0: new Inh = 0.2 + rd_inh, so 0.88 vs 0.53 vs 0.395.
+    All three branches must produce distinct values.
     """
     params = _diffusion_off_params(
         k_act=1.0, k_inh=2.0, k_deg=0.1,
@@ -172,6 +175,14 @@ def test_eq17_inh_source_branches_differ():
     )
     assert state_paper.inh[0] == pytest.approx(0.2 + 0.68, abs=1e-12)
 
+    state_literal = _single_cell_state(act=0.7, inh=0.2, diff=0.5, knot=False)
+    mesh = Mesh.from_positions(state_literal.positions)
+    step_reaction_diffusion(
+        state_literal, params, mesh, dt,
+        replace(PATH_B_DEFAULT, eq17_inh_source='act_times_di'),
+    )
+    assert state_literal.inh[0] == pytest.approx(0.2 + 0.33, abs=1e-12)
+
     state_fortran = _single_cell_state(act=0.7, inh=0.2, diff=0.5, knot=False)
     mesh = Mesh.from_positions(state_fortran.positions)
     step_reaction_diffusion(
@@ -180,7 +191,9 @@ def test_eq17_inh_source_branches_differ():
     )
     assert state_fortran.inh[0] == pytest.approx(0.2 + 0.195, abs=1e-12)
 
+    assert state_paper.inh[0] != state_literal.inh[0]
     assert state_paper.inh[0] != state_fortran.inh[0]
+    assert state_literal.inh[0] != state_fortran.inh[0]
 
 
 # --- Eq. 18 secondary-signal source ----------------------------------

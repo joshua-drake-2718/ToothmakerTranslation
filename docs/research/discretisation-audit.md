@@ -648,50 +648,107 @@ biologically right and the paper text is a typo.
 
 ---
 
-### `eq17_inh_source` — kind: PaperVsCodeTension
+### `eq17_inh_source` — kind: PaperVsCodeTension (with translation drift)
 
 **Question:** for cells with `d_i >= Int`, is the eq. 17 Inh
-source `[Act]` (paper) or `(rate of [Act]) * d_i` (FORTRAN
-temp-variable form)?
+source `[Act]` (paper), `[Act] * d_i` (13.f90 literal), or
+`(rate of [Act]) * d_i` (Path A's coreop2d.py rewrite)?
 
 **Default:** `act_concentration` per the paper.
+
+This is the one field where the discretisation surface is
+three-way rather than two-way. The A8 audit identified the
+divergence by cross-checking 13.f90 against coreop2d.py line
+by line: 13.f90:487 uses the Act *concentration* times d_i,
+whereas Path A's coreop2d.py:647 uses a post-eq.14 *rate*
+temporary variable times d_i. The two are not equivalent
+(rate ≠ concentration in general), and humppa, tgrohens and
+the C++ port all match 13.f90 literally — Path A is the
+single implementer that diverges. B4 (2026-05-05) split the
+field three ways and added the `PATH_A_REWRITE` preset
+(identical to `LEGACY_FORTRAN` in every other field) so the
+comparison study can quantify the rewrite's biological effect
+in isolation.
 
 #### Option `act_concentration`
 
 - **Paper evidence:** main p. 586, eq. (17):
   `partial[Inh] / partial t = [Act] - k_deg [Inh] +
   k_di nabla^2 [Inh]` for cells with `d_i >= k_int`. The source
-  is the Act *concentration*.
+  is the Act *concentration*, with no d_i factor.
 - **FORTRAN evidence:** not used.
 - **Alternative code-bases:** none.
 - **Comparison-study question:** paper-faithful baseline.
 
+#### Option `act_times_di`
+
+- **Source code:** `13.f90:487` reads
+  `hq3d(i,1,2) = q3d(i,1,1)*DiffState(i) - Deg*q3d(i,1,2)`,
+  i.e. `[Inh]' = [Act] * d_i - Deg [Inh]`. The source is the
+  Act *concentration* multiplied by `d_i` — a smooth ramp on
+  the differentiation state that takes the value `[Act] * Int`
+  at the threshold and rises to `[Act]` at full
+  differentiation (`d_i = 1`).
+- **Paper evidence:** none. The paper's eq. (17) writes plain
+  `[Act]` with no `d_i` factor. The d_i scaling is a
+  FORTRAN-side smooth-onset choice introduced by humppa and
+  preserved in 13.f90 — not in the published model.
+- **Alternative code-bases:** humppa preserves the literal
+  form (`humppa_translate.f90:617`:
+  `hq3d(i,1,2) = q3d(i,1,1)*q2d(i,1) - mu*q3d(i,1,2)`,
+  where `q2d(i,1)` is humppa's name for what 13.f90 calls
+  `DiffState(i)`). tgrohens is byte-identical to humppa. The
+  C++ port at `tooth_model_diffusion.cpp:218` matches the
+  literal FORTRAN form.
+- **Lineage finding:** the A8 audit caught Path A's
+  `coreop2d.py:647` rewrite as a translation drift —
+  `coreop2d.py` rewrote 13.f90's `q3d(i,1,1)` (the Act
+  concentration) as `hq3d[i, 0, 0]` (the post-eq.14 Act
+  *rate* temporary variable). The two are not equivalent, and
+  no other code-base in the lineage uses the rate form.
+  silicoshark's `LEGACY_FORTRAN` preset now uses
+  `'act_times_di'` (the literal FORTRAN form); the new
+  `PATH_A_REWRITE` preset preserves the rewrite for direct
+  comparison.
+- **Comparison-study question:** does the d_i scaling on the
+  Act concentration materially change the cusp pattern
+  relative to the paper's plain `[Act]` source?
+  `act_times_di vs act_concentration` answers this directly
+  on parameter sets where Inh accumulates.
+
 #### Option `act_rate_times_di`
 
+- **Source code:** Path A's `coreop2d.py:647` reads
+  `hq3d[i, 0, 1] = hq3d[i, 0, 0] * cls.diff_state[i] -
+  cls.Deg * cls.q3d[i, 0, 1]`, where `hq3d[i, 0, 0]` is the
+  Act *rate* (the eq. 14 right-hand side: numerator divided by
+  Michaelis–Menten denominator, minus Deg*Act). The form is
+  `[Inh]' = (rate of [Act]) * d_i - Deg [Inh]`.
 - **Paper evidence:** none.
-- **FORTRAN evidence:** the form differs between
-  `13.f90` and Path A's `coreop2d.py`. `13.f90:487` reads
-  `hq3d(i,1,2) = q3d(i,1,1)*DiffState(i) - Deg*q3d(i,1,2)`,
-  which is `[Act] * d_i - Deg * [Inh]` (Act concentration
-  times d_i). `coreop2d.py:647` reads `hq3d[i, 0, 1] =
-  hq3d[i, 0, 0] * cls.diff_state[i] - cls.Deg * cls.q3d[i, 0, 1]`,
-  where `hq3d[i, 0, 0]` is the eq. 14 *rate* (post-numerator,
-  post-denominator, post-degradation), not the Act
-  concentration. The Path A `coreop2d.py` form uses the
-  temporary variable that 13.f90 *would* have used had
-  someone thought the d_i factor through, so silicoshark's
-  `act_rate_times_di` follows the Path A reading. Either way
-  the paper's plain `[Act]` source is replaced by a d_i-modulated
-  form.
-- **Alternative code-bases:** humppa and tgrohens preserve
-  13.f90's `q3d(i,1,1)*DiffState(i)` form. The C++ port at
-  `tooth_model_diffusion.cpp:218` matches the FORTRAN.
-- **Comparison-study question:** the d_i ramp smooths the Inh
-  source onset; the paper's plain `[Act]` is binary on/off at
-  threshold. Does the smoother onset materially change the
-  knot dynamics? Note also the loose match between `13.f90`'s
-  literal form and Path A's temp-variable form is itself a
-  paper-vs-code finding worth reporting.
+- **FORTRAN evidence:** none directly. Path A's rewrite is
+  not a faithful translation of 13.f90; the rate temp-variable
+  form has no precedent in any FORTRAN ancestor or the C++
+  port.
+- **Alternative code-bases:** none. This form exists only in
+  Path A's `coreop2d.py`.
+- **Lineage finding:** B2's run on
+  `examples/wt-tribosphenic-2014.txt` showed that under the
+  rate form, Inh stays at zero for the entire run (because
+  rate × d_i drives the source negative once degradation
+  exceeds the rate, and the rate variable is itself
+  near-zero once Inh has accumulated). The paper's plain
+  `[Act]` source produces non-trivial Inh and the expected
+  cusp pattern.
+- **Comparison-study question:** `PATH_A_REWRITE vs
+  LEGACY_FORTRAN` quantifies whether Path A's rewrite is
+  biologically observable on the comparison-matrix parameter
+  sets. If indistinguishable, the rewrite is harmless and is
+  documented as a translation drift of methodological
+  interest only. If divergent, the rewrite would have produced
+  different results from a faithful translation — a finding
+  the methodology paper can use as a worked example of
+  LLM-assisted analysis catching a divergence that human-only
+  review missed.
 
 ---
 
@@ -1130,7 +1187,66 @@ because all the 13.f90-only divergences catalogued in
 machinery v2 either replaces or has not yet wired through.
 The Swi/parap[6] handling that genuinely distinguishes humppa
 from 13.f90 will need a new Discretisation field once the band
-becomes observable.
+becomes observable. (The B4 `eq17_inh_source` split puts
+HUMPPA_LITERAL on the same `'act_times_di'` form as
+LEGACY_FORTRAN: humppa_translate.f90:617's
+`q3d(i,1,1)*q2d(i,1)` is identical to 13.f90:487's
+`q3d(i,1,1)*DiffState(i)` after the cosmetic
+`q2d(i,1) → DiffState(i)` rename.)
+
+`PATH_A_REWRITE` differs from `LEGACY_FORTRAN` in
+`eq17_inh_source` only (`'act_rate_times_di'` vs
+`'act_times_di'`). Comparing the two on the comparison-matrix
+parameter sets isolates the biological cost of Path A's
+silent rewrite of 13.f90:487. If the trajectories are
+indistinguishable, the rewrite is harmless and the audit
+records a translation drift of methodological interest only.
+
+## Lineage findings
+
+This section catalogues findings about the *lineage* of the
+codebase — places where the audit identified a divergence
+between two implementers that human-only review had missed,
+or a chain of accidents whose load-bearing role had not been
+documented. The methodological argument of the follow-up
+paper rests on these findings.
+
+### Path A's `coreop2d.py:647` rewrite of 13.f90:487 (B4, 2026-05-05)
+
+- **What was caught:** 13.f90:487 reads
+  `hq3d(i,1,2) = q3d(i,1,1)*DiffState(i) - Deg*q3d(i,1,2)` —
+  the Act *concentration* times d_i. Path A's
+  `coreop2d.py:647` reads
+  `hq3d[i, 0, 1] = hq3d[i, 0, 0] * cls.diff_state[i] -
+  cls.Deg * cls.q3d[i, 0, 1]` — the post-eq.14 Act *rate*
+  times d_i. `hq3d[i, 0, 0]` is the eq. 14 RHS (numerator /
+  denominator − Deg×Act), not the Act concentration. The two
+  are not equivalent.
+- **How it was caught:** the A8 discretisation audit (this
+  document) cross-checked 13.f90 against coreop2d.py line by
+  line for every reaction equation and noticed that the
+  expression on the right-hand side of the eq.17 source had
+  been silently substituted from `q3d(i,1,1)` (concentration)
+  to `hq3d[i, 0, 0]` (rate). Humppa, tgrohens and the C++
+  port all match 13.f90 literally; Path A is the single
+  implementer that diverges.
+- **Why it matters methodologically:** Path A's translation
+  was a careful, attentive human-review effort that
+  preserved every other detail of 13.f90 (including
+  load-bearing accidents like the FMA-limit guard and the
+  border-bias x=0 chain). The eq.17 rewrite is the kind of
+  silent drift a translator introduces when 'tidying up' an
+  expression they assume is equivalent — `hq3d[i, 0, 0]`
+  was already the temporary variable in scope, and using it
+  felt natural. The drift is invisible to a code-only review
+  and only surfaces when an audit cross-references the source
+  and the destination at expression-level granularity.
+  LLM-assisted analysis is well-suited to that level of
+  cross-reference, and B4's three-way split of
+  `eq17_inh_source` (paper / 13.f90 literal / Path A
+  rewrite) plus the new `PATH_A_REWRITE` preset gives the
+  comparison study the apparatus to quantify whether the
+  drift is biologically observable.
 
 ## What the comparison study tests
 
@@ -1139,8 +1255,9 @@ becomes observable.
 | `PATH_B_DEFAULT` | What does the cleanest numpy-idiomatic implementation produce? | (defaults) |
 | `PAPER_2010` | What does the 2010 paper as written (with eq. 14 typo corrected) produce? | (defaults — same as `PATH_B_DEFAULT` initially) |
 | `PAPER_LITERAL_2010` | Does the eq. 14 typo materially change biology? | `eq14_denominator='act_typo'` |
-| `LEGACY_FORTRAN` | Does the v2 framework reproduce the FORTRAN goldens? | every FORTRAN-flavoured option, plus `division_total_cap=60`, `lattice_orientation='fortran'`, `border_definition='topological_descendants'`, `border_bias_x_zero_quirk=True` |
+| `LEGACY_FORTRAN` | Does the v2 framework reproduce the FORTRAN goldens? | every FORTRAN-flavoured option, plus `division_total_cap=60`, `lattice_orientation='fortran'`, `border_definition='topological_descendants'`, `border_bias_x_zero_quirk=True`, `eq17_inh_source='act_times_di'` (literal 13.f90) |
 | `HUMPPA_LITERAL` | Are the 13.f90-vs-humppa divergences observable in the v2 framework? | currently identical to `LEGACY_FORTRAN`; will diverge once Swi-band-style fields are added |
+| `PATH_A_REWRITE` | Is Path A's silent rewrite of 13.f90:487 (`coreop2d.py:647`) biologically observable? | identical to `LEGACY_FORTRAN` except `eq17_inh_source='act_rate_times_di'` |
 
 The comparison-matrix runner in
 `scripts/run-discretisation-study.py` exercises each preset on the
