@@ -349,9 +349,13 @@ green.
 When done, append a summary to .tmp/path-b-v2/progress.md.
 """,
         validate_cmd=(
+            'rm -rf .tmp/path-b-v2/cli-run && '
             'TMPDIR=.tmp .venv/bin/python -m silicoshark examples/seal.txt '
-            '.tmp/path-b-v2/cli-run run 100 5 --preset PATH_B_DEFAULT && '
-            'ls .tmp/path-b-v2/cli-run/*.off | wc -l'
+            '.tmp/path-b-v2/cli-run run 100 5 --preset PATH_B_DEFAULT '
+            '--override mesenchyme=absent && '
+            'ls .tmp/path-b-v2/cli-run/*.off | wc -l && '
+            '.venv/bin/pytest tests/test_silicoshark_a5_v1_replica.py '
+            'tests/test_simulator_smoke.py -q'
         ),
     ),
     'A6': Phase(
@@ -747,13 +751,16 @@ def cmd_mark_done(phase_id: str) -> None:
         ['git', 'rev-parse', '--short', 'HEAD'],
         cwd=REPO, capture_output=True, text=True, check=True,
     ).stdout.strip()
+    # Accept either 'pending' or a bare 'done' (without commit hash) so
+    # we can stamp a hash retroactively when an agent updated the row
+    # directly without going through `mark-done`.
     new_text = re.sub(
-        rf'^(\|\s*{phase_id}\s*\|.*?\|)\s*pending\s*(\|)\s*$',
-        rf'\1 done (commit `{head}`) \2',
+        rf'^(\|\s*{phase_id}\s*\|.*?\|)\s*(pending|done)\s*(\|)\s*$',
+        rf'\1 done (commit `{head}`) \3',
         text, count=1, flags=re.MULTILINE,
     )
     if new_text == text:
-        sys.exit(f'phase {phase_id} not pending in progress.md (or already marked done)')
+        sys.exit(f'phase {phase_id} status not stampable in progress.md')
     PROGRESS.write_text(new_text)
     print(f'marked {phase_id} done at commit {head}')
 
