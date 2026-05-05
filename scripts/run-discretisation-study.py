@@ -5,11 +5,11 @@ presets and one or more parameter files.
 For each (preset, params_file) combination the runner:
 
 1. Resolves the effective Discretisation (preset + study-wide
-   overrides + auto-overrides for the not-yet-implemented `mesenchyme`
-   / `laplacian='fortran_margins'` fields). The auto-overrides are
-   conditional: a preset that already specifies `mesenchyme='absent'`
-   and a non-`fortran_margins` Laplacian gets no auto-overrides; the
-   currently-shipping presets all need at least one of them.
+   overrides + auto-overrides for the not-yet-implemented
+   `mesenchyme` field). `laplacian='fortran_margins'` was a
+   structural no-op until B3 (Path B v2, 2026-05-05) and is now
+   auto-override-free; presets carrying it run via
+   `mesh.fortran_margins_laplacian` directly.
 2. Invokes silicoshark via subprocess (the simulator currently lives
    behind a CLI; a thin in-process wrapper would have to duplicate
    the CLI's preset-and-override plumbing). Captures stdout/stderr to
@@ -88,7 +88,10 @@ KNOT_TOL = 1e-9
 DEFERRED_FIELD_OVERRIDES: dict[str, tuple[str, str]] = {
     # field name -> (forbidden_value, replacement_value)
     'mesenchyme': ('per_column_z_layers', 'absent'),
-    'laplacian': ('fortran_margins', 'length_weighted'),
+    # `laplacian='fortran_margins'` was a structural no-op until B3
+    # (Path B v2, 2026-05-05); now wired through
+    # `mesh.fortran_margins_laplacian` as the in-plane contact-area-
+    # weighted operator. No auto-override needed.
 }
 
 

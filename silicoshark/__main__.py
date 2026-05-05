@@ -91,21 +91,22 @@ def _apply_overrides(disc: Discretisation, overrides: list[str]) -> Discretisati
 
 def _check_implemented(disc: Discretisation) -> None:
     """Reject preset/override combinations whose code path is not yet
-    implemented. Currently:
-      - laplacian == 'fortran_margins' (deferred to its own sub-project).
+    implemented.
 
     `mesenchyme='per_column_z_layers'` was unimplemented in A5 and is
     now wired through `silicoshark/reaction.step_mesenchyme_diffusion`
     plus the cervical-loop / buoyancy reads in `silicoshark/forces.py`
     (Path B v2 B3, 2026-05-05).
+
+    `laplacian='fortran_margins'` was a structural no-op until B3
+    (Path B v2, 2026-05-05); it is now wired through
+    `silicoshark/mesh.fortran_margins_laplacian` as the in-plane
+    contact-area-weighted operator. The substrate sink, vertical-z
+    flux, and substrate-edge layer of the FORTRAN's full
+    apply_diffusion are NOT modelled — silicoshark's existing vertical
+    coupling applies independently. See the mesh docstring.
     """
-    if disc.laplacian == 'fortran_margins':
-        raise SystemExit(
-            "discretisation field laplacian='fortran_margins' is not "
-            'implemented in this phase (the FORTRAN per-edge margin '
-            'scheme is documented as a separate sub-project). Use '
-            '--override laplacian=length_weighted (or =cotangent).'
-        )
+    return
 
 
 def main(argv: list[str] | None = None) -> int:

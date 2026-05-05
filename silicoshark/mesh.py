@@ -151,7 +151,7 @@ class Mesh:
             diag_w=diag_w,
             is_border=is_border,
             kind=kind,
-            positions=positions if kind == 'cotangent' else None,
+            positions=positions if kind in ('cotangent', 'fortran_margins') else None,
         )
 
     @classmethod
@@ -204,7 +204,7 @@ class Mesh:
             diag_w=diag_w,
             is_border=is_border,
             kind=kind,
-            positions=positions if kind == 'cotangent' else None,
+            positions=positions if kind in ('cotangent', 'fortran_margins') else None,
         )
 
     def laplacian(self, u: np.ndarray) -> np.ndarray:
@@ -217,8 +217,8 @@ class Mesh:
         - `'length_weighted'` — Fick's-law graph Laplacian (default).
         - `'cotangent'` — discrete Laplace-Beltrami; requires positions
           to have been retained on the mesh.
-        - `'fortran_margins'` — raises NotImplementedError; the FORTRAN
-          per-edge margin scheme is documented as future work.
+        - `'fortran_margins'` — per-edge contact-area-weighted Laplacian
+          following the FORTRAN's `pes`/`area_p` scheme; requires positions.
         """
         if self.kind == 'length_weighted':
             return self._length_weighted_laplacian(u)
@@ -230,6 +230,11 @@ class Mesh:
                 )
             return self.cotangent_laplacian(u, self.positions)
         if self.kind == 'fortran_margins':
+            if self.positions is None:
+                raise ValueError(
+                    "Mesh.kind='fortran_margins' requires positions to be set "
+                    'on the mesh; got positions=None.'
+                )
             return self.fortran_margins_laplacian(u)
         raise ValueError(f'unknown Mesh.kind: {self.kind!r}')
 
@@ -399,13 +404,80 @@ class Mesh:
         return out
 
     def fortran_margins_laplacian(self, u: np.ndarray) -> np.ndarray:
-        """The FORTRAN's per-edge `pes`-margin Laplacian. Not implemented
-        in this phase; documented in the discretisation audit as its own
-        sub-project (the FORTRAN scheme is interleaved with z-layer
-        mesenchyme handling and is not a drop-in textbook discretisation).
+        """Per-edge contact-area-weighted Laplacian (FORTRAN-style).
+
+        Approximates the FORTRAN's `pes` / `area_p` scheme
+        (`13.f90:392-518`, `coreop2d.py:506-666`) on silicoshark's
+        existing variable-length CSR adjacency. For each cell:
+
+        1. Sort neighbours angularly around the cell centre (xy plane).
+        2. Place a margin midpoint at the midpoint of each edge to a
+           neighbour (Voronoi approximation; on a regular hex lattice
+           this coincides with the perpendicular bisector intersection).
+        3. `pes[k]` = perimeter-segment length between margin midpoint k
+           and its angular successor (closed polygon — the loop wraps).
+        4. `area_p[k]` = 0.5 * ‖(midpoint_k − pos_i) × (midpoint_{k+1} − pos_i)‖,
+           the triangle area swept from the cell centre to segment k.
+        5. `area_bottom = sum(area_p)`,
+           `sum_a = sum(pes) + 2 * area_bottom`. Normalise
+           `pes /= sum_a`. (FMA-LIMIT GUARD: when `sum_a == 0` —
+           a degenerate cell with collinear / collapsed margins — the
+           cell contributes no flux.)
+        6. `L u[i] = sum_k pes[k] * (u[neigh_k] − u[i])`.
+
+        Reduced-scope implementation (Path B v2, May 2026): this matches
+        the FORTRAN's `pes` weighting in the in-plane Laplacian only.
+        Substrate sink (`-0.44 * pes * q`), vertical-z-layer flux
+        (`area_bottom * (q_above + q_below − 2q)`), and the
+        substrate-edge layer are NOT modelled — silicoshark's existing
+        vertical coupling and 2-layer mesenchyme handling apply
+        independently of this operator. Acceptance for `Discretisation
+        .laplacian='fortran_margins'` therefore measures the in-plane
+        weighting difference vs `length_weighted`, not byte-equality
+        with Path A's `coreop2d.py`. See
+        `docs/plans/2026-05-05-fortran-margins-laplacian.md` and the
+        accompanying findings doc for the scope decision.
         """
-        raise NotImplementedError(
-            "Discretisation.laplacian='fortran_margins' is not implemented "
-            "in this phase. The FORTRAN's per-edge margin scheme is "
-            'documented as a future-work item in the discretisation audit.'
-        )
+        n = u.shape[0]
+        out = np.zeros(n, dtype=np.float64)
+        pos = self.positions
+        if pos is None:
+            raise ValueError("fortran_margins_laplacian requires positions")
+        for i in range(n):
+            start = int(self.neigh_starts[i])
+            end = int(self.neigh_starts[i + 1])
+            if end - start < 3:
+                # Degenerate (< 3 neighbours): no closed polygon. The
+                # FORTRAN-style operator is undefined here; contribute
+                # zero flux. In practice this only fires on contrived
+                # initial conditions; the seal/cusp-forming examples
+                # have ≥ 3 neighbours per cell after Delaunay.
+                continue
+            nbrs = self.neigh_idx[start:end]
+            pos_i = pos[i]
+            rel = pos[nbrs] - pos_i
+            # Angular sort in the xy plane. `np.argsort(arctan2)` gives
+            # a stable counter-clockwise ordering around the centre,
+            # matching the FORTRAN topology walk's perimeter ordering.
+            order = np.argsort(np.arctan2(rel[:, 1], rel[:, 0]))
+            sorted_nbrs = nbrs[order]
+            midpoints = 0.5 * (pos_i + pos[sorted_nbrs])
+            next_midpoints = np.roll(midpoints, -1, axis=0)
+            edges = next_midpoints - midpoints
+            pes = np.linalg.norm(edges, axis=1)
+            v_a = midpoints - pos_i
+            v_b = next_midpoints - pos_i
+            area_p = 0.5 * np.linalg.norm(np.cross(v_a, v_b), axis=1)
+            area_bottom = area_p.sum()
+            sum_a = pes.sum() + 2.0 * area_bottom
+            if sum_a == 0.0:
+                # FMA-LIMIT GUARD analogue: degenerate cell with
+                # collapsed margin geometry. The full FORTRAN/Path A
+                # path substitutes `area_bottom = 0.5/1.0` to keep the
+                # vertical-flux coefficients finite; in this reduced-
+                # scope implementation there is no vertical flux, so
+                # the cell simply contributes zero in-plane flux.
+                continue
+            pes_norm = pes / sum_a
+            out[i] = float(np.dot(pes_norm, u[sorted_nbrs] - u[i]))
+        return out
