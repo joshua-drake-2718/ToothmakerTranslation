@@ -182,12 +182,16 @@ def test_adh_form_branches_differ_by_factor_d():
       hookean_attraction: f_0 = 1.0 * (1.5, 0, 0)       = (1.5, 0, 0)
 
     Magnitudes differ by a factor of 1.5.
+
+    Note: `hookean_attraction` is gated to interior cells only
+    (Path B v2 A6 fix). We set `first_border_cell = n` so all cells
+    in this small test fixture qualify as interior.
     """
     positions = np.array(
         [[0.0, 0.0, 0.0], [1.5, 0.0, 0.0], [0.75, 5.0, 0.0], [-3.0, 5.0, 0.0]],
         dtype=np.float64,
     )
-    state = _state_from_positions(positions)
+    state = _state_from_positions(positions, first_border_cell=positions.shape[0])
     params = _zero_params(k_adh=1.0)
     mesh = Mesh.from_positions(state.positions)
 
@@ -295,24 +299,25 @@ def test_eq5_z_gate_branches_differ():
 
 
 def test_eq5_apply_to_branches_differ():
-    """Build a seal initial state (rad=4 → 37 cells, first_border_cell=18).
+    """Build a seal initial state (rad=4 → 37 cells, first_border_cell=19).
+
+    Path B v2 A6 fix: silicoshark's lattice has the centre at index 0
+    and the outer ring at the high indices, so the 'interior' cells
+    are at LOW indices (centre + inner rings), and the FORTRAN-faithful
+    `interior_only` gate is `idx < first_border_cell`. With rad=4 the
+    interior cells are indices [0, 18] (inclusive) and the outer ring
+    is [19, 36]; first_border_cell = 19 = num_active - 6*(rad-1).
 
     Zero out every coefficient except k_egr, then perturb the geometry so
-    eq.5 has something to do (lift cell 0 up so its neighbours are below
-    in z, then check force; we use k_egr=1.0 and check on a cell with
-    index < first_border_cell).
-
-    Under 'all': interior cells (index < 18) DO receive the eq.5
-    contribution.
-    Under 'interior_only': cells with index < 18 do NOT receive eq.5.
-
-    For this test to fire the gate has to be open (z-asymmetric), so we
-    perturb the z of one boundary so its neighbours are all above it.
+    eq.5 has something to do (lift cell 19 — outer ring — down so its
+    neighbours are above in z; under 'all', cell 19 gets eq.5 force;
+    under 'interior_only', it does not, because index 19 is in the
+    outer ring).
     """
     params = Params.from_file('examples/seal.txt')
     state = build_initial_state(params)
-    # Push cell 0 (centre) down so its 6 neighbours are above in z.
-    state.positions[0, 2] = 0.5
+    # Push an outer-ring cell down so its neighbours are above.
+    state.positions[19, 2] = 0.5
 
     # Zero out every coefficient except k_egr; rest_length stays 1.0.
     test_params = _zero_params(k_egr=1.0)
@@ -325,19 +330,31 @@ def test_eq5_apply_to_branches_differ():
         state, test_params, mesh, replace(PATH_B_DEFAULT, eq5_apply_to='interior_only'),
     )
 
-    # Cell 0 has index 0 < first_border_cell = 6 * (4 - 1) = 18. Under
-    # 'all' it receives eq.5 (non-zero); under 'interior_only' it doesn't.
     fbc = state.first_border_cell
-    assert fbc == 18
-    assert np.linalg.norm(f_all[0]) > 1e-6, 'cell 0 eq.5 should be non-zero under all'
-    assert np.allclose(f_interior[0], 0.0, atol=1e-12), (
-        'cell 0 eq.5 should be zero under interior_only (index 0 < first_border_cell=18)'
+    assert fbc == 19, f'expected first_border_cell=19 (rad=4), got {fbc}'
+    # Cell 19 (outer ring) gets eq.5 under 'all' but not under
+    # 'interior_only'. Cervical-loop fires for cell 19 in both branches,
+    # so we compare the DIFFERENCE between the two branches' forces on
+    # cell 19; that difference is exactly the eq.5 contribution.
+    delta_19 = f_all[19] - f_interior[19]
+    assert np.linalg.norm(delta_19) > 1e-6, (
+        'eq.5 contribution to cell 19 should differ between all and interior_only'
     )
 
-    # An interior-by-FORTRAN cell (index 18) should be equal under both
-    # branches, because both grant it eq.5.
-    if np.linalg.norm(f_all[fbc]) > 1e-6:
-        np.testing.assert_allclose(f_all[fbc], f_interior[fbc], atol=1e-12)
+    # An interior cell (e.g., the centre, idx 0) — push another cell
+    # down so cell 0 has above-z neighbours; both branches should treat
+    # cell 0 the same (interior, eligible under both).
+    state.positions[19, 2] = 1.0  # restore
+    state.positions[0, 2] = 0.5
+    mesh = Mesh.from_positions(state.positions)
+    f_all2 = compute_forces(
+        state, test_params, mesh, replace(PATH_B_DEFAULT, eq5_apply_to='all'),
+    )
+    f_int2 = compute_forces(
+        state, test_params, mesh, replace(PATH_B_DEFAULT, eq5_apply_to='interior_only'),
+    )
+    # Cell 0 is interior (idx 0 < 19) under both branches.
+    np.testing.assert_allclose(f_all2[0], f_int2[0], atol=1e-12)
 
 
 # --- rep_neighbour_set: 'mesh' vs 'mesh_plus_all_close' --------------

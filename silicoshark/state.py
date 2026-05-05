@@ -89,6 +89,16 @@ class State:
     init_posterior: np.ndarray
     init_lingual: np.ndarray
     init_buccal: np.ndarray
+    is_border_topo: np.ndarray | None = None
+    """Topological border-cell flags, FORTRAN's first-border-block book-
+    keeping. True for the original outer-ring cells; daughters inherit
+    True only if BOTH parents are border (per FORTRAN's
+    `new_cell_is_external` rule at coreop2d.py:1068). Used by
+    `Discretisation.border_definition='topological_descendants'`. Path B
+    v2 A6 added this field (wired from the existing `first_border_cell`
+    threshold at construction). The geometric `mesh.is_border` is a
+    separate, recomputed-each-step quantity.
+    """
     rest_length: float = 1.0
     iter_count: int = 0
     first_border_cell: int = 0
@@ -110,7 +120,7 @@ class State:
         return self.positions.shape[0]
 
 
-def hex_lattice(rad: int) -> np.ndarray:
+def hex_lattice(rad: int, fortran_orientation: bool = False) -> np.ndarray:
     """Hexagonal lattice of cells centred at the origin.
 
     Returns an (N, 2) array of (x, y) coordinates with N = 3*(rad-1)*rad + 1.
@@ -125,6 +135,26 @@ def hex_lattice(rad: int) -> np.ndarray:
     lattice (with an outer "virtual" ring beyond num_active_cells). Path B
     uses the simpler standard hex lattice; the outer ring is a FORTRAN
     book-keeping artefact unnecessary with `scipy.spatial.Delaunay`.
+
+    Orientation
+    -----------
+    Two orientations are supported, controlled by `fortran_orientation`:
+
+    - `False` (default): rings start at angle 0 (cells at (1,0), (2,0)).
+      Conventional axial layout. The v1 simulator and the
+      v1-byte-identity baseline depend on this orientation.
+
+    - `True`: rotated 30° clockwise so that cells lie at x=0 on the
+      y-axis (e.g., outer ring includes (0, rad), (0, -rad)). This
+      matches `13.f90`'s allocate_initial_state output. Required for
+      the LEGACY_FORTRAN preset to reproduce the FORTRAN's
+      border_bias_x_zero_quirk dynamics on the seal example: the
+      FORTRAN's `if x > 0 / elif x < 0` chain in update_cell_position
+      excludes cells at exact x=0 from the Bgr z-multiplier, anchoring
+      those cells low in z and creating the z gradient that drives
+      the FORTRAN's 57-cell plateau. Without cells at exactly x=0,
+      the quirk has no targets and the dynamics produce a flat
+      border-z curve, mismatching the FORTRAN's seal output by ~50%.
     """
     if rad < 1:
         raise ValueError(f'rad must be >= 1, got {rad}')
@@ -151,10 +181,36 @@ def hex_lattice(rad: int) -> np.ndarray:
             for _ in range(ring):
                 pts.append((float(p[0]), float(p[1])))
                 p = p + edge
-    return np.asarray(pts, dtype=np.float64)
+    arr = np.asarray(pts, dtype=np.float64)
+    if fortran_orientation:
+        # Rotate 30° (= pi/6) counter-clockwise so the lattice matches
+        # FORTRAN's `13.f90` output: corners of ring k at (k*sqrt(3)/2,
+        # ±k/2) rather than the conventional axial (k, 0) etc.
+        cos30 = math.sqrt(3) / 2
+        sin30 = 0.5
+        x = arr[:, 0].copy()
+        y = arr[:, 1].copy()
+        arr[:, 0] = x * cos30 - y * sin30
+        arr[:, 1] = x * sin30 + y * cos30
+        # Round near-zero coordinates exactly to zero so the FORTRAN
+        # `border_bias_x_zero_quirk` (which compares against x=0
+        # exactly) fires consistently. Without this, fp noise around
+        # the rotated y-axis cells leaves them at x ~ ±1e-16, defeating
+        # the strict `if x>0 / elif x<0` chain. FORTRAN's
+        # `allocate_initial_state` does the same (line 320:
+        # `cls.positions = cls.positions.round(decimals=14)`).
+        zero_mask_x = np.abs(arr[:, 0]) < 1e-13
+        arr[zero_mask_x, 0] = 0.0
+        zero_mask_y = np.abs(arr[:, 1]) < 1e-13
+        arr[zero_mask_y, 1] = 0.0
+    return arr
 
 
-def build_initial_state(params: Params) -> State:
+def build_initial_state(
+    params: Params,
+    *,
+    lattice_orientation: str = 'axial',
+) -> State:
     """Build the initial state for a simulation.
 
     Initial conditions, per the 2010 paper p. 586:
@@ -172,8 +228,13 @@ def build_initial_state(params: Params) -> State:
       lingual = x > 0, buccal = x < 0. (Paper: anterior/posterior border
       cells "have positive y values" / "negative y values"; left/right
       bias is FORTRAN-only via `Lbi`/`Rbi`.)
+
+    `lattice_orientation` selects between the conventional axial layout
+    (default) and the FORTRAN-compatible 30°-rotated layout (used by
+    LEGACY_FORTRAN to make `border_bias_x_zero_quirk` cells exist).
+    See `hex_lattice` for the orientation discussion.
     """
-    xy = hex_lattice(params.rad)
+    xy = hex_lattice(params.rad, fortran_orientation=(lattice_orientation == 'fortran'))
     n = xy.shape[0]
     expected = 3 * (params.rad - 1) * params.rad + 1
     if n != expected:
@@ -203,11 +264,35 @@ def build_initial_state(params: Params) -> State:
     init_lingual = positions[:, 0] > 0
     init_buccal = positions[:, 0] < 0
 
-    # FORTRAN's first_border_cell: 6 * (rad - 1) per the Path B v2
-    # charter (knot_threshold_gate field). For rad=1 this is 0, which
-    # means the gate is inert (every cell qualifies); for rad>=2 it
-    # excludes the inner cells from knot formation.
-    first_border_cell = 6 * (params.rad - 1)
+    # `first_border_cell` is the threshold index used by Discretisation
+    # gates that the FORTRAN spells `i >= first_border_cell` (interior
+    # cells in the FORTRAN's reversed lattice, where indices [0,
+    # first_border_cell-1] are the outer ring and the centre is the
+    # last index). silicoshark uses the inverted convention (centre at
+    # index 0, outer ring at high indices), so the threshold is the
+    # COUNT OF INTERIOR CELLS, and the corresponding gate in the
+    # silicoshark numbering is `idx < first_border_cell` for interior
+    # and `idx >= first_border_cell` for border.
+    #
+    # For rad=R the count of interior cells (centre + rings 1..R-2) is
+    #   1 + 6 + 12 + ... + 6*(R-2) = 1 + 6 * (R-2)*(R-1)/2
+    #                               = 1 + 3 * (R-1) * (R-2).
+    # rad=1 -> 1 (single centre, no border); the gate is inert (all
+    # cells qualify as interior). rad=2 -> 1, rad=3 -> 7, rad=4 -> 19.
+    #
+    # This is a Path B v2 A6 fix: the v1/A5 implementation used
+    # FORTRAN's `6 * (rad - 1)` directly, which matches FORTRAN's
+    # value but means the wrong cells under silicoshark's lattice
+    # convention. See docs/findings/2026-05-05-... and `Discretisation`
+    # field docstrings for `eq5_apply_to` / `knot_threshold_gate`.
+    rad = params.rad
+    first_border_cell = 1 + 3 * (rad - 1) * (rad - 2) if rad >= 2 else 1
+
+    # Topological border flags: cells with index >= first_border_cell
+    # form the outer ring. Daughters of two-border parents inherit True;
+    # daughters with at least one interior parent are interior. See
+    # State.is_border_topo and `divide_cells` for the inheritance rule.
+    is_border_topo = np.arange(n) >= first_border_cell
 
     return State(
         positions=positions,
@@ -222,5 +307,6 @@ def build_initial_state(params: Params) -> State:
         init_posterior=init_posterior,
         init_lingual=init_lingual,
         init_buccal=init_buccal,
+        is_border_topo=is_border_topo,
         first_border_cell=first_border_cell,
     )

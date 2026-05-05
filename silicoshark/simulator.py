@@ -111,6 +111,7 @@ def divide_cells(
     *,
     max_per_pass: int | None = None,
     max_edge_dist: float | None = None,
+    total_cap: int | None = None,
     disc: Discretisation = PATH_B_DEFAULT,
     top: Topology | None = None,
 ) -> bool:
@@ -140,6 +141,13 @@ def divide_cells(
     adjacency graph in sync with the state arrays.
     """
     n = state.num_active
+    # Total-cell cap: a pragmatic stand-in for FORTRAN's add_cell panic
+    # (see Discretisation.division_total_cap docstring). When num_active
+    # is at or above the cap, no further divisions in this pass — the
+    # FORTRAN's `add_cell` would have aborted via topology-walk panic
+    # by this point on the seal example.
+    if total_cap is not None and n >= total_cap:
+        return False
     rows = np.repeat(
         np.arange(n, dtype=np.int64),
         np.diff(mesh.neigh_starts),
@@ -177,6 +185,9 @@ def divide_cells(
         new_rows.append(a)
         new_cols.append(b)
         if max_per_pass is not None and len(new_rows) >= max_per_pass:
+            break
+        # Total-cap honoured even mid-pass: stop once n + new == cap.
+        if total_cap is not None and n + len(new_rows) >= total_cap:
             break
     if not new_rows:
         return False
@@ -233,6 +244,18 @@ def divide_cells(
     state.init_posterior = np.concatenate([state.init_posterior, new_posterior])
     state.init_lingual = np.concatenate([state.init_lingual, new_lingual])
     state.init_buccal = np.concatenate([state.init_buccal, new_buccal])
+
+    # Topological border-flag inheritance per FORTRAN's `new_cell_is_external`
+    # rule (coreop2d.py:1068): a daughter is border iff BOTH parents are
+    # border. Daughters of one border + one interior parent (or two
+    # interior parents) are interior. This keeps the topological border
+    # set bounded under repeated division, even though geometric
+    # mesh.is_border (cells with <6 neighbours) may grow unboundedly.
+    if state.is_border_topo is not None:
+        daughter_topo_border = state.is_border_topo[a_idx] & state.is_border_topo[b_idx]
+        state.is_border_topo = np.concatenate(
+            [state.is_border_topo, daughter_topo_border]
+        )
 
     # Keep the static topology in sync with the appended state arrays.
     # The Topology's daughter index is `num_cells` at insert time, which
@@ -309,6 +332,8 @@ def _step_gauss_seidel(
     # remaining force components see the updated geometry. eq. 4 is:
     #   f_ntr = k_ntr * (1 - d_i) * (mean_neigh - p_i)
     # Re-derive it here so we have the per-cell vector to step with.
+    # Border cells use only their border neighbours for the mean (per
+    # FORTRAN's split — see forces.compute_forces eq.4 section).
     n = state.num_active
     counts = np.diff(mesh.neigh_starts).astype(np.float64)
     rows = np.repeat(
@@ -320,6 +345,29 @@ def _step_gauss_seidel(
     np.add.at(sum_neigh, rows, state.positions[cols])
     safe_counts = np.maximum(counts, 1.0)[:, None]
     mean_neigh = sum_neigh / safe_counts
+
+    # Border-only eq.4 mean is applied only when border_definition is
+    # the FORTRAN-faithful 'topological_descendants' option. See
+    # forces.compute_forces eq.4 section for rationale.
+    if disc.border_definition == 'topological_descendants':
+        ntr_border = state.is_border_topo if state.is_border_topo is not None else mesh.is_border
+        if np.any(ntr_border):
+            is_b_neigh = ntr_border[cols]
+            b_only = is_b_neigh.astype(np.float64)
+            sum_b = np.zeros((n, 3), dtype=np.float64)
+            np.add.at(sum_b, rows, state.positions[cols] * b_only[:, None])
+            cnt_b = np.zeros(n, dtype=np.float64)
+            np.add.at(cnt_b, rows, b_only)
+            safe_cnt_b = np.maximum(cnt_b, 1.0)[:, None]
+            mean_b = sum_b / safe_cnt_b
+            has_b_neigh = cnt_b > 0
+            use_border_mean = ntr_border & has_b_neigh
+            mean_neigh = np.where(
+                use_border_mean[:, None], mean_b, mean_neigh
+            )
+    else:
+        ntr_border = None  # used below in the second f_ntr2 step
+
     one_minus_d = (1.0 - state.diff)[:, None]
     f_ntr = params.k_ntr * one_minus_d * (mean_neigh - state.positions)
     state.positions = state.positions + dt * f_ntr
@@ -327,15 +375,27 @@ def _step_gauss_seidel(
     # 4. Recompute the remaining forces against the updated positions
     # (this captures the Gauss-Seidel essence). Subtract the traction
     # component that has already been applied so we don't double-count.
+    # The eq.4 form here matches compute_forces (border cells use
+    # only border neighbours for the mean).
     new_forces = compute_forces(state, params, mesh, disc)
-    # The eq. 4 sub-step in `compute_forces` is recomputed against the
-    # new geometry; subtract it because we already moved by f_ntr above
-    # at the *old* geometry, and the post-traction f_ntr should be
-    # absorbed into the next iteration rather than applied again here.
     counts = np.diff(mesh.neigh_starts).astype(np.float64)
     sum_neigh2 = np.zeros((n, 3), dtype=np.float64)
     np.add.at(sum_neigh2, rows, state.positions[cols])
     mean_neigh2 = sum_neigh2 / np.maximum(counts, 1.0)[:, None]
+    if ntr_border is not None and np.any(ntr_border):
+        is_b_neigh = ntr_border[cols]
+        b_only = is_b_neigh.astype(np.float64)
+        sum_b = np.zeros((n, 3), dtype=np.float64)
+        np.add.at(sum_b, rows, state.positions[cols] * b_only[:, None])
+        cnt_b = np.zeros(n, dtype=np.float64)
+        np.add.at(cnt_b, rows, b_only)
+        safe_cnt_b = np.maximum(cnt_b, 1.0)[:, None]
+        mean_b2 = sum_b / safe_cnt_b
+        has_b_neigh = cnt_b > 0
+        use_border_mean = ntr_border & has_b_neigh
+        mean_neigh2 = np.where(
+            use_border_mean[:, None], mean_b2, mean_neigh2
+        )
     f_ntr2 = params.k_ntr * one_minus_d * (mean_neigh2 - state.positions)
     remaining = new_forces - f_ntr2
 
@@ -396,6 +456,7 @@ def step(
             division_dist=DIVISION_FACTOR * state.rest_length,
             max_per_pass=max_per_pass,
             max_edge_dist=max_edge,
+            total_cap=disc.division_total_cap,
             disc=disc,
             top=None,
         )
@@ -406,6 +467,7 @@ def step(
             division_dist=DIVISION_FACTOR * state.rest_length,
             max_per_pass=disc.division_per_step_cap,
             max_edge_dist=disc.division_max_edge,
+            total_cap=disc.division_total_cap,
             disc=disc,
             top=top,
         )

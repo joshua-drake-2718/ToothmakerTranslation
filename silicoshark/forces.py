@@ -138,13 +138,59 @@ def compute_forces(
     # disc.adh_form: unit_vector (paper, f = k_adh * d / |d|) vs
     # hookean_attraction (FORTRAN, f = k_adh * d). Both gate on
     # |d| > rest + tol to avoid firing at exact-rest equilibrium.
+    #
+    # FORTRAN's `repulse_neighbour` else-branch (coreop2d.py:869) gates
+    # the Hookean attraction to interior cells only — `elif i >= first_
+    # border_cell` selects interior cells in FORTRAN's reversed lattice.
+    # Border cells in FORTRAN do NOT receive adhesion. This gate is
+    # load-bearing for the seal example: applying adhesion to border
+    # cells would pull them down toward the lower-z interior and cancel
+    # the cervical-loop's downward push, collapsing the z plateau.
+    #
+    # Mapping to silicoshark's lattice (centre at index 0, border at
+    # high indices) the same semantic gate is `rows < first_border_cell`.
+    # We co-locate the gate with the `hookean_attraction` branch so
+    # the FORTRAN-specific behaviour stays bundled with the FORTRAN
+    # form choice. The unit-vector form (paper) has no such gate.
+    #
+    # Adhesion fires when `dist >= rest` for the FORTRAN form: the
+    # FORTRAN's gate is `dr >= rd` (an `elif` after the `if dr < rd`
+    # repulsion clause). Including the equality is load-bearing for
+    # the symmetric initial condition: with all six neighbours of an
+    # interior cell at exact rest length, the adhesion sums cancel by
+    # symmetry. Using a strict `dist > rest + tol` skips adhesion at
+    # exact rest, breaking the symmetry — only the stretched (z-
+    # separated) neighbours' adhesion contributes, dragging the cell
+    # outward and triggering exponential over-division. The
+    # `unit_vector` form keeps a small tolerance because at exact
+    # rest the unit-vector force has finite magnitude even when no
+    # net displacement is needed.
     stretch_tol = rest * 1e-6
-    outside = dist > rest + stretch_tol
     if disc.adh_form == 'unit_vector':
+        outside = dist > rest + stretch_tol
         adh_scalar = np.where(outside, params.k_adh / np.maximum(dist, _SAFE_DIV_EPS), 0.0)
         f_adh = adh_scalar[:, None] * d
     elif disc.adh_form == 'hookean_attraction':
-        f_adh = np.where(outside[:, None], params.k_adh * d, 0.0)
+        # FORTRAN gate: only interior cells (rows < first_border_cell)
+        # accumulate adhesion. The pair-force itself is symmetric in
+        # the FORTRAN's per-cell loop (each cell decides for itself
+        # based on its own index), so we mask on `rows`, not on the
+        # neighbour's index — matching FORTRAN's `for i: if i >=
+        # first_border_cell: persu[j] = ...; forces[i] += sum(persu)`.
+        # FORTRAN's `dr >= rd` adhesion gate compares the current 3D
+        # distance against a per-edge XY-projected distance frozen at
+        # cell creation (`border[i, j, 4]` in coreop2d.py:1450,1472).
+        # Edges that started at unit length and have only separated in
+        # z trigger the elif branch (adhesion). Pure-distance silicoshark
+        # gates (`dist > rest + tol` or `dist >= rest`) miss the
+        # FORTRAN behaviour because cells move slightly during a step
+        # and dist drops below rest by fp noise. We use a generous
+        # tolerance `dist >= rest * (1 - tol)` so that fp-noise-rest
+        # edges (where cells have only barely moved) trigger adhesion,
+        # matching FORTRAN's symmetric-neighbourhood behaviour.
+        outside = dist >= rest * (1.0 - 1e-3)
+        gate = rows < state.first_border_cell
+        f_adh = np.where((outside & gate)[:, None], params.k_adh * d, 0.0)
     else:
         raise ValueError(f'unknown adh_form: {disc.adh_form!r}')
     np.add.at(forces, rows, f_adh)
@@ -207,11 +253,53 @@ def compute_forces(
         raise ValueError(f'unknown rep_neighbour_set: {disc.rep_neighbour_set!r}')
 
     # --- Nucleus traction (eq. 4) ------------------------------------
+    # FORTRAN's `apply_nuclear_traction` (coreop2d.py:954) splits the
+    # neighbour-mean computation by cell role:
+    #   - interior cells (`i >= first_border_cell` in FORTRAN's reversed
+    #     lattice) use ALL their neighbours (both interior and border).
+    #   - border cells (`i < first_border_cell`) use ONLY their border
+    #     neighbours (`if k < first_border_cell`).
+    # The latter is load-bearing for the seal example: a border cell
+    # whose neighbours include lower-z interior cells would otherwise
+    # be dragged down by eq.4, cancelling the cervical-loop's z push
+    # and slowing the border's z growth (silicoshark v2 A6 finding).
+    #
+    # When `border_definition='topological_descendants'`, the gate uses
+    # state.is_border_topo. Otherwise (geometric `<6 neighbours` border),
+    # the same split is approximated using mesh.is_border. Either way,
+    # cells that this code treats as border get eq.4 with only
+    # cells-of-the-same-class neighbours, mimicking FORTRAN.
     counts = np.diff(mesh.neigh_starts).astype(np.float64)
     sum_neigh = np.zeros((n, 3), dtype=np.float64)
     np.add.at(sum_neigh, rows, pos[cols])
     safe_counts = np.maximum(counts, 1.0)[:, None]
     mean_neigh = sum_neigh / safe_counts
+
+    # Determine "border" cells per the discretisation choice for the
+    # purpose of this border-only eq.4 sub-step. The split is gated on
+    # `border_definition='topological_descendants'` because the FORTRAN-
+    # specific border treatment (eq.4 split, cervical-loop bias gate)
+    # only makes sense for the FORTRAN-faithful border identification.
+    # Default `border_definition='neighbour_count'` (used by
+    # PATH_B_DEFAULT and V1_REPLICA) keeps the v1 behaviour: eq.4
+    # uses ALL neighbours uniformly.
+    if disc.border_definition == 'topological_descendants':
+        ntr_border = state.is_border_topo if state.is_border_topo is not None else mesh.is_border
+        if np.any(ntr_border):
+            # Compute mean of border-only neighbours for border cells.
+            is_b_neigh = ntr_border[cols]
+            b_only = is_b_neigh.astype(np.float64)
+            sum_b = np.zeros((n, 3), dtype=np.float64)
+            np.add.at(sum_b, rows, pos[cols] * b_only[:, None])
+            cnt_b = np.zeros(n, dtype=np.float64)
+            np.add.at(cnt_b, rows, b_only)
+            safe_cnt_b = np.maximum(cnt_b, 1.0)[:, None]
+            mean_b = sum_b / safe_cnt_b
+            has_b_neigh = cnt_b > 0
+            use_border_mean = ntr_border & has_b_neigh
+            mean_neigh = np.where(
+                use_border_mean[:, None], mean_b, mean_neigh
+            )
     forces += params.k_ntr * one_minus_d * (mean_neigh - pos)
 
     # --- Epithelial growth (eq. 5) -----------------------------------
@@ -236,16 +324,20 @@ def compute_forces(
     has_dir = sum_unit_norm > _SAFE_DIV_EPS
 
     # disc.eq5_apply_to: paper ('all' — every cell) vs FORTRAN
-    # ('interior_only' — only cells with index >= first_border_cell).
-    # The 'interior_only' branch uses the FORTRAN's index gate,
-    # NOT mesh.is_border: in 13.f90 eq. 5 fires for cells in the
-    # range [first_border_cell, num_active_cells), which is a
-    # topological book-keeping criterion, not a geometric one.
+    # ('interior_only' — only interior cells, by the topological
+    # `first_border_cell` book-keeping criterion).
+    #
+    # In FORTRAN's reversed lattice, indices [0, first_border_cell-1]
+    # are the outer ring and `i >= first_border_cell` selects the
+    # interior. silicoshark's lattice has the centre at index 0 and
+    # the outer ring at the high indices, so the same semantic gate
+    # ('interior cells only') is `idx < state.first_border_cell` here.
+    # See `state.first_border_cell` for the count derivation.
     if disc.eq5_apply_to == 'all':
         eligible = has_dir
     elif disc.eq5_apply_to == 'interior_only':
         idx = np.arange(n)
-        eligible = has_dir & (idx >= state.first_border_cell)
+        eligible = has_dir & (idx < state.first_border_cell)
     else:
         raise ValueError(f'unknown eq5_apply_to: {disc.eq5_apply_to!r}')
     forces[eligible] += (
@@ -253,9 +345,32 @@ def compute_forces(
     )
 
     # --- Cervical-loop downgrowth (eqs. 7–9 + 10–12) -----------------
-    # Border cells (mesh.is_border — geometric) get an additional
-    # outward+downward push from the cervical-loop dynamics.
-    border = mesh.is_border
+    # Border cells get an additional outward+downward push from the
+    # cervical-loop dynamics.
+    #
+    # disc.border_definition selects how 'border' is identified:
+    #   - 'neighbour_count': geometric, cells with <6 mesh neighbours.
+    #     Recomputed each step from the triangulation.
+    #   - 'topological_descendants': cells in the FORTRAN-style
+    #     first-border-block. Daughters inherit border status only if
+    #     both parents are border (`new_cell_is_external` rule). This
+    #     bounds the border set under repeated division, matching
+    #     FORTRAN's behaviour where only original-border cells and
+    #     their double-border-parent descendants drive cervical-loop
+    #     downgrowth. Geometric cells with <6 neighbours that arise
+    #     from triangulation degradation do NOT receive cervical-loop.
+    if disc.border_definition == 'neighbour_count':
+        border = mesh.is_border
+    elif disc.border_definition == 'topological_descendants':
+        if state.is_border_topo is None:
+            raise ValueError(
+                "border_definition='topological_descendants' requires "
+                'state.is_border_topo to be populated; ensure the State '
+                'was built via state.build_initial_state.'
+            )
+        border = state.is_border_topo
+    else:
+        raise ValueError(f'unknown border_definition: {disc.border_definition!r}')
     if np.any(border):
         outward_xy = -(mean_neigh[border] - pos[border])[:, :2]
         out_h = np.maximum(np.linalg.norm(outward_xy, axis=1), _SAFE_DIV_EPS)
@@ -303,8 +418,25 @@ def apply_border_multipliers(
 
     Then any cell with negative z-force or knot status has its z-force
     zeroed (FORTRAN's "due to the pressure of the stelate" comment).
+
+    `disc.border_definition` selects between geometric (`'neighbour_count'`)
+    and topological (`'topological_descendants'`) border identification.
+    The FORTRAN-faithful preset uses topological so the multipliers are
+    applied only to FORTRAN-original border cells and their
+    double-border-parent descendants; geometric cells emerging from
+    triangulation degradation are not bias-multiplied.
     """
-    border = mesh.is_border
+    if disc.border_definition == 'neighbour_count':
+        border = mesh.is_border
+    elif disc.border_definition == 'topological_descendants':
+        if state.is_border_topo is None:
+            raise ValueError(
+                "border_definition='topological_descendants' requires "
+                'state.is_border_topo to be populated.'
+            )
+        border = state.is_border_topo
+    else:
+        raise ValueError(f'unknown border_definition: {disc.border_definition!r}')
     pos = state.positions
     in_band = np.abs(pos[:, 1]) < params.k_bwi
 
@@ -313,9 +445,24 @@ def apply_border_multipliers(
     # promotes x == 0 to the east half-plane (>= 0) so those cells
     # receive Pbi and Bgr. This is documented as a load-bearing
     # FORTRAN accident in coreop2d.py:1011-1023.
+    #
+    # We use a tolerance around 0 for the quirk because silicoshark's
+    # positions can drift away from exact x=0 even when initially
+    # placed there. FORTRAN's `13.f90` initialises with
+    # `cls.positions = positions.round(decimals=14)` and its symmetric
+    # force calculation preserves that exact zero; silicoshark uses
+    # scatter-adds whose order can introduce ULP-level drift, and cell
+    # divisions in the local neighbourhood (creating asymmetric force
+    # patterns) can kick the y-axis cells off zero by ~1e-3. We use a
+    # generous tolerance (`x_zero_tol = 0.05 = 5% of unit spacing`)
+    # to keep the cells anchored even after such kicks. This is a
+    # phenomenological match, not a faithful translation of FORTRAN's
+    # exact-zero comparison; future work could maintain a separate
+    # `is_y_axis` flag inherited on division to make the gate exact.
+    x_zero_tol = 0.05
     if disc.border_bias_x_zero_quirk:
-        east = pos[:, 0] > 0
-        west = pos[:, 0] < 0
+        east = pos[:, 0] > x_zero_tol
+        west = pos[:, 0] < -x_zero_tol
     else:
         east = pos[:, 0] >= 0
         west = pos[:, 0] < 0

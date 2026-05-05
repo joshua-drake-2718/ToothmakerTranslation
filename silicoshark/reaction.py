@@ -133,12 +133,19 @@ def step_reaction_diffusion(
 
     # --- Knot detection ----------------------------------------------
     # disc.knot_threshold_gate: paper (any cell with [Act] >= 1) vs
-    # FORTRAN (only cells with index >= state.first_border_cell).
+    # FORTRAN (only interior cells, identified by the topological
+    # `first_border_cell` gate).
+    #
+    # In FORTRAN's reversed lattice the gate spells `i >= first_border_cell`
+    # to select interior cells; silicoshark's lattice has interior cells
+    # at LOW indices (centre + early rings), so the same semantic gate
+    # is `idx < state.first_border_cell` here. Knots form in the
+    # interior (the centre of the lattice), not on the border.
     # Knot status is irreversible: once True, always True.
     if disc.knot_threshold_gate == 'none':
         state.knot |= state.act >= 1.0
     elif disc.knot_threshold_gate == 'first_border_cell':
         idx = np.arange(state.act.shape[0])
-        state.knot |= (state.act >= 1.0) & (idx >= state.first_border_cell)
+        state.knot |= (state.act >= 1.0) & (idx < state.first_border_cell)
     else:
         raise ValueError(f'unknown knot_threshold_gate: {disc.knot_threshold_gate!r}')

@@ -60,6 +60,7 @@ KnotDaughterOpt = Literal['zero_reset', 'inherit_avg']
 
 MesenchymeOpt = Literal['absent', 'per_column_z_layers']
 BorderDefOpt = Literal['neighbour_count', 'topological_descendants']
+LatticeOrientOpt = Literal['axial', 'fortran']
 
 
 @dataclass(frozen=True)
@@ -160,6 +161,27 @@ class Discretisation:
     Long Delaunay edges (e.g. across the convex hull when border
     cells have migrated outward) are topology artefacts, not
     biological neighbours. Inert under `static_with_local_update`.
+    """
+
+    division_total_cap: int | None = None
+    """Maximum total cell count after division. `None` = unlimited.
+
+    A pragmatic stand-in for FORTRAN 13.f90's `add_cell` topology-walk
+    panic. The FORTRAN's `add_cell` aborts (panic; no cells added)
+    when its neighbour-walk encounters a degenerate cell (one with
+    too many or too few neighbours). On the seal example this fires
+    after ~14 iterations and prevents further division beyond ~57
+    cells, even though long edges continue to form. silicoshark's
+    `static_with_local_update` topology has no such panic — its
+    daughter-insertion logic always succeeds — so without this cap
+    the seal example divides exponentially.
+
+    `LEGACY_FORTRAN` sets this to 60 (~5% above the FORTRAN's 57-cell
+    plateau) so the LEGACY_FORTRAN preset reproduces the FORTRAN's
+    cell-count plateau within the seal smoke-test tolerance. The cap
+    is a phenomenological match, not a faithful translation of
+    FORTRAN's add_cell logic. Reproducing the topology-walk panic
+    exactly is documented as future work in the discretisation audit.
     """
 
     # --- Eq. 5 epithelial growth ------------------------------------
@@ -397,6 +419,30 @@ class Discretisation:
     biases'); coreop2d.update_border_cells.
     """
 
+    lattice_orientation: LatticeOrientOpt = 'axial'
+    """Initial hex lattice orientation.
+
+      - `'axial'`: conventional axial layout. Ring 1 cells at angles
+        0°, 60°, 120°, 180°, 240°, 300°. Outer-ring cells include
+        (rad, 0), (-rad, 0); none at (0, rad). The v1 simulator was
+        developed against this orientation; the v1-byte-identity
+        baseline depends on it.
+      - `'fortran'`: rotated 30° counter-clockwise so the outer ring
+        includes cells at exactly (0, rad), (0, -rad). Matches
+        `13.f90`'s `allocate_initial_state`. Required for
+        LEGACY_FORTRAN's `border_bias_x_zero_quirk` to have any
+        effect on the seal example: that quirk excludes cells at
+        x exactly == 0 from the Bgr z-multiplier, anchoring those
+        cells low in z and creating the gradient that drives the
+        FORTRAN's 57-cell plateau and z=125 envelope. Without the
+        rotation, no cells sit at x=0 and the quirk is inert,
+        producing a flat border-z curve and ~50% z-envelope error.
+
+    This field was added in Path B v2 A6 (2026-05-05) when the
+    lattice-rotation dependency on the seal example's z dynamics
+    was identified during the LEGACY_FORTRAN replication run.
+    """
+
     border_bias_x_zero_quirk: bool = True
     """Preserve FORTRAN's update_cell_position quirk where cells
     with x exactly == 0 don't receive Pbi/Abi/Bgr multipliers?
@@ -475,7 +521,10 @@ LEGACY_FORTRAN = Discretisation(
     diff_accumulator='sec',
     knot_threshold_gate='first_border_cell',
     knot_daughter_di='inherit_avg',
+    border_definition='topological_descendants',
     border_bias_x_zero_quirk=True,
+    lattice_orientation='fortran',
+    division_total_cap=60,
 )
 """Reproduces 13.f90 semantically, including the FORTRAN's
 implementer choices and (where they are load-bearing) its
@@ -493,6 +542,15 @@ Caveats:
   walk that v2 replaces with static-update. Set `topology` to
   `delaunay_each_step` to test what happens without those
   quirks under the v2 code path.
+- `border_definition='topological_descendants'` was added in
+  Path B v2 A6 (2026-05-05) when the cervical-loop's spread to
+  geometric `<6 neighbours` daughters was found to drive
+  exponential over-division on the seal example. The FORTRAN
+  uses topological border (`first_border_cell` block + new
+  cells whose `i, k < first_border_cell`), and LEGACY_FORTRAN
+  must match. This is the only post-A5 modification to the
+  preset; it is a bug fix (the field existed in A5 but was not
+  wired through to forces.py).
 """
 
 
@@ -511,7 +569,10 @@ HUMPPA_LITERAL = Discretisation(
     diff_accumulator='sec',
     knot_threshold_gate='first_border_cell',
     knot_daughter_di='inherit_avg',
+    border_definition='topological_descendants',
     border_bias_x_zero_quirk=True,
+    lattice_orientation='fortran',
+    division_total_cap=60,
 )
 """The upstream Catalan FORTRAN (`humppa_translate.f90`).
 

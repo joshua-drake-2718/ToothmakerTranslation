@@ -140,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     _check_implemented(disc)
 
     params = Params.from_file(args.params_file)
-    state = build_initial_state(params)
+    state = build_initial_state(params, lattice_orientation=disc.lattice_orientation)
     top = build_topology(state) if disc.topology == 'static_with_local_update' else None
 
     out_folder = Path(args.output_folder)

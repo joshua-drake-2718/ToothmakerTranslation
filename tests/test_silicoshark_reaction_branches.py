@@ -288,12 +288,20 @@ def _seven_cell_state(*, act_cell0: float, first_border_cell: int) -> State:
 
 
 def test_knot_threshold_gate_branches_differ():
-    """7-cell rad=2 state, Act=2.0 in cell 0 only, first_border_cell=6
-    (= 6 * (rad - 1)).
+    """7-cell rad=2 state, Act=2.0 in cell 0 only, first_border_cell=1
+    (= 1 + 3*(rad-1)*(rad-2) for rad=2; rad=2 has only the centre as
+    interior, and the 6 surrounding cells as the outer ring).
 
       'none': cell 0 (Act >= 1) becomes a knot.
-      'first_border_cell': cell 0 (index 0 < 6) does NOT become a
-        knot, even though Act >= 1.
+      'first_border_cell': cell 0 (index 0 < first_border_cell=1) IS
+        an interior cell, so it DOES become a knot. The gate excludes
+        cells at indices >= first_border_cell (the outer ring) from
+        knot formation. With first_border_cell=1, only cell 0 (the
+        centre) is interior; the 6 ring-1 cells are border.
+
+    Cell 5 is in the outer ring (index 5 >= 1) so we additionally
+    seed it with Act=2.0 and assert that under 'first_border_cell'
+    cell 5 does NOT become a knot.
 
     All reaction parameters set to zero so the only effect of the
     step is the knot-detection clause and a degraded copy of Act
@@ -301,27 +309,33 @@ def test_knot_threshold_gate_branches_differ():
     """
     params = _diffusion_off_params()  # all zero
     dt = 1.0
-    fbc = 6 * (2 - 1)  # = 6
+    fbc = 1 + 3 * (2 - 1) * (2 - 2)  # = 1 (centre only is interior)
 
     state_none = _seven_cell_state(act_cell0=2.0, first_border_cell=fbc)
+    state_none.act[5] = 2.0  # additionally seed an outer-ring cell
     mesh = Mesh.from_positions(state_none.positions)
     step_reaction_diffusion(
         state_none, params, mesh, dt,
         replace(PATH_B_DEFAULT, knot_threshold_gate='none'),
     )
     assert state_none.knot[0] == True, 'paper rule: cell 0 should be a knot'
-    assert state_none.knot[1:].sum() == 0, 'no other cells should be knots'
+    assert state_none.knot[5] == True, 'paper rule: cell 5 should be a knot'
 
     state_gate = _seven_cell_state(act_cell0=2.0, first_border_cell=fbc)
+    state_gate.act[5] = 2.0
     mesh = Mesh.from_positions(state_gate.positions)
     step_reaction_diffusion(
         state_gate, params, mesh, dt,
         replace(PATH_B_DEFAULT, knot_threshold_gate='first_border_cell'),
     )
-    assert state_gate.knot[0] == False, (
-        'FORTRAN rule: cell 0 (index 0 < first_border_cell=6) should not be a knot'
+    assert state_gate.knot[0] == True, (
+        'FORTRAN rule: cell 0 (index 0 < first_border_cell=1) IS '
+        'interior, so it should become a knot.'
     )
-    assert state_gate.knot.sum() == 0, 'no cells should be knots under the gate'
+    assert state_gate.knot[5] == False, (
+        'FORTRAN rule: cell 5 (index 5 >= first_border_cell=1) is on '
+        'the outer ring, so the knot gate should exclude it.'
+    )
 
 
 # --- Default-preset equivalence to v1 (sanity check) -----------------
