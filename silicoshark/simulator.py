@@ -197,8 +197,8 @@ def step(
     mesh = Mesh.from_positions(state.positions)
     step_reaction_diffusion(state, params, mesh, dt, disc)
     step_differentiation(state, params, dt, disc)
-    forces = compute_forces(state, params, mesh)
-    apply_border_multipliers(forces, state, params, mesh)
+    forces = compute_forces(state, params, mesh, disc)
+    apply_border_multipliers(forces, state, params, mesh, disc)
     state.positions = state.positions + dt * forces
     # Cap divisions per step and reject very-long Delaunay edges as
     # topology artefacts; otherwise the convex-hull-spanning edges of
