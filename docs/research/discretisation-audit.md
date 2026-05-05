@@ -106,7 +106,7 @@ once the comparison study reports.
   z-displacement is large (i.e. the seal example, where
   cervical-loop downgrowth produces ~125-unit z-spread)?
 
-#### Option `fortran_margins` (deferred — `NotImplementedError`)
+#### Option `fortran_margins` (in-plane operator wired; full byte-match deferred)
 
 - **Paper evidence:** no direct support. The paper does not
   describe per-edge margins or area_p z-weighting at any level of
@@ -115,28 +115,61 @@ once the comparison study reports.
   (`coreop2d.py:506-666`). The FORTRAN computes a per-edge `pes`
   margin from the neighbour `border` array and a per-cell
   `area_p` z-weighting that drives vertical diffusion between
-  z-layers. The hand-tuned `0.044D1` factor at the substrate
-  boundary (`13.f90:431, 444, 459`) is a load-bearing magic
-  number — see findings on FMA and over-division for context. The
-  approach is described in the C++ port glossary (`cpp_README.md`)
-  as 'internode positions' but the inner indexing
-  (`cellMargins[i][j][k]` with k=0..7 carrying margin x/y/z plus
-  distance components) is not paper-specified.
+  z-layers. The hand-tuned `0.044D1` factor (= `0.44`, FORTRAN
+  scientific notation) at the substrate boundary (`13.f90:431,
+  444, 459`) is a load-bearing magic number — see findings on
+  FMA and over-division for context. The approach is described
+  in the C++ port glossary (`cpp_README.md`) as 'internode
+  positions' but the inner indexing (`cellMargins[i][j][k]` with
+  k=0..7 carrying margin x/y/z plus distance components) is not
+  paper-specified.
 - **Alternative code-bases:** the C++ port at
   `tooth_model_diffusion.cpp` reproduces the FORTRAN margins
   (with the `if (suma > 0)` guard documented in
   `docs/research/cpp-port-review.md` §2(a) producing a third
   behaviour distinct from both FORTRAN and Path A's Python).
   tgrohens' `coreop2d.f90:401-571` is byte-identical to humppa.
-- **Comparison-study question:** how much of the FORTRAN's
-  seal-example trajectory is driven by the per-edge margin
-  geometry versus the simpler graph-Laplacian alternatives? This
-  option is deferred behind a `NotImplementedError` because
-  reproducing the FORTRAN margins inside the v2 vectorised
-  pipeline is its own sub-project; the residual z-min
-  divergence in
+- **Implementation status (Path B v2 B3, 2026-05-05):**
+  `silicoshark/mesh.py:fortran_margins_laplacian` implements the
+  in-plane contact-area-weighted operator on silicoshark's CSR
+  (per-step pes/area_p, FMA-LIMIT GUARD on `sum_a == 0`). The
+  substrate sink, vertical-z flux, and substrate-edge layer of
+  the FORTRAN's full `apply_diffusion` are NOT modelled —
+  silicoshark's existing 2-layer mesenchyme handling and zero-
+  flux substrate boundary apply independently of this operator.
+  The byte-match against Path A's `coreop2d.py` is therefore
+  deferred (5–7 day sub-project). See findings doc
+  `docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`.
+- **Comparison-study answer (post-implementation):** the row was
+  empirically asymmetric on `wt-tribosphenic-2014.txt`. Under
+  LEGACY_FORTRAN's saturated regime the in-plane laplacian's
+  choice is byte-identically inert (SHA-256 `3947760b3bc1` for
+  every save 500–2500). Under PATH_B_DEFAULT the choice shifts
+  cusp_width −57 % (0.6927900 → 0.2947925) and halves the y-
+  envelope. The FORTRAN's seal-example trajectory is plausibly
+  insensitive to the in-plane laplacian under LEGACY_FORTRAN's
+  bundled settings — testable by a single seal re-run, which
+  was not in this session's scope.
+- **Phase-2 deferral rationale:** the byte-match against Path A
+  closes acceptance criterion 2 of the plan
+  (`docs/plans/2026-05-05-fortran-margins-laplacian.md`); the
+  other four criteria are already met. The phase-2 evidence
+  base is a faithfulness claim ('silicoshark's fortran_margins
+  matches Path A bit-for-bit'). The in-plane operator's empirical
+  null on the knock-down direction is itself evidence the
+  operator is well-behaved on saturated dynamics; phase 2 would
+  confirm what can already be inferred. The cost is 5–7 days
+  with state-shape changes (substrate-edge layer, mesenchyme
+  Act, per-cell-per-slot border/neigh arrays) and a flow-
+  ordering change risking the existing 62-test fast suite. The
+  z-min residual at
   `docs/findings/2026-05-05-path-b-v2-legacy-fortran-divergence.md`
-  may or may not close once `fortran_margins` is implemented.
+  is unaffected by the in-plane operator (LEGACY_FORTRAN's
+  cusp-forming output is byte-identical between length_weighted
+  and fortran_margins) and is a property of force propagation
+  under `static_with_local_update` topology, not the laplacian.
+  Phase 2 is therefore a follow-up paper item, same category as
+  a second species or a second code-base for §C.1.
 
 ---
 

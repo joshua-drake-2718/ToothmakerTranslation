@@ -108,6 +108,32 @@ Reaching FORTRAN-faithful z_min for interior cells will require one or more of:
 These are out of scope for A6 (the v1-replica milestone). They should be
 prioritised against the comparison-study matrix's needs in A8/A9.
 
+### Update (2026-05-05): laplacian operator ruled out as cause
+
+The audit document previously flagged that the residual z_min divergence
+'may or may not close' once `fortran_margins` was implemented. Path B
+v2 B3 (2026-05-05) implemented the in-plane fortran_margins operator at
+`silicoshark/mesh.py:fortran_margins_laplacian`. Re-running the
+LEGACY_FORTRAN preset on `examples/wt-tribosphenic-2014.txt` showed
+byte-identical OFF outputs at every save (SHA-256 `3947760b3bc1`) between
+`laplacian=length_weighted` and `laplacian=fortran_margins`. The
+in-plane laplacian operator therefore is **not** the cause of the
+z_min residual on this preset family. The residual is a property of
+force propagation under `static_with_local_update` topology, not of
+the laplacian operator's specific weighting. Phase 2 of fortran_margins
+(substrate sink, vertical-z flux, substrate-edge layer for byte-match
+against Path A's full `apply_diffusion`) might shift z_min if the
+substrate sink turns out to affect dynamics distinct from the in-plane
+operator, but the in-plane test rules out the simpler hypothesis.
+Findings doc:
+`docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`.
+
+A direct seal-example test of the in-plane operator on the LEGACY_FORTRAN
+preset would falsify the parameter-set-specificity hypothesis (i.e.,
+whether the byte-identical inertia holds on seal as well as on
+wt-tribosphenic-2014). It was not run in the B3 session — flagged as
+follow-up in the implementation findings doc.
+
 ## References
 
 - Charter: `docs/plans/2026-05-05-path-b-v2-configurable-discretisation.md`
