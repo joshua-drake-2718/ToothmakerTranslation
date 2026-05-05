@@ -13,3 +13,6 @@ silicoshark.stdout
 silicoshark.stderr
 params-snapshot.txt
 HANDOVER.md
+
+# Claude Code session-local files (per-machine, not part of the project)
+.claude/

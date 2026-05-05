@@ -76,6 +76,31 @@ families. A longer iteration budget or a parameter set with larger
 k_di / k_ds is the natural follow-up to test whether they would
 become observable.
 
+### Update (2026-05-05): re-test under `laplacian=fortran_margins`
+
+Path B v2 B3 (2026-05-05) wired the in-plane fortran_margins
+operator. Re-running case (ii) under `laplacian=fortran_margins`
+(`experiments/discretisation-study/sensitivity-closure-fortran-margins-2026-05-05/`)
+shows:
+
+```
+Subdir                          1/2/3 layer hashes
+paper-mes-{1,2,3}layer-fortran  5ff49087634d (all three identical)
+```
+
+`n_mesenchyme_layers` remains **inert** under fortran_margins —
+the three layer counts produce byte-identical OFF outputs. The
+absolute output differs from the length_weighted runs (consistent
+with the −57 % cusp_width shift on `PATH_B_DEFAULT_plus_laplacian`
+documented in
+`docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`),
+but the layer-count sensitivity is unchanged.
+
+Reading: the operator's choice shifts where PATH_B_DEFAULT
+equilibrates, but does not unlock the substrate-edge layers'
+contribution to the dynamics. The §5E inert classification for
+`n_mesenchyme_layers` therefore survives the operator change.
+
 ## Reproduction
 
 ```bash
@@ -94,5 +119,13 @@ for n in 1 2 3; do
       experiments/discretisation-study/sensitivity-closure/paper-mes-${n}layer run 100 5 \
       --preset PATH_B_DEFAULT \
       --override n_mesenchyme_layers=$n --override laplacian=length_weighted
+done
+
+# 2026-05-05 fortran_margins re-test
+for n in 1 2 3; do
+  TMPDIR=.tmp .venv/bin/python -m silicoshark examples/wt-tribosphenic-2014.txt \
+      experiments/discretisation-study/sensitivity-closure-fortran-margins-2026-05-05/paper-mes-${n}layer-fortran \
+      run 100 5 --preset PATH_B_DEFAULT \
+      --override n_mesenchyme_layers=$n --override laplacian=fortran_margins
 done
 ```

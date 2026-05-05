@@ -181,3 +181,57 @@ def test_cli_runs_with_fortran_margins():
                 xyz = [float(x) for x in line.split()[:3]]
                 assert all(math.isfinite(v) for v in xyz), line
         assert n_v == 19, f'expected 19 vertices, got {n_v}'
+
+
+def test_legacy_fortran_byte_identical_under_either_laplacian():
+    """Regression: LEGACY_FORTRAN on `wt-tribosphenic-2014.txt` must
+    produce byte-identical OFF outputs under `laplacian=length_weighted`
+    and `laplacian=fortran_margins`. This locks in the empirical null
+    on the knock-down direction of the disentanglement matrix and
+    catches any future change to the in-plane operator that
+    accidentally drifts LEGACY_FORTRAN's saturated-regime output.
+
+    See findings doc
+    `docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`
+    and the §B.3 rebuttal entry for the rationale.
+
+    Iteration budget kept short (100×3 = 300 iters) for fast-suite
+    inclusion. The 2026-05-05 byte-identicality confirmation was on
+    500×5 = 2500 iters; if that ever drifts, this 300-iter test will
+    pick it up first.
+    """
+    import hashlib
+    import tempfile
+
+    def _run_and_hash(out_dir: Path, laplacian: str) -> dict[str, str]:
+        args = [
+            sys.executable, '-m', 'silicoshark',
+            str(REPO_ROOT / 'examples' / 'wt-tribosphenic-2014.txt'),
+            str(out_dir), 'run', '100', '3',
+            '--preset', 'LEGACY_FORTRAN',
+            '--override', f'laplacian={laplacian}',
+            '--override', 'mesenchyme=absent',
+        ]
+        proc = subprocess.run(args, cwd=REPO_ROOT, capture_output=True, text=True)
+        assert proc.returncode == 0, (
+            f'silicoshark with laplacian={laplacian} exited {proc.returncode}\n'
+            f'stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}'
+        )
+        hashes = {}
+        for save in (100, 200, 300):
+            off = out_dir / f'{save}_run_.off'
+            assert off.exists(), f'missing OFF at {off}'
+            hashes[save] = hashlib.sha256(off.read_bytes()).hexdigest()
+        return hashes
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out_lw = Path(tmp) / 'lw'
+        out_fm = Path(tmp) / 'fm'
+        out_lw.mkdir()
+        out_fm.mkdir()
+        h_lw = _run_and_hash(out_lw, 'length_weighted')
+        h_fm = _run_and_hash(out_fm, 'fortran_margins')
+    assert h_lw == h_fm, (
+        f'LEGACY_FORTRAN OFF outputs differ between length_weighted and '
+        f'fortran_margins:\n  length_weighted: {h_lw}\n  fortran_margins: {h_fm}'
+    )

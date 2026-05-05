@@ -189,12 +189,18 @@ separable sub-projects.
   propagation under `static_with_local_update` topology, not of
   the laplacian operator.
 - **Re-running the seal-example single-field disentanglement
-  with the new operator.** The seal example uses LEGACY_FORTRAN
-  with `mesenchyme='per_column_z_layers'` (auto-overridden to
-  absent in the runner currently). For the seal disentanglement
-  the laplacian field's row should be re-measured to confirm the
-  same byte-identicality holds; deferred — the cusp-forming
-  result is the headline for B.3.
+  with the new operator.** ✅ *Done (2026-05-05; confirmation
+  run).* `experiments/discretisation-study/seal-fortran-margins-2026-05-05/`
+  ran LEGACY_FORTRAN on `examples/seal.txt` for 500×5 = 2500
+  iters with `laplacian=fortran_margins`. The OFF outputs at
+  every save (500, 1000, 1500, 2000, 2500) are byte-identical
+  to the corresponding length_weighted runs at
+  `experiments/discretisation-study/seal-baseline/LEGACY_FORTRAN/seal/`.
+  Confirms the parameter-set-specificity hypothesis: under
+  LEGACY_FORTRAN's saturated regime, the in-plane laplacian's
+  weighting is byte-identically inert on BOTH the cusp-forming
+  and seal datasets. The seal disentanglement table's laplacian
+  row is unaffected by B3.
 
 ## Files touched
 

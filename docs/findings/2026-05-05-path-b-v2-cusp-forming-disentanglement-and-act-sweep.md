@@ -100,6 +100,35 @@ PATH_B_DEFAULT. The disentanglement quantifies what *else* is going on
 inside the FORTRAN bundle on this dataset; it does not bear on the
 typo finding directly.
 
+### Update (2026-05-05): post-B3 disentanglement re-run
+
+After Path B v2 B3 implemented `laplacian='fortran_margins'` as the
+in-plane operator, the cusp-forming single-field disentanglement was
+re-run at
+`experiments/discretisation-study/single-field-cusp-forming-fortran-margins-2026-05-05/`.
+The 28-row table is byte-identical to the original run **except for
+one row**: `PATH_B_DEFAULT_plus_laplacian`. Specifically:
+
+- Knock-down direction (LEGACY_FORTRAN_minus_X for all X): every row
+  is byte-identical to the original. The OFF outputs match SHA-256
+  exactly. Confirms that under LEGACY_FORTRAN's saturated regime, the
+  laplacian operator's in-plane choice has zero observable effect.
+- Knock-up direction: every row except `PATH_B_DEFAULT_plus_laplacian`
+  is byte-identical to the original (those rows' base preset uses
+  length_weighted, and they don't perturb the laplacian field).
+- `PATH_B_DEFAULT_plus_laplacian`: cusp_width 0.6927900 → 0.2947925
+  (−57 %). Vertex envelope shifts: x [−1.158, 1.244] → [−1.103,
+  −0.150]; y [−0.888, 0.837] → [−0.468, 0.468] (y span halves).
+  Cusp count and cell count both stay at 19.
+
+The headline finding ('11 of 14 fields stay dormant under both
+directions') remains correct; the laplacian field's row content
+moves from 'structural no-op (auto-overridden)' to 'asymmetric
+empirical measurement (null on knock-down, −57 % cusp_width on
+knock-up)'. The laplacian field joins the load-bearing list for
+the knock-up direction only. Findings doc:
+`docs/findings/2026-05-05-path-b-v2-fortran-margins-implementation.md`.
+
 ## Result B: Act sweep
 
 | Preset | Cusps at every Act ∈ [0.1, 1.6] |
@@ -151,7 +180,12 @@ replication of the FORTRAN's published Act-sweep curve. Reproducing
 the curve quantitatively requires implementing
 `mesenchyme='per_column_z_layers'` with parameter values that allow
 inhibitor accumulation between knot loci, and/or implementing the
-`fortran_margins` laplacian (§Future work item 3 of the briefing).
+full FORTRAN `apply_diffusion` byte-match (substrate sink, vertical-z
+flux, substrate-edge layer; phase 2 of the in-plane fortran_margins
+operator wired in B3 — see §Future work item 4 in the rebuttal). The
+in-plane fortran_margins operator alone (B3) does not unlock the
+quantitative Act sweep — it shifts PATH_B_DEFAULT's plateau but does
+not break the saturated regime under FORTRAN-flavoured presets.
 Until that work is done, silicoshark can answer 'does the typo
 matter?' but not 'how many cusps does the FORTRAN form at Act = X?'.
 
