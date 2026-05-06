@@ -1,0 +1,17 @@
+{
+  "experiment": "silicoshark_PATH_B_DEFAULT_run",
+  "status": "completed",
+  "started_at": "2026-05-05T13:03:57.188668+00:00",
+  "updated_at": "2026-05-05T13:03:57.273452+00:00",
+  "elapsed_s": 0.1,
+  "phase": "block_5",
+  "phase_description": "Save block 5/5",
+  "phase_number": 5,
+  "total_phases": 5,
+  "step": 100,
+  "total_steps": 100,
+  "step_pct": 100.0,
+  "rate": 5977.86,
+  "eta_s": 0,
+  "message": "wrote 500_run_.off"
+}

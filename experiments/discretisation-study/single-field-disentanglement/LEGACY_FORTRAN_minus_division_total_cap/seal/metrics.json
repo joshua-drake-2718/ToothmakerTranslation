@@ -1,0 +1,23 @@
+{
+  "cell_count_history": [
+    -1,
+    -1,
+    -1,
+    -1,
+    -1
+  ],
+  "cell_count_plateau": NaN,
+  "cell_count_final": null,
+  "cusp_count": null,
+  "cusp_width": null,
+  "vertex_envelope": null,
+  "regime": "NaN",
+  "note": "no final OFF file",
+  "row_label": "LEGACY_FORTRAN_minus_division_total_cap",
+  "base_preset": "LEGACY_FORTRAN",
+  "perturbation": {
+    "division_total_cap": "None"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+  "returncode": -9
+}

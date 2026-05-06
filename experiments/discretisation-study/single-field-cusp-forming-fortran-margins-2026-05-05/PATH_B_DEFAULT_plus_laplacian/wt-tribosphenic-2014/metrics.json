@@ -1,0 +1,30 @@
+{
+  "cell_count_history": [
+    19,
+    19,
+    19,
+    19,
+    19
+  ],
+  "cell_count_plateau": 19.0,
+  "cell_count_final": 19,
+  "cusp_count": 19,
+  "cusp_width": 0.2947925242953689,
+  "vertex_envelope": {
+    "x_min": -1.1026622347861617,
+    "x_max": -0.1495220933149528,
+    "y_min": -0.4677014378974501,
+    "y_max": 0.4677014378974487,
+    "z_min": 1.0006173396094318,
+    "z_max": 1.0139408532763716
+  },
+  "regime": "plateau",
+  "row_label": "PATH_B_DEFAULT_plus_laplacian",
+  "base_preset": "PATH_B_DEFAULT",
+  "perturbation": {
+    "laplacian": "fortran_margins"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/wt-tribosphenic-2014.txt",
+  "returncode": 0,
+  "timed_out": false
+}

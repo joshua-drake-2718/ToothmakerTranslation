@@ -5,3 +5,14 @@ __pycache__/
 *.egg-info/
 .venv/
 *.mod
+
+# silicoshark per-run reproduction artefacts (canonical evidence is the
+# committed OFFs + metrics.json + preset-snapshot.json + progress.json;
+# stdout/stderr and the snapshotted params file regenerate on every run)
+silicoshark.stdout
+silicoshark.stderr
+params-snapshot.txt
+HANDOVER.md
+
+# Claude Code session-local files (per-machine, not part of the project)
+.claude/

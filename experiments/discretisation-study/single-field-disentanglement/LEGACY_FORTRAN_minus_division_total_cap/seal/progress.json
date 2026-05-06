@@ -1,0 +1,12 @@
+{
+  "experiment": "silicoshark_LEGACY_FORTRAN_run",
+  "status": "failed",
+  "started_at": "2026-05-05T11:38:51.287216+00:00",
+  "updated_at": "2026-05-05T11:54:46.721545+00:00",
+  "elapsed_s": 0.0,
+  "phase": "block_1",
+  "phase_description": "Save block 1/5",
+  "phase_number": 1,
+  "total_phases": 5,
+  "message": "silicoshark exited -9; last stderr: "
+}

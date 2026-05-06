@@ -1,0 +1,29 @@
+{
+  "cell_count_history": [
+    37,
+    37,
+    37,
+    37,
+    40
+  ],
+  "cell_count_plateau": 40.0,
+  "cell_count_final": 40,
+  "cusp_count": 0,
+  "cusp_width": 0.0,
+  "vertex_envelope": {
+    "x_min": -1.5550930988679763,
+    "x_max": 1.2777358719723104,
+    "y_min": -1.8631634679668856,
+    "y_max": 2.026961422822386,
+    "z_min": 115.21288325984396,
+    "z_max": 118.73608345068888
+  },
+  "regime": "plateau",
+  "row_label": "LEGACY_FORTRAN_minus_adh_form",
+  "base_preset": "LEGACY_FORTRAN",
+  "perturbation": {
+    "adh_form": "unit_vector"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+  "returncode": 0
+}

@@ -1,0 +1,28 @@
+{
+  "cell_count_history": [
+    19,
+    19,
+    19,
+    19,
+    19
+  ],
+  "cell_count_plateau": 19.0,
+  "cell_count_final": 19,
+  "cusp_count": 7,
+  "cusp_width": 0.49516299314604545,
+  "vertex_envelope": {
+    "x_min": 2.549124290263739,
+    "x_max": 4.077578706406488,
+    "y_min": -10.157241868337985,
+    "y_max": -9.02114686742267,
+    "z_min": 57.038034378705206,
+    "z_max": 57.93743198880925
+  },
+  "regime": "plateau",
+  "row_label": "LEGACY_FORTRAN",
+  "base_preset": "LEGACY_FORTRAN",
+  "perturbation": {},
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/experiments/discretisation-study/act-sweep-2014/params/Act_1.2.txt",
+  "returncode": 0,
+  "timed_out": false
+}

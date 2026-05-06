@@ -1,0 +1,36 @@
+{
+  "row_label": "LEGACY_FORTRAN_minus_border_definition",
+  "base_preset": "LEGACY_FORTRAN",
+  "perturbation": {
+    "border_definition": "neighbour_count"
+  },
+  "overrides": {
+    "mesenchyme": "absent",
+    "laplacian": "length_weighted",
+    "border_definition": "neighbour_count"
+  },
+  "effective": {
+    "laplacian": "length_weighted",
+    "update_order": "gauss_seidel_forces",
+    "topology": "static_with_local_update",
+    "division_per_step_cap": null,
+    "division_max_edge": null,
+    "division_total_cap": 60,
+    "eq5_z_gate": true,
+    "eq5_apply_to": "interior_only",
+    "rep_form": "paper_gated",
+    "adh_form": "hookean_attraction",
+    "rep_neighbour_set": "mesh_plus_all_close",
+    "eq14_denominator": "inh_corrected",
+    "eq17_inh_source": "act_rate_times_di",
+    "eq18_sec_source": "k_sec_times_di",
+    "diff_accumulator": "sec",
+    "knot_threshold_gate": "first_border_cell",
+    "knot_daughter_di": "inherit_avg",
+    "mesenchyme": "absent",
+    "n_mesenchyme_layers": 2,
+    "border_definition": "neighbour_count",
+    "lattice_orientation": "fortran",
+    "border_bias_x_zero_quirk": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "cell_count_history": [
+    37,
+    37,
+    37,
+    37,
+    37
+  ],
+  "cell_count_plateau": 37.0,
+  "cell_count_final": 37,
+  "cusp_count": 0,
+  "cusp_width": 0.0,
+  "vertex_envelope": {
+    "x_min": -3.0,
+    "x_max": 3.0,
+    "y_min": -0.25947183189999484,
+    "y_max": 0.2599251596991529,
+    "z_min": 128.5482190481486,
+    "z_max": 131.13444290317543
+  },
+  "regime": "plateau",
+  "row_label": "PATH_B_DEFAULT_plus_eq5_apply_to",
+  "base_preset": "PATH_B_DEFAULT",
+  "perturbation": {
+    "eq5_apply_to": "interior_only"
+  },
+  "params_file": "/home/lyndon/repo/project/ToothmakerTranslation/examples/seal.txt",
+  "returncode": 0
+}

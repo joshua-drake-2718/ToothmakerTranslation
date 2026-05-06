@@ -1,0 +1,12 @@
+{
+  "experiment": "silicoshark_PATH_B_DEFAULT_run",
+  "status": "failed",
+  "started_at": "2026-05-05T21:35:53.443653+00:00",
+  "updated_at": "2026-05-05T21:40:53.771169+00:00",
+  "elapsed_s": 0.0,
+  "phase": "block_1",
+  "phase_description": "Save block 1/5",
+  "phase_number": 1,
+  "total_phases": 5,
+  "message": "silicoshark timed out after 300.0s (runaway protection)"
+}
